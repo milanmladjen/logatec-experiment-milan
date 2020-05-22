@@ -1,0 +1,3 @@
+[submodule "contiki-ng"]
+	path = contiki-ng
+	url = https://github.com/gcerar/contiki-ng
