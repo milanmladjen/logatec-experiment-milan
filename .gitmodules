@@ -1,3 +1,6 @@
 [submodule "contiki-ng"]
 	path = contiki-ng
 	url = https://github.com/gcerar/contiki-ng
+[submodule "vesna-drivers"]
+	path = vesna-drivers
+	url = https://github.com/logatec3/vesna-drivers
