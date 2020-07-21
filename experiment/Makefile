@@ -9,8 +9,8 @@ PROJECT_SOURCES = experiment.c
 
 #VESNA= ../../arch/platform/vesna/vesna-drivers/
 
-CONTIKI := ./contiki-ng
-VSNDRIVERS := ./vesna-drivers
+CONTIKI := ../contiki-ng
+VSNDRIVERS := ../vesna-drivers
 
 #CFLAGS += -DPROJECT_CONF_PATH=\"./project-conf.h\"
 
