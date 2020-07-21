@@ -77,5 +77,3 @@ cpu/x86/uefi/edk2
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-
-vesna-drivers/

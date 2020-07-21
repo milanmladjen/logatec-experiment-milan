@@ -1,9 +1,10 @@
 # ----------------------------------------------------------------------
-# Monitor serial input from given port and store it into given file
+# 
+# This script will just store everything that it gets on serial connection,
+# without checking if Vesna is alive
 #
-# TODO: description
-#
-#
+# Make sure to enter the same time (MAX_APP_TIME) here and in stats-app.c
+# (APP_DURATION_IN_SEC)! 
 # ----------------------------------------------------------------------
 import sys
 import argparse
@@ -12,8 +13,7 @@ import os
 from datetime import datetime
 from timeit import default_timer as timer
 
-LINES_TO_READ = 2000
-MAX_APP_TIME  = 1200
+MAX_APP_TIME  = (60 * 60)
 
 DEFAULT_FILE_NAME = "node_stats.txt"
 
@@ -89,19 +89,17 @@ class serial_monitor():
 
     def prepare_file(self, filename):
         self.filename = filename
-        self.file = open(filename, mode="w", encoding="UTF-8")
+        self.file = open(filename, mode="w", encoding="ASCII")
         self.file.write(str(datetime.now())+"\n")
         self.file.write("----------------------------------------------------------------------------------------------- \n")
         self.file.write("Serial input from port:" + monitor.port + "\n")
-        if(args.root):
-            self.file.write("Device is root of the DAG network! \n")
         self.file.write("----------------------------------------------------------------------------------------------- \n")
         self.file.close()
 
     
     def store_to_file(self, data):
         self.file.write("[" + str(datetime.now().time())+"]: ")
-        data = data.decode("UTF-8")
+        data = data.decode("ASCII")
         self.file.write(str(data))
 
     def store_str_to_file(self,string):
@@ -139,10 +137,6 @@ parser.add_argument("-p",
                     given, program will find it automatically""",
                     type=str, 
                     required=False)
-parser.add_argument("-r",
-                    "--root",
-                    help="set device as root of the network",
-                    action="store_true")
 
 args = parser.parse_args()
 
@@ -169,105 +163,59 @@ else:
 # (optional) Write first lines into it
 monitor.prepare_file(name)
 
-# ----------------------------------------------------------------------
-# Set device as root of the network via serial CLI
-# ----------------------------------------------------------------------
-if(args.root):
-    print("Set device as DAG root")
-    monitor.send_cmd("*Root")
-    
-# ----------------------------------------------------------------------
-# Start the app
-# ----------------------------------------------------------------------
-print("Send start command")
-monitor.send_cmd(">Start")
-
-# Wait for response ('>' character) from Vesna for 3 seconds
-print("Waiting for response...")
-monitor.wait_response(3)
-
-# If device is not responding, try again
-if(not monitor.gotResponse):
-    print("No response -> send start cmd again...")
-    monitor.flush()
-    monitor.send_cmd("=End")
-    monitor.send_cmd(">Start")
-    monitor.wait_response(3)
-
-if(not monitor.gotResponse):
-    print("No response...please reset the device and try again")
-    sys.exit(1)
-
-print("Start logging serial input:") 
-
 # Open file to append serial input to it
 monitor.file = open(monitor.filename, "a")
 
 # ----------------------------------------------------------------------
-# Get general info about the app
+# Start the app
 # ----------------------------------------------------------------------
-
-# Get max duration of the app ("AD 1200")
-value = monitor.read_line()
-if((chr(value[0]) == 'A') and (chr(value[1])== 'D')):
-    MAX_APP_TIME = int(value[3:])
-
-# Get a device ID (ex: Device ID: 0124B006D1)
-value = monitor.read_line()
-monitor.store_to_file(value)
-
-id = value.decode("UTF-8").split(": ")
-if(str(id[0])== "Device ID"):
-    # Get only last 4 bytes
-    deviceID = id[1][-5:-1]
+    
+print("Start logging serial input:") 
 
 # ----------------------------------------------------------------------
-# Read input lines while LINES_TO_READ or until app stops sending data
+# Read input lines until the end of predefined time
 # ----------------------------------------------------------------------
-
 line = 1
 startTime = timer()
 elapsedMin = 0
 timeoutCnt = 0
+timeoutGlobalCnt = 0
 
 try:
-    while(True):    #while(line <= LINES_TO_READ): 
+    while(True):
         
         # Measure approximate elapsed time - just for a feeling (+- 10s)
         if((timer() - startTime) > 59):
             elapsedMin += 1
             startTime = timer()
-            #print(timer() - startTime)
-            #print(timer() - startTime - 59)
-            #startTime = timer() + (timer() - startTime - 59)
 
-        # Failsafe mechanism - if Vesna for some reason stops responding 
-        # So it didn't sent stop command 3min after MAX_APP_TIME, stop the monitor
-        if elapsedMin > ((MAX_APP_TIME/60) + 2):
-            print("\n \n Vesna must have crashed... :( \n \n")
-            monitor.store_str_to_file(""" \n ERROR!
-            Vesna has crashed durring application. 
-            No stop command found 3min after end of application!""")
+        # If application come to an end - timing is not precise at all!!!
+        if elapsedMin > ((MAX_APP_TIME/60)):
+            print("End of application time")
             break
+
+        #if timeoutCnt > 50 :
+        #    print("\n \n Vesna must have crashed... :( \n \n")
+        #    monitor.store_str_to_file(""" \n ERROR!
+        #    Vesna has crashed durring application. 
+        #    50 Timeout event in a row happend""")
+        #    break
         
         # Read one line (until \n char)
         value = monitor.read_line()
 
         # Because of timeout setting, serial may return empty list
         if value:           
-            # If stop command '=' found, exit monitor
-            if(chr(value[0]) == '='):
-                print("Found stop command (" + str(MAX_APP_TIME/60) +
-                " minutes has elapsed)..stored " + str(line) + " lines.")
-                break
 
             # Store value into file
             monitor.store_to_file(value)
-
             line += 1
+            timeoutCnt = 0
+
         else:
             timeoutCnt += 1
-            monitor.store_str_to_file(("Serial timeout occurred: " + str(timeoutCnt) + "\n"))
+            timeoutGlobalCnt += 1
+            monitor.store_str_to_file(("Serial timeout occurred: " + str(timeoutGlobalCnt) + "\n"))
             print("Serial timeout occurred: " + str(timeoutCnt))
 
         # Update status line in terminal
@@ -278,25 +226,10 @@ try:
     print("Done!..Exiting serial monitor")
 
 except KeyboardInterrupt:
-    print("\n Keyboard interrupt!..send stop command")
-    monitor.send_cmd("=End")
-
-    # Get last data ("driver statistics") before closing the monitor
-    while(True):
-        try:
-            value = monitor.read_line()
-            if(chr(value[0]) == '='):
-                break
-            else:
-                monitor.store_to_file(value)
-        except:
-            print("Error closing monitor")  
-            break
-    print("Exiting serial monitor")
-
+    print("\n Keyboard interrupt!.. Exiting serial monitor")
 
 except serial.SerialException:
-    print("Error opening port!..Exiting serial monitor")
+    print("Error opening port!.. Exiting serial monitor")
 
 except IOError:
     print("\n Serial port disconnected!.. Exiting serial monitor")
@@ -306,6 +239,3 @@ except IOError:
 # ----------------------------------------------------------------------
 finally:
     monitor.close()
-    # Rename a file with device ID
-    #if(not args.output):
-    #    monitor.rename_file(deviceID)
