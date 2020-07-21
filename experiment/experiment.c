@@ -8,6 +8,7 @@
  * serial_monitor.py (MAX_APP_TIME)! 
  * -----------------------------------------------------------------------------
 */
+// TODO change this
 
 #include <stdio.h>
 #include "contiki.h"
