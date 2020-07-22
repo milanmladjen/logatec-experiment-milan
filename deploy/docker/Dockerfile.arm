@@ -1,0 +1,73 @@
+FROM arm32v7/debian:stretch
+
+# File Author / Maintainer
+MAINTAINER Matevz Vucnik
+
+# Set debian frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install common dependences
+RUN	apt-get update --fix-missing
+RUN	apt-get upgrade -y
+RUN	apt-get install -y apt-utils git && \
+	apt-get clean -y
+
+# Install dependences for vena drivers
+RUN 	apt-get install -y	gcc-arm-none-eabi \
+				gdb-arm-none-eabi \
+				libnewlib-arm-none-eabi \
+				devscripts && \
+	apt-get clean -y
+
+# Compile and install OpenOCD
+WORKDIR /root
+
+# "touch" commands are here to avoid occasional
+# "aclocal-1.13: command not found" errors.
+# https://stackoverflow.com/a/30386141
+RUN	git clone -b sna-lgtc https://github.com/avian2/openocd.git && \
+	cd openocd && \
+	touch configure.ac aclocal.m4 configure && \
+	find . -name Makefile.in -exec 'touch' '{}' ';' && \
+	mk-build-deps --install -t "apt-get -y --no-install-recommends" && \
+	dpkg-buildpackage -uc -b && \
+	cd .. && \
+	dpkg -i openocd_*.deb && \
+	apt-get clean && \
+	apt-get remove -y openocd-build-deps && \
+	apt-get autoremove -y && \
+	rm -rf openocd && \
+rm -f openocd_*.deb openocd_*.changes
+
+# Wishful Dependencies
+RUN mkdir -p wishful
+WORKDIR /root/wishful
+
+RUN git clone https://github.com/wishful-project/agent.git && \
+git clone https://github.com/wishful-project/controller.git && \
+git clone https://github.com/wishful-project/examples.git && \
+git clone https://github.com/wishful-project/framework.git && \
+git clone https://github.com/wishful-project/pyre.git && \
+git clone https://github.com/wishful-project/module_discovery.git && \
+git clone https://github.com/wishful-project/module_discovery_pyre.git && \
+git clone https://github.com/wishful-project/module_iperf.git && \
+git clone https://github.com/wishful-project/python-tc.git && \
+git clone https://github.com/wishful-project/wishful_upis.git && \
+git clone https://github.com/wishful-project/module_simple.git && \
+git clone https://github.com/wishful-project/wishful-module-ismtv.git && \
+git clone https://github.com/wishful-project/wishful-module-6lowpan.git && \
+git clone https://github.com/wishful-project/wishful-module-lora.git && \
+git clone https://github.com/wishful-project/wishful-module-uwb.git
+
+RUN apt-get install -y python3-pip python3-zmq python3-gevent python3-numpy python3-lxml && apt-get clean -y
+
+RUN pip3 install docopt pyyaml agent/ controller/ framework/ pyre/ \
+module_discovery/ module_discovery_pyre/ module_iperf/ python-tc/ \
+wishful_upis/ module_simple/ wishful-module-ismtv/ wishful-module-6lowpan/ \
+wishful-module-lora/ wishful-module-uwb/
+
+# Copy source
+COPY . /root/vesna-drivers
+WORKDIR /root/vesna-drivers
+
+ENTRYPOINT ["docker/start.sh"]

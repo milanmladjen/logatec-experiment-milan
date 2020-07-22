@@ -1,0 +1,30 @@
+---
+- hosts: 172.17.0.1
+  remote_user: videk
+  tasks:
+  - name: Creates directory
+    file:
+      path: ~/deploy 
+      state: directory
+
+  - name: deploy repo changes
+    synchronize:
+      src: "{{ lookup('env','PWD') }}"
+      dest: ~/deploy
+      delete: yes
+      recursive: yes
+
+  - name: build docker file
+    command: docker build -t vesna-drivers .
+    args:
+      chdir: ~/deploy/vesna-drivers
+
+  - name: cleanup docker container controller
+    ignore_errors: yes
+    command: "{{ item }}"
+    with_items:
+      - docker kill controller
+      - docker rm controller
+
+  - name: run docker image
+    command: docker run --privileged --name controller -e TEST=Tests/system/alh -e TARGET=server_socket -e NODES_NUM=19 -p 50000:50000 vesna-drivers 

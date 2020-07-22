@@ -1,0 +1,45 @@
+---
+    - hosts: 172.17.0.1
+      remote_user: videk
+      tasks:
+
+      - name: cleanup docker container controller
+        command: docker stop controller
+ 
+      - name: copy file from container
+        command: docker cp controller:/root/contiki-ng/arch/platform/vesna/vesna-drivers/Tests/system/alh/experiment_results/ .
+        args:
+          chdir: ~/deploy/vesna-drivers
+          
+#      - name: cleanup docker container controller
+#        command: "{{ item }}"
+#        with_items:
+#          - docker stop controller
+#          - docker rm controller
+    
+#      - name: fetch data file to out
+#        fetch:
+#          src: ~/deploy/vesna-drivers/results #node_stats.txt will be in the same folder as serial_monitor.py
+#          dest: ../../../../out/results
+#          flat: yes
+
+      - name: get files from folder
+        find:
+          paths: "~/deploy/vesna-drivers/experiment_results"
+          recurse: no
+          patterns: "*.txt"
+        register: file
+
+      - name: fetch data file to out
+        fetch:
+          src: "{{ item.path }}"
+          #src: ~/deploy/vesna-drivers/node_stats.txt #node_stats.txt will be in the same folder as serial_monitor.py
+          dest: ../../../../out/
+          flat: yes
+        with_items: "{{ file.files }}"
+
+      - name: delete experiment_results
+        file: 
+          path: ~/deploy/vesna-drivers/experiment_results
+          state: absent
+    

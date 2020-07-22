@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+cd /root/contiki-ng/examples/stats-app
+git pull
+make stats-app.logatec3 -j2
+python3 serial_monitor.py -o node_stats.txt
+cd /root/contiki-ng/arch/platform/vesna/vesna-drivers/Tests/system/alh
+python3 client.py
+#cp /root/contiki-ng/examples/stats-app/serial_monitor/node_stats.txt /root/contiki-ng/arch/platform/vesna/vesna-drivers/Tests/system/alh/
