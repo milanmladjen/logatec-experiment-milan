@@ -12,7 +12,6 @@ Do it in one step (but you will also get all nested sub-modules, which are usual
 ```$ git clone --recurse-submodules git@github.com:logatec3/LOG-a-TEC-testbed.git```
 
 **IMPORTANT**
-
 `Git pull` is not enough - it will only pull the changes of the base repo.
 If you want to pull the changes on the sub-module as well, insert:
 ```$ git submodule update --remote```
@@ -29,7 +28,8 @@ Make few branches here --> do this on the end, when everything works
 * One for LoRa
 
 Make few more folders with examples
-/experiments/demo
-/experiments/multicast
-/experiments/neighbour-ping
-...
+
+* /experiments/demo
+* /experiments/multicast
+* /experiments/neighbour-ping
+* ...
