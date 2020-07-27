@@ -32,9 +32,9 @@
 
     # Root node
   - name: run docker image root
-    command: docker run -d --name target --privileged --net=host -it -e TEST=Tests/system/alh -e TARGET=stats_app_root -e VESNA_DEV=/dev/ttyS2  vesna-drivers
+    command: docker run -d --name target --privileged --net=host -it -e TEST=deploy/jobs -e TARGET=run_experiment_root -e VESNA_DEV=/dev/ttyS2  vesna-drivers
     when: inventory_hostname == '192.168.12.86'
 
   - name: run docker image
-    command: docker run -d --name target --privileged --net=host -it -e TEST=Tests/system/alh -e TARGET=stats_app -e VESNA_DEV=/dev/ttyS2 vesna-drivers
+    command: docker run -d --name target --privileged --net=host -it -e TEST=deploy/jobs -e TARGET=run_experiment -e VESNA_DEV=/dev/ttyS2 vesna-drivers
     when: inventory_hostname != '192.168.12.86'

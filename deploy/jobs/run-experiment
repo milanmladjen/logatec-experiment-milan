@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
-cd /root/contiki-ng/examples/stats-app
+# Enter experiment directory (TODO popravi mapo eksperimenta)
+cd /root/LOG-a-TEC-testbed/experiments
+
+# Get the changes from github
 git pull
+
+# Download submodules (TODO github username and password must be writen here :/ )
+git submodule update --init
+
+# Start the experiment (TODO)
 make stats-app.logatec3 -j2
 python3 serial_monitor.py -o node_stats.txt
-cd /root/contiki-ng/arch/platform/vesna/vesna-drivers/Tests/system/alh
+
+# Transfer colected results to the server 
+cd /root/deploy/jobs/
 python3 client.py
-#cp /root/contiki-ng/examples/stats-app/serial_monitor/node_stats.txt /root/contiki-ng/arch/platform/vesna/vesna-drivers/Tests/system/alh/
