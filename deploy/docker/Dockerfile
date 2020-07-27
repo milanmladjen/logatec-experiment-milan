@@ -12,18 +12,11 @@ RUN apt-get update --fix-missing && \
 #TODO why do we need lxml?
 
 WORKDIR /root/
-RUN git clone --single-branch --branch stats-app https://github.com/gcerar/contiki-ng.git
-#WORKDIR /root/vesna-management-system
-#RUN ant build
+RUN git clone https://github.com/logatec3/LOG-a-TEC-testbed.git
 
-#RUN git clone --single-branch --branch grega https://github.com/gcerar/contiki-ng.git
-#WORKDIR /root/contiki-ng/
-#ARG time 
-#RUN git pull
-
-# Copy source
-COPY . /root/contiki-ng/arch/platform/vesna/vesna-drivers
-WORKDIR /root/contiki-ng/arch/platform/vesna/vesna-drivers
+# Copy source --> TODO do we still need it?
+# COPY . /root/contiki-ng/arch/platform/vesna/vesna-drivers
+# WORKDIR /root/contiki-ng/arch/platform/vesna/vesna-drivers
 
 ENTRYPOINT ["docker/start.sh"]
 

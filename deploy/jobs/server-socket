@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+cd karkoli_pac_bo
+git pull (da pogledas spremembe serverja) TODO
+
+python3 server.py
