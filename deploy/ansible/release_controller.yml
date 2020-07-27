@@ -4,20 +4,20 @@
   tasks:
   - name: Creates directory
     file:
-      path: ~/deploy 
+      path: ~/experiment 
       state: directory
 
   - name: deploy repo changes
     synchronize:
       src: "{{ lookup('env','PWD') }}"
-      dest: ~/deploy
+      dest: ~/experiment
       delete: yes
       recursive: yes
 
   - name: build docker file
     command: docker build -t vesna-drivers .
     args:
-      chdir: ~/deploy/vesna-drivers
+      chdir: ~/experiment/LOG-a-TEC-testbed/deploy/docker
 
   - name: cleanup docker container controller
     ignore_errors: yes
@@ -27,4 +27,4 @@
       - docker rm controller
 
   - name: run docker image
-    command: docker run --privileged --name controller -e TEST=Tests/system/alh -e TARGET=server_socket -e NODES_NUM=19 -p 50000:50000 vesna-drivers 
+    command: docker run --privileged --name controller -e TEST=deploy/tasks -e TARGET=server_socket -e NODES_NUM=19 -p 50000:50000 vesna-drivers 

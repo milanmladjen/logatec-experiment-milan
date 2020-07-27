@@ -5,7 +5,7 @@ cd /root/LOG-a-TEC-testbed/experiments
 # Get the changes from github
 git pull
 
-# Download submodules (TODO github username and password must be writen here :/ )
+# Download submodules (vesna-drivers and contiki-ng) (TODO github username and password must be writen here :/ )
 git submodule update --init
 
 # Start the experiment (TODO)
@@ -13,5 +13,5 @@ make stats-app.logatec3 -j2
 python3 serial_monitor.py -o node_stats.txt
 
 # Transfer colected results to the server 
-cd /root/deploy/jobs/
+cd /root/deploy/tasks/
 python3 client.py

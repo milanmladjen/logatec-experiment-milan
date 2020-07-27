@@ -1,26 +1,24 @@
 ---
 #- hosts: 192.168.12.81, 192.168.12.82, 192.168.12.83, 192.168.12.86, 192.168.12.87,  192.168.12.89, 192.168.12.90,  192.168.12.92,  192.168.12.93, 192.168.12.97, 192.168.12.98, 192.168.12.101, 192.168.12.100  #192.168.12.84, 192.168.12.85, 192.168.12.88, 192.168.12.99,  192.168.12.94, 192.168.12.95, 192.168.12.96, 192.168.12.91,
-- hosts: 192.168.12.81, 192.168.12.82, 192.168.12.83, 192.168.12.86, 192.168.12.87, 192.168.12.88, 192.168.12.89, 192.168.12.90, 192.168.12.91, 192.168.12.92, 192.168.12.93, 192.168.12.94, 192.168.12.95, 192.168.12.96, 192.168.12.97, 192.168.12.98, 192.168.12.99, 192.168.12.101, 192.168.12.100  #192.168.12.84, 192.168.12.85,
-  #strategy: free    
+- hosts: 192.168.12.81, 192.168.12.82, 192.168.12.83, 192.168.12.86, 192.168.12.87, 192.168.12.88, 192.168.12.89, 192.168.12.90, 192.168.12.91, 192.168.12.92, 192.168.12.93, 192.168.12.94, 192.168.12.95, 192.168.12.96, 192.168.12.97, 192.168.12.98, 192.168.12.99, 192.168.12.101, 192.168.12.100  #192.168.12.84, 192.168.12.85,  
   remote_user: videk
   tasks:
   - name: Creates directory
     file:
-      path: /home/videk/deploy 
+      path: ~/experiment
       state: directory
 
   - name: deploy repo changes
     synchronize:
       src: "{{ lookup('env','PWD') }}"
-      dest: /home/videk/deploy
+      dest: ~/experiment
       delete: yes
       recursive: yes
   
-
   - name: build docker file
     command: docker build -t vesna-drivers .
     args:
-      chdir: /home/videk/deploy/vesna-drivers
+      chdir: ~/experiment/LOG-a-TEC-testbed/deploy/docker
 
   - name: cleanup docker containers
     register: target
@@ -32,9 +30,9 @@
 
     # Root node
   - name: run docker image root
-    command: docker run -d --name target --privileged --net=host -it -e TEST=deploy/jobs -e TARGET=run_experiment_root -e VESNA_DEV=/dev/ttyS2  vesna-drivers
+    command: docker run -d --name target --privileged --net=host -it -e TEST=deploy/tasks -e TARGET=run_experiment_root -e VESNA_DEV=/dev/ttyS2  vesna-drivers
     when: inventory_hostname == '192.168.12.86'
 
   - name: run docker image
-    command: docker run -d --name target --privileged --net=host -it -e TEST=deploy/jobs -e TARGET=run_experiment -e VESNA_DEV=/dev/ttyS2 vesna-drivers
+    command: docker run -d --name target --privileged --net=host -it -e TEST=deploy/tasks -e TARGET=run_experiment -e VESNA_DEV=/dev/ttyS2 vesna-drivers
     when: inventory_hostname != '192.168.12.86'

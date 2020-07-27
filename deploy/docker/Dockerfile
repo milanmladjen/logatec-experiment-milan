@@ -15,9 +15,11 @@ WORKDIR /root/
 RUN git clone --single-branch --branch master https://github.com/logatec3/LOG-a-TEC-testbed.git	
 #TODO branch nej bo tisti na katerem delamo...torej za SRDA plate nej bo branch SRDA
 
-# Copy source --> TODO do we still need it?
+# TODO 
+# If "git submodule update --init" doesnt work without uname and passwd, copy vesna-drivers from here to the docker container
 # COPY . /root/contiki-ng/arch/platform/vesna/vesna-drivers
-# WORKDIR /root/contiki-ng/arch/platform/vesna/vesna-drivers
 
-ENTRYPOINT ["docker/start.sh"]
+WORKDIR /root/LOG-a-TEC-testbed
+
+ENTRYPOINT ["deploy/docker/start.sh"]
 

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+cd /root/LOG-a-TEC-testbed/deploy/tasks
+
+# Get the changes from the github
+git pull 
+
+# Run the server script
+python3 server.py
