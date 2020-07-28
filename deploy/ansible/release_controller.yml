@@ -7,12 +7,16 @@
       path: ~/experiment 
       state: directory
 
-  - name: deploy repo changes
-    synchronize:
-      src: "{{ lookup('env','PWD') }}"
+# recursive will also download the submodules
+# on the version you can change the branch to pull TODO
+# https://docs.ansible.com/ansible/latest/modules/git_module.html
+  - name: Pull changes in repo from github
+    git:
+      repo: git@github.com:logatec3/LOG-a-TEC-testbed.git
       dest: ~/experiment
-      delete: yes
-      recursive: yes
+      recursive: no
+      update: yes
+      version: master
 
   - name: build docker file
     command: docker build -t vesna-drivers .

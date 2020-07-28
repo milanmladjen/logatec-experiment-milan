@@ -8,15 +8,18 @@
       path: ~/experiment
       state: directory
 
-# recursive will download also submodules
-# on the version you can change the branch to pull
-  - name: Pull repo from github
+# recursive will also download the submodules
+# on the version you can change the branch to pull TODO
+# https://docs.ansible.com/ansible/latest/modules/git_module.html
+# Maybe we should add sudo_user: <your user that has the ssh key>
+  - name: Pull changes in repo from github
     git:
       repo: git@github.com:logatec3/LOG-a-TEC-testbed.git
       dest: ~/experiment
       recursive: yes
       update: yes
       version: master
+    #sudo_user: logatec
   
   - name: build docker file
     command: docker build -t vesna-drivers .

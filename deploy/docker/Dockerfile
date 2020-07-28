@@ -12,12 +12,11 @@ RUN apt-get update --fix-missing && \
 #TODO why do we need lxml?
 
 WORKDIR /root/
-RUN git clone --single-branch --branch master https://github.com/logatec3/LOG-a-TEC-testbed.git	
-#TODO branch nej bo tisti na katerem delamo...torej za SRDA plate nej bo branch SRDA
 
-# TODO 
-# If "git submodule update --init" doesnt work without uname and passwd, copy vesna-drivers from here to the docker container
-COPY ../../vesna-drivers /root/LOG-a-TEC-testbed/contiki-ng/arch/platform/vesna/vesna-drivers
+RUN mkdir LOG-a-TEC-testbed
+
+# Copy the LOG-a-TEC-testbed directory into container
+COPY ../../ /root/LOG-a-TEC-testbed/
 
 WORKDIR /root/LOG-a-TEC-testbed
 
