@@ -7,25 +7,13 @@
         command: docker stop controller
  
       - name: copy file from container
-        command: docker cp controller:/root/contiki-ng/arch/platform/vesna/vesna-drivers/Tests/system/alh/experiment_results/ .
+        command: docker cp controller:/root/LOG-a-TEC-testbed/deploy/tasks/results/ .
         args:
-          chdir: ~/deploy/vesna-drivers
+          chdir: ~/experiment
           
-#      - name: cleanup docker container controller
-#        command: "{{ item }}"
-#        with_items:
-#          - docker stop controller
-#          - docker rm controller
-    
-#      - name: fetch data file to out
-#        fetch:
-#          src: ~/deploy/vesna-drivers/results #node_stats.txt will be in the same folder as serial_monitor.py
-#          dest: ../../../../out/results
-#          flat: yes
-
       - name: get files from folder
         find:
-          paths: "~/deploy/vesna-drivers/experiment_results"
+          paths: "~/experiment/results"
           recurse: no
           patterns: "*.txt"
         register: file
@@ -33,13 +21,12 @@
       - name: fetch data file to out
         fetch:
           src: "{{ item.path }}"
-          #src: ~/deploy/vesna-drivers/node_stats.txt #node_stats.txt will be in the same folder as serial_monitor.py
-          dest: ../../../../out/
+          dest: ../../../../out/  #TODO change this directory
           flat: yes
         with_items: "{{ file.files }}"
 
-      - name: delete experiment_results
+      - name: delete results
         file: 
-          path: ~/deploy/vesna-drivers/experiment_results
+          path: ~/experiment/results
           state: absent
     

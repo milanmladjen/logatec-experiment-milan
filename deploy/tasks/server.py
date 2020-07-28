@@ -26,7 +26,7 @@ def client_thread(conn, addr):
     ip = addr[0]
     filename = '%s.txt' % ip
 
-    with open(os.path.join("experiment_results/", filename), "wb") as f:
+    with open(os.path.join("results/", filename), "wb") as f:
         print('file opened')
         while True:
             data = conn.recv(1024)
@@ -40,8 +40,8 @@ def client_thread(conn, addr):
 
     
 
-if os.path.exists("experiment_results/") is False:
-	os.system("mkdir -m777 experiment_results/")
+if os.path.exists("results/") is False:
+	os.system("mkdir -m777 results/")
 threads = []
 totalthreads = 0
 while True:

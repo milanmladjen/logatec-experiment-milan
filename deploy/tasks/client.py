@@ -18,7 +18,7 @@ except socket.error as err:
 	print("Connection error: ", err)
 	sys.exit(1)
 
-filename= path.relpath("/root/contiki-ng/examples/stats-app/node_stats.txt")
+filename= path.relpath("/root/LOG-a-TEC-testbed/experiments/stats-app/node_stats.txt")
 f=open(filename, "rb")  #with open (filename, "rb") as f:
 line=f.read(1024)
 while(line):
