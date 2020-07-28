@@ -8,12 +8,15 @@
       path: ~/experiment
       state: directory
 
-  - name: deploy repo changes
-    synchronize:
-      src: "{{ lookup('env','PWD') }}"
+# recursive will download also submodules
+# on the version you can change the branch to pull
+  - name: Pull repo from github
+    git:
+      repo: git@github.com:logatec3/LOG-a-TEC-testbed.git
       dest: ~/experiment
-      delete: yes
       recursive: yes
+      update: yes
+      version: master
   
   - name: build docker file
     command: docker build -t vesna-drivers .

@@ -17,7 +17,7 @@ RUN git clone --single-branch --branch master https://github.com/logatec3/LOG-a-
 
 # TODO 
 # If "git submodule update --init" doesnt work without uname and passwd, copy vesna-drivers from here to the docker container
-# COPY . /root/contiki-ng/arch/platform/vesna/vesna-drivers
+COPY ../../vesna-drivers /root/LOG-a-TEC-testbed/contiki-ng/arch/platform/vesna/vesna-drivers
 
 WORKDIR /root/LOG-a-TEC-testbed
 
