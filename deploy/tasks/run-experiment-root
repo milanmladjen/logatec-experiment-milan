@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Enter experiment directory (TODO popravi mapo eksperimenta)
-cd /root/LOG-a-TEC-testbed/experiments
+cd /root/LOG-a-TEC-testbed/applications
 
 # Start the experiment (TODO)
 make stats-app.logatec3 -j2
