@@ -4,7 +4,7 @@ cd /root/LOG-a-TEC-testbed/applications
 
 # Start the experiment (TODO)
 make stats-app.logatec3 -j2
-python3 serial_monitor.py -o node_stats.txt -r
+python3 serial_monitor.py -o node_results.txt -r
 
 # Transfer colected results to the server 
 cd /root/deploy/tasks/

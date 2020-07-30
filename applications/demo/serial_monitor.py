@@ -15,7 +15,7 @@ from timeit import default_timer as timer
 
 MAX_APP_TIME  = (60 * 60)
 
-DEFAULT_FILE_NAME = "node_stats.txt"
+DEFAULT_FILE_NAME = "node_results.txt"
 
 BASEPORT = "/dev/ttyS"
 BAUD = 460800
