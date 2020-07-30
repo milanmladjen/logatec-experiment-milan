@@ -17,10 +17,10 @@ from timeit import default_timer as timer
 
 # Application duration should be defined as variable while running container
 try:
-    APP_DURATION_S = int(os.environ['APP_DURATION'])
+    APP_DURATION = int(os.environ['APP_DURATION_MIN'])
 except:
     print("No app duration was defined...going with default 60min")
-    APP_DURATION_S = (60 * 60)
+    APP_DURATION = 60
 
 
 DEFAULT_FILE_NAME = "node_results.txt"
@@ -205,10 +205,10 @@ if(args.root):
     monitor.send_cmd("*")
     
 # ----------------------------------------------------------------------
-# Send desired duration of the application
+# Send desired duration of the application (Vesna needs it in seconds)
 # ----------------------------------------------------------------------
-monitor.send_cmd("&" + str(APP_DURATION_S))
-print("Application duration " + str(APP_DURATION_S/60) + "min")
+monitor.send_cmd("&" + str(APP_DURATION * 60))
+print("Application duration " + str(APP_DURATION) + "min")
 
 # ----------------------------------------------------------------------
 # Read input lines until app stops sending data
@@ -228,8 +228,8 @@ try:
             startTime = timer()
 
         # Failsafe mechanism - if Vesna for some reason stops responding 
-        # So it didn't sent stop command 3min after APP_DURATION_S, stop the monitor
-        if elapsedMin > ((APP_DURATION_S/60) + 2):
+        # So it didn't sent stop command 3min after APP_DURATION, stop the monitor
+        if elapsedMin > ((APP_DURATION) + 2):
             print("\n \n Vesna must have crashed... :( \n \n")
             monitor.store_str_to_file(""" \n CRITICAL WARNING!
             Vesna has crashed durring application.""")
@@ -242,7 +242,7 @@ try:
         if value:           
             # If stop command '=' found, exit monitor
             if(chr(value[0]) == '='):
-                print("Found stop command (" + str(APP_DURATION_S/60) +
+                print("Found stop command (" + str(APP_DURATION) +
                 " minutes has elapsed)..stored " + str(line) + " lines.")
                 break
 
@@ -256,7 +256,7 @@ try:
 
         # Update status line in terminal
         print("Line: " + str(line) + " (~ " + str(elapsedMin) + "|" + 
-        str(int(APP_DURATION_S/60)) + " min)", end="\r")
+        str(int(APP_DURATION)) + " min)", end="\r")
     
     print("")
     print("Done!..Exiting serial monitor")
