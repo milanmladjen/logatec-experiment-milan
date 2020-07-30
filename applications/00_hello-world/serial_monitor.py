@@ -3,7 +3,7 @@
 # This script will just store everything that it gets on serial connection,
 # without checking if Vesna is alive
 #
-# Make sure to enter the same time (MAX_APP_TIME) here and in stats-app.c
+# Make sure to enter the same time (APP_DURATION_S) here and in hello-world.c
 # (APP_DURATION_IN_SEC)! 
 # ----------------------------------------------------------------------
 import sys
@@ -13,7 +13,7 @@ import os
 from datetime import datetime
 from timeit import default_timer as timer
 
-MAX_APP_TIME  = (60 * 60)
+APP_DURATION_S  = (60 * 60)
 
 DEFAULT_FILE_NAME = "node_results.txt"
 
@@ -58,33 +58,6 @@ class serial_monitor():
         value = self.ser.read_until(b'\n', None)
         return value
 
-
-    def send_cmd(self, cmd):
-        try:
-            self.ser.write((cmd + "\n").encode("ASCII"))
-        except:
-            print("Error writing to device!")
-
-
-    def wait_response(self, max_time):
-        startTime = timer()
-        while((timer() - startTime) < max_time):
-            try:
-                value = self.ser.readline()
-                if not value:
-                    break     
-                if(chr(value[0]) == '>'):
-                    self.gotResponse = True
-                    break
-            except KeyboardInterrupt:
-                print("\n Keyboard interrupt!..Exiting now")
-                sys.exit(1)
-
-
-    def flush(self):
-        self.ser.reset_input_buffer()
-        self.ser.reset_output_buffer()
-
 # ----------------------------------------------------------------------
 
     def prepare_file(self, filename):
@@ -101,16 +74,6 @@ class serial_monitor():
         self.file.write("[" + str(datetime.now().time())+"]: ")
         data = data.decode("ASCII")
         self.file.write(str(data))
-
-    def store_str_to_file(self,string):
-        self.file.write("[" + str(datetime.now().time())+"]: ")
-        self.file.write(string)
-
-    def rename_file(self, name):
-        os.rename(DEFAULT_FILE_NAME, DEFAULT_FILE_NAME[:-4] + 
-                  "_node_" + name + ".txt")
-        print("File renamed to:" + DEFAULT_FILE_NAME[:-4] + 
-                  "_node_" + name + ".txt")
 
 
     def close(self):
@@ -169,7 +132,6 @@ monitor.file = open(monitor.filename, "a")
 # ----------------------------------------------------------------------
 # Start the app
 # ----------------------------------------------------------------------
-    
 print("Start logging serial input:") 
 
 # ----------------------------------------------------------------------
@@ -178,8 +140,6 @@ print("Start logging serial input:")
 line = 1
 startTime = timer()
 elapsedMin = 0
-timeoutCnt = 0
-timeoutGlobalCnt = 0
 
 try:
     while(True):
@@ -190,16 +150,9 @@ try:
             startTime = timer()
 
         # If application come to an end - timing is not precise at all!!!
-        if elapsedMin > ((MAX_APP_TIME/60)):
+        if elapsedMin > ((APP_DURATION_S/60)):
             print("End of application time")
             break
-
-        #if timeoutCnt > 50 :
-        #    print("\n \n Vesna must have crashed... :( \n \n")
-        #    monitor.store_str_to_file(""" \n ERROR!
-        #    Vesna has crashed durring application. 
-        #    50 Timeout event in a row happend""")
-        #    break
         
         # Read one line (until \n char)
         value = monitor.read_line()
@@ -210,17 +163,13 @@ try:
             # Store value into file
             monitor.store_to_file(value)
             line += 1
-            timeoutCnt = 0
 
         else:
-            timeoutCnt += 1
-            timeoutGlobalCnt += 1
-            monitor.store_str_to_file(("Serial timeout occurred: " + str(timeoutGlobalCnt) + "\n"))
-            print("Serial timeout occurred: " + str(timeoutCnt))
+            print("Serial timeout occurred")
 
         # Update status line in terminal
         print("Line: " + str(line) + " (~ " + str(elapsedMin) + "|" + 
-        str(int(MAX_APP_TIME/60)) + " min)", end="\r")
+        str(int(APP_DURATION_S/60)) + " min)", end="\r")
     
     print("")
     print("Done!..Exiting serial monitor")
