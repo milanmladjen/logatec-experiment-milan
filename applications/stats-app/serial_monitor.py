@@ -1,9 +1,12 @@
 # ----------------------------------------------------------------------
-# Monitor serial input from given port and store it into given file
+# 
+# This script first sends start command '>' to Vesna to start the app.
+# Then it waits for response from Vesna - if no response, exit monitor
+# Then it sends app duration and root command if specified as argument 
+# After it monitors serial input and store the lines into given file
 #
-# TODO: description
-#
-#
+# Serial monitor has included failsafe mechanism and mechanism to
+# restart Vesna if it stops responding
 # ----------------------------------------------------------------------
 import sys
 import argparse
@@ -13,12 +16,19 @@ import time
 from datetime import datetime
 from timeit import default_timer as timer
 
-MAX_APP_TIME  = 1200
 
-DEFAULT_FILE_NAME = "node_stats.txt"
+# Application duration should be defined as variable while running container
+try:
+    APP_DURATION = int(os.environ['APP_DURATION_MIN'])
+except:
+    print("No app duration was defined...going with default 60min")
+    APP_DURATION = 60
+
+
+DEFAULT_FILE_NAME = "node_results.txt"
 
 BASEPORT = "/dev/ttyS"
-BAUD = 460800           #460800
+BAUD = 460800
 PARITY = serial.PARITY_NONE
 STOPBIT = serial.STOPBITS_ONE
 BYTESIZE = serial.EIGHTBITS
@@ -97,7 +107,6 @@ class serial_monitor():
             self.file.write("Device is root of the DAG network! \n")
         self.file.write("----------------------------------------------------------------------------------------------- \n")
         self.file.close()
-
     
     def store_to_file(self, data):
         self.file.write("[" + str(datetime.now().time())+"]: ")
@@ -107,12 +116,6 @@ class serial_monitor():
     def store_str_to_file(self,string):
         self.file.write("[" + str(datetime.now().time())+"]: ")
         self.file.write(string)
-
-    def rename_file(self, name):
-        os.rename(DEFAULT_FILE_NAME, DEFAULT_FILE_NAME[:-4] + 
-                  "_node_" + name + ".txt")
-        print("File renamed to:" + DEFAULT_FILE_NAME[:-4] + 
-                  "_node_" + name + ".txt")
 
 # ----------------------------------------------------------------------
 
@@ -134,6 +137,15 @@ class serial_monitor():
 
         # Set value back to 1 - wake Vesna up
         os.system('echo 1 > /sys/class/gpio/gpio66/value')
+
+    def resend_config(self, elapsedtime):
+        
+        print("Send start command")
+        self.send_cmd(">")
+        if(args.root):
+            print("Set device as DAG root")
+            self.send_cmd("*")
+        self.send_cmd( "&" + str((APP_DURATION - elapsedtime) * 60) )
 
 # ----------------------------------------------------------------------
 
@@ -201,13 +213,13 @@ print("Send start command")
 monitor.send_cmd(">")
 
 # Wait for response ('>' character) from Vesna for 3 seconds
-print("Waiting for response...")
 monitor.wait_response(3)
 
 # If device is not responding, try again
 if(not monitor.gotResponse):
     print("No response -> send start cmd again...")
     monitor.flush()
+    monitor.send_cmd("=")
     monitor.send_cmd(">")
     monitor.wait_response(3)
 
@@ -224,60 +236,47 @@ if(args.root):
     print("Set device as DAG root")
     monitor.send_cmd("*")
     
-print("Start logging serial input:") 
+# ----------------------------------------------------------------------
+# Send desired duration of the application (Vesna needs it in seconds)
+# ----------------------------------------------------------------------
+monitor.send_cmd("&" + str(APP_DURATION * 60))
 
 # ----------------------------------------------------------------------
-# Get general info about the app
+# Read input lines until app stops sending data
 # ----------------------------------------------------------------------
-
-# Get max duration of the app ("AD 1200")
-value = monitor.read_line()
-if((chr(value[0]) == 'A') and (chr(value[1])== 'D')):
-    MAX_APP_TIME = int(value[3:])
-
-# ----------------------------------------------------------------------
-# Read input lines while LINES_TO_READ or until app stops sending data
-# ----------------------------------------------------------------------
-
 line = 1
 startTime = timer()
 elapsedMin = 0
 timeoutCnt = 0
 timeoutGlobalCnt = 0
 
+print("Start logging serial input:") 
+
 try:
     while(True):
         
         # Measure approximate elapsed time - just for a feeling (+- 10s)
-        if((timer() - startTime) > 59):                                     # TODO: timeout is 20..test if this works   
-            elapsedMin += 1                                                 # Doesnt work - fix it
+        if((timer() - startTime) > 59):
+            elapsedMin += 1
             startTime = timer()
-            #print(timer() - startTime)
-            #print(timer() - startTime - 59)
-            #startTime = timer() + (timer() - startTime - 59)
 
         # Failsafe mechanism - if Vesna for some reason stops responding 
-        # So it didn't sent stop command 3min after MAX_APP_TIME, stop the monitor
-        if elapsedMin > ((MAX_APP_TIME/60) + 2):
+        # So it didn't sent stop command 3min after APP_DURATION, stop the monitor
+        if elapsedMin > ((APP_DURATION) + 2):
             print("\n \n Vesna must have crashed... :( \n \n")
-            monitor.store_str_to_file(""" \n ERROR!
-            Vesna has crashed durring application. 
-            No stop command found 3min after end of application!""")
+            monitor.store_str_to_file(""" \n CRITICAL WARNING!
+            Vesna has crashed durring application.""")
             break
-
-        if timeoutCnt > 10 :
+        
+        # If Vesna is not responding for one minute, restart it
+        if timeoutCnt > 5:
             print("\n \n Vesna must have crashed...Restart it now \n")
             monitor.store_str_to_file(""" \n WARNING!
-            Vesna has crashed durring application. 
-            10 Timeout event in a row happend. Restarting it now.. \n""")
+            Vesna has chrashed (10 timeouts)! Restarting it now... \n""")
             monitor.restart_vesna()
-            # Restart stats-app
             time.sleep(1)
-            print("Send start command")
-            monitor.send_cmd(">")
-            if(args.root):
-                print("Set device as DAG root")
-                monitor.send_cmd("*")
+            monitor.resend_config(elapsedMin)
+            timeoutCnt = 0
         
         # Read one line (until \n char)
         value = monitor.read_line()
@@ -286,13 +285,12 @@ try:
         if value:           
             # If stop command '=' found, exit monitor
             if(chr(value[0]) == '='):
-                print("Found stop command (" + str(MAX_APP_TIME/60) +
+                print("Found stop command (" + str(APP_DURATION) +
                 " minutes has elapsed)..stored " + str(line) + " lines.")
                 break
 
             # Store value into file
             monitor.store_to_file(value)
-
             line += 1
             timeoutCnt = 0
 
@@ -304,16 +302,15 @@ try:
 
         # Update status line in terminal
         print("Line: " + str(line) + " (~ " + str(elapsedMin) + "|" + 
-        str(int(MAX_APP_TIME/60)) + " min)", end="\r")
+        str(int(APP_DURATION)) + " min)", end="\r")
     
     print("")
     print("Done!..Exiting serial monitor")
 
 except KeyboardInterrupt:
     print("\n Keyboard interrupt!..send stop command")
-    monitor.send_cmd("=End")
+    monitor.send_cmd("=")
 
-    # Get last data ("driver statistics") before closing the monitor
     while(True):
         try:
             value = monitor.read_line()
@@ -322,10 +319,9 @@ except KeyboardInterrupt:
             else:
                 monitor.store_to_file(value)
         except:
-            print("Error closing monitor")  
+            print("Error closing monitor, no response")  
             break
     print("Exiting serial monitor")
-
 
 except serial.SerialException:
     print("Error opening port!..Exiting serial monitor")
@@ -338,6 +334,3 @@ except IOError:
 # ----------------------------------------------------------------------
 finally:
     monitor.close()
-    # Rename a file with device ID
-    #if(not args.output):
-    #    monitor.rename_file(deviceID)

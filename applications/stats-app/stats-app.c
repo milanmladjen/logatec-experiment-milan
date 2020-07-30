@@ -1,8 +1,3 @@
-/* -----------------------------------------------------------------------------
- * STATS-APP for MMT-IOT Fed4FIRE+ experiment
- * -----------------------------------------------------------------------------
-*/
-
 #include "contiki.h"
 #include <stdio.h>
 #include "dev/serial-line.h"
@@ -12,12 +7,12 @@
 #include "net/routing/rpl-classic/rpl-private.h"
 
 /*---------------------------------------------------------------------------*/
-#define SECOND 		  (1000)
-#define MAX_APP_TIME  (60 * 90) // 1:30 
+#define SECOND						(1000)
+#define DEFAULT_APP_DUR_IN_SEC		(60 * 60)
 
-uint32_t counter = 0;
+uint32_t app_duration = DEFAULT_APP_DUR_IN_SEC;
 
-enum STATS_commands {cmd_start, cmd_stop, app_duration};
+enum STATS_commands {cmd_start, cmd_stop, cmd_appdur};
 /*---------------------------------------------------------------------------*/
 void STATS_print_help(void);
 void STATS_input_command(char *data);
@@ -46,22 +41,31 @@ PROCESS_THREAD(serial_input_process, ev, data)
 void
 STATS_input_command(char *data){
     char cmd = data[0];
+	char time[8];
+	char *p;
     switch(cmd){
-      case '>':
-        process_start(&stats_process, NULL);
-        break;
-      
-      case '*':
-        STATS_set_device_as_root();
-        break;
-      
-      case '=':
-        process_exit(&stats_process);
-        STATS_close_app();
-        break;
+		case '>':
+			process_start(&stats_process, NULL);
+			break;
 
-	  default:
-	  	break;
+		case '*':
+			STATS_set_device_as_root();
+			break;
+
+		case '=':
+			process_exit(&stats_process);
+			STATS_close_app();
+			break;
+
+		case '&':
+			p = data + 1;
+			strcpy(time, p);
+			app_duration = atoi(time);
+			STATS_output_command(cmd_appdur);
+			break;
+
+		default:
+			break;
     }
 }
 
@@ -77,8 +81,8 @@ STATS_output_command(uint8_t cmd)
 			printf("= \n");
 			break;
 
-		case app_duration:
-			printf("AD %d\n", (MAX_APP_TIME));
+		case cmd_appdur:
+			printf("App duration %ld\n", app_duration);
 			break;
 		
 		default:
@@ -91,34 +95,31 @@ STATS_output_command(uint8_t cmd)
 PROCESS_THREAD(stats_process, ev, data)
 {
 	static struct etimer timer;
+	static uint32_t time_counter = 0;
 
 	PROCESS_BEGIN();
 
 	// Respond to LGTC
 	STATS_output_command(cmd_start);
 
-	counter = 0;  
+	time_counter = 0;  
 
 	// Empty buffers if they have some values from before
 	RF2XX_STATS_RESET();
 	STATS_clear_packet_stats();
 
-	// Send app duration to LGTC
-	STATS_output_command(app_duration);
-
 	STATS_print_help();
 
 	etimer_set(&timer, SECOND);
 
-	while(1) {
-		counter++;	
+	while(1) {	
 
-		if((counter % 10) == 0){
+		if((time_counter % 10) == 0){
 			STATS_print_packet_stats();
 		}
 		
 		// After max time send stop command ('=') and print driver statistics
-		if(counter == (MAX_APP_TIME)){
+		if(time_counter == (app_duration)){
 			STATS_close_app();
 			PROCESS_EXIT();
 		}
@@ -126,6 +127,9 @@ PROCESS_THREAD(stats_process, ev, data)
 		// Wait for the periodic timer to expire and then restart the timer.
 		PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
 		etimer_reset(&timer);
+
+		// Second has passed
+		time_counter++;
 	}
 
 	PROCESS_END();
