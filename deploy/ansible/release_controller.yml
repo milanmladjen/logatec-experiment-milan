@@ -2,15 +2,14 @@
 - hosts: 172.17.0.1
   remote_user: videk
   tasks:
-  - name: Creates directory
+  - name: Create directory
     file:
       path: ~/experiment 
       state: directory
 
 # recursive will also download the submodules
 # on the version you can change the branch to pull TODO
-# https://docs.ansible.com/ansible/latest/modules/git_module.html
-  - name: Pull changes in repo from github
+  - name: Pull all changes from github
     git:
       repo: git@github.com:logatec3/LOG-a-TEC-testbed.git
       dest: ~/experiment
@@ -18,17 +17,17 @@
       update: yes
       version: master
 
-  - name: build docker file
+  - name: Build docker file
     command: docker build -t vesna-drivers .
     args:
       chdir: ~/experiment/LOG-a-TEC-testbed/deploy/docker
 
-  - name: cleanup docker container controller
+  - name: Cleanup old docker container (controller)
     ignore_errors: yes
     command: "{{ item }}"
     with_items:
       - docker kill controller
       - docker rm controller
 
-  - name: run docker image
+  - name: Run docker image
     command: docker run --privileged --name controller -e TEST=deploy/tasks -e TARGET=server_socket -e NODES_NUM=19 -p 50000:50000 vesna-drivers 

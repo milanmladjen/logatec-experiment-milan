@@ -3,29 +3,29 @@
       remote_user: videk
       tasks:
 
-      - name: cleanup docker container controller
+      - name: Stop docker container (controller)
         command: docker stop controller
  
-      - name: copy file from container
+      - name: Copy file from the container
         command: docker cp controller:/root/LOG-a-TEC-testbed/deploy/tasks/results/ .
         args:
           chdir: ~/experiment
           
-      - name: get files from folder
+      - name: Get files from folder
         find:
           paths: "~/experiment/results"
           recurse: no
           patterns: "*.txt"
         register: file
 
-      - name: fetch data file to out
+      - name: Fetch data file to out
         fetch:
           src: "{{ item.path }}"
           dest: ../../../../out/  #TODO change this directory
           flat: yes
         with_items: "{{ file.files }}"
 
-      - name: delete results
+      - name: Delete results
         file: 
           path: ~/experiment/results
           state: absent

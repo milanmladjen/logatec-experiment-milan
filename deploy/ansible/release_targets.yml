@@ -3,30 +3,27 @@
 - hosts: 192.168.12.81, 192.168.12.82, 192.168.12.83, 192.168.12.86, 192.168.12.87, 192.168.12.88, 192.168.12.89, 192.168.12.90, 192.168.12.91, 192.168.12.92, 192.168.12.93, 192.168.12.94, 192.168.12.95, 192.168.12.96, 192.168.12.97, 192.168.12.98, 192.168.12.99, 192.168.12.101, 192.168.12.100  #192.168.12.84, 192.168.12.85,  
   remote_user: videk
   tasks:
-  - name: Creates directory
+  - name: Create directory
     file:
       path: ~/experiment
       state: directory
 
 # recursive will also download the submodules
 # on the version you can change the branch to pull TODO
-# https://docs.ansible.com/ansible/latest/modules/git_module.html
-# Maybe we should add sudo_user: <your user that has the ssh key>
-  - name: Pull changes in repo from github
+  - name: Pull all changes from github
     git:
       repo: git@github.com:logatec3/LOG-a-TEC-testbed.git
       dest: ~/experiment
       recursive: yes
       update: yes
       version: master
-    #sudo_user: logatec
   
-  - name: build docker file
+  - name: Build docker file
     command: docker build -t vesna-drivers .
     args:
       chdir: ~/experiment/LOG-a-TEC-testbed/deploy/docker
 
-  - name: cleanup docker containers
+  - name: Cleanup old docker containers (target)
     register: target
     ignore_errors: yes
     command: "{{ item }}"
@@ -35,10 +32,11 @@
       - docker rm target
 
     # Root node
-  - name: run docker image root
-    command: docker run -d --name target --privileged --net=host -it -e TEST=deploy/tasks -e TARGET=run_experiment_root -e VESNA_DEV=/dev/ttyS2  vesna-drivers
+  - name: Run docker image for root
+    command: docker run -d --name target --privileged --net=host -it -e TEST=deploy/tasks -e TARGET=run_experiment_root -e VESNA_DEV=/dev/ttyS2 vesna-drivers
     when: inventory_hostname == '192.168.12.86'
 
-  - name: run docker image
+    # Other nodes
+  - name: Run docker image
     command: docker run -d --name target --privileged --net=host -it -e TEST=deploy/tasks -e TARGET=run_experiment -e VESNA_DEV=/dev/ttyS2 vesna-drivers
     when: inventory_hostname != '192.168.12.86'
