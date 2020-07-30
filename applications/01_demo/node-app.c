@@ -14,7 +14,8 @@
 #include "dev/serial-line.h"
 
 /*---------------------------------------------------------------------------*/
-#define DEFAULT_APP_DUR_IN_SEC    (60 * 60)
+#define SECOND						(1000)
+#define DEFAULT_APP_DUR_IN_SEC		(60 * 60)
 
 uint32_t app_duration = DEFAULT_APP_DUR_IN_SEC;
 
@@ -84,7 +85,7 @@ PROCESS_THREAD(log_process, ev, data)
 	printf("> \n");
 
 	// Setup a periodic timer that expires after 1 second
-	etimer_set(&timer, CLOCK_SECOND );
+	etimer_set(&timer, SECOND);
 
 	time_counter = 0;
 
