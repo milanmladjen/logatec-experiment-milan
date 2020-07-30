@@ -117,10 +117,6 @@ class serial_monitor():
         self.file.write("[" + str(datetime.now().time())+"]: ")
         self.file.write(string)
 
-    def close(self):
-        self.ser.close()
-        self.file.close()
-
 # ----------------------------------------------------------------------
 
     def restart_vesna(self):
