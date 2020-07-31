@@ -141,16 +141,11 @@ PROCESS_THREAD(stats_process, ev, data)
 /*---------------------------------------------------------------------------*/
 void
 STATS_set_device_as_root(void){
-	static uip_ipaddr_t prefix;
-	const uip_ipaddr_t *default_prefix = uip_ds6_default_prefix();
-	uip_ip6addr_copy(&prefix, default_prefix);
-
-  	if(!NETSTACK_ROUTING.node_is_root()) {
-     	NETSTACK_ROUTING.root_set_prefix(&prefix, NULL);
-     	NETSTACK_ROUTING.root_start();
+	if(!NETSTACK_ROUTING.node_is_root()) {
+		NETSTACK_ROUTING.root_start();
 	} else {
-      	printf("Node is already a DAG root\n");
-    }
+		printf("Node is already a DAG root\n");
+	}
 }
 
 /*---------------------------------------------------------------------------*/
