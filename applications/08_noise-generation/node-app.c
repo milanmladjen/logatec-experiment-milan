@@ -1,5 +1,7 @@
 /* ----------------------------------------------------------------------------
  * NOISE GENERATION - AT86RF231 CONTINUOUS TRANSMISSION TEST MODE 
+ * 
+ * You must enter the application duration here (and in serial_monitor.py)
  * ----------------------------------------------------------------------------
 */
 #include <stdio.h>
@@ -45,5 +47,3 @@ PROCESS_THREAD(continuous_transmission_test_mode_process, ev, data){
 
     PROCESS_END();
 }
-
-//TODO uredi application duration - podan kot parameter iz ansibla
