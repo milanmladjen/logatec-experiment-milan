@@ -24,3 +24,11 @@ Go to function rf2xx_CTTM_start() and configure:
 ### Select between PRBS or CW mode
 
 Go to function rf2xx_CTTM_start() and configure steps **10**, **11** and **12** ... Refer to datasheet appendix A and picture below.
+
+### PRBS
+
+![PRBS with data 0xAA](./img/PRBS.jpg)
+
+### CW
+
+![CW - continuous wave](./img/CW.jpg)
