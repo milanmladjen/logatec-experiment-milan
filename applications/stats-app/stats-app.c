@@ -1,10 +1,13 @@
+/* -----------------------------------------------------------------------------
+ * APPLICATION FOR MEASURING STATISTICS OF THE NETWORK
+ * -----------------------------------------------------------------------------
+*/
+
 #include "contiki.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include "dev/serial-line.h"
-#include "arch/platform/vesna/dev/at86rf2xx/rf2xx.h"
-#include "arch/platform/vesna/dev/at86rf2xx/rf2xx_stats.h"
-#include "net/ipv6/uip.h"
-#include "net/routing/rpl-classic/rpl-private.h"
+#include "../../contiki-ng/arch/platform/vesna/dev/at86rf2xx/rf2xx_stats.h"
 
 /*---------------------------------------------------------------------------*/
 #define SECOND						(1000)
@@ -195,6 +198,6 @@ STATS_print_help(void){
 	printf("Tx [time-stamp] packet-type  dest-addr (chn len sqn | pow) BC or UC \n");
 	printf("Rx [time-stamp] packet-type  sour-addr (chn len sqn | rssi lqi) \n");
 	printf("\n");
-	printf("On the end of file, there is a count of all received and transmited packets. \n");
+	printf("On the end of file, there is a count of all received and transmitted packets. \n");
 	printf("----------------------------------------------------------------------------\n");
 }
