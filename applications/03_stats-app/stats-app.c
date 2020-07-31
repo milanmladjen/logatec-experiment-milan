@@ -17,7 +17,7 @@ uint32_t app_duration = DEFAULT_APP_DUR_IN_SEC;
 
 enum STATS_commands {cmd_start, cmd_stop, cmd_appdur};
 /*---------------------------------------------------------------------------*/
-void STATS_print_help(void);
+void STATS_print_description(void);
 void STATS_input_command(char *data);
 void STATS_output_command(uint8_t cmd);
 void STATS_set_device_as_root(void);
@@ -111,7 +111,7 @@ PROCESS_THREAD(stats_process, ev, data)
 	RF2XX_STATS_RESET();
 	STATS_clear_packet_stats();
 
-	STATS_print_help();
+	STATS_print_description();
 
 	etimer_set(&timer, SECOND);
 
@@ -169,24 +169,25 @@ STATS_close_app(void){
 
 /*---------------------------------------------------------------------------*/
 void
-STATS_print_help(void){
+STATS_print_description(void){
 	uint8_t addr[8];
-  radio_value_t rv;
+  	radio_value_t rv;
 
+	printf("----------------------------------------------------------------------------\n");
 	rf2xx_driver.get_object(RADIO_PARAM_64BIT_ADDR, &addr, 8);
 	printf("Device ID: ");
 	for(int j=0; j<8; j++){
 		printf("%X",addr[j]);
 	}
+  	printf("\n"); 
 
-  printf("\n"); 
+#if !MAC_CONF_WITH_TSCH
+	rf2xx_driver.get_value(RADIO_PARAM_CHANNEL, &rv);
+	printf("Set on channel %d \n", rv);
+#endif
 
-  rf2xx_driver.get_value(RADIO_PARAM_CHANNEL, &rv);
-  printf("Set on channel %d \n", rv);
-	
 	printf("----------------------------------------------------------------------------\n");
-	printf("\n");
-	printf("       DESCRIPTION\n");
+	printf("   STATISTICS\n");
 	printf("----------------------------------------------------------------------------\n");
 	printf("BGN [time-stamp (channel)RSSI] [time-stamp (channel)RSSI] [ ...\n");
 	printf("\n");
