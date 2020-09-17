@@ -55,6 +55,6 @@ ci:
 cd: 
 	$(DEPLOY_LOCATION)/release_targets
 	$(DEPLOY_LOCATION)/release_controller
-	$(DEPLOY_LOCATION)/collect_results
+	#$(DEPLOY_LOCATION)/collect_results
 
 .PHONY: all force_look clean

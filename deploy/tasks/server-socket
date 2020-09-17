@@ -3,4 +3,4 @@
 cd /root/LOG-a-TEC-testbed/deploy/tasks
 
 # Run the server script
-python3 server.py
+#python3 server.py
