@@ -5,7 +5,7 @@
   tasks:
   - name: Create directory
     file:
-      path: ~/experiment
+      path: ~/LOG-a-TEC-testbed
       state: directory
 
 # recursive will also download the submodules
@@ -13,7 +13,7 @@
   - name: Pull all changes from github
     git:
       repo: git@github.com:logatec3/LOG-a-TEC-testbed.git
-      dest: ~/experiment/LOG-a-TEC-testbed
+      dest: ~/LOG-a-TEC-testbed
       recursive: yes
       update: yes
       version: master
@@ -21,7 +21,7 @@
   - name: Build docker file
     command: docker build -t vesna-drivers .
     args:
-      chdir: ~/experiment/LOG-a-TEC-testbed/deploy/docker
+      chdir: ~/LOG-a-TEC-testbed/deploy/docker
 
   - name: Cleanup old docker containers (target)
     register: target
