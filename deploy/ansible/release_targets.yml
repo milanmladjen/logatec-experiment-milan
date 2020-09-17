@@ -17,7 +17,9 @@
       recursive: yes
       update: yes
       version: master
-  
+
+# -f flag so we can later copy whole LOG-a-TEC directory into container
+# with Dockerfile command COPY...else we get error "Forbidden path outside the build context"
   - name: Build docker file
     command: docker build -t vesna-drivers -f ~/LOG-a-TEC-testbed/deploy/docker/Dockerfile .
     args:
