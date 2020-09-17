@@ -16,9 +16,9 @@ WORKDIR /root/
 RUN mkdir LOG-a-TEC-testbed
 
 # Copy the LOG-a-TEC-testbed directory into container
-COPY ../../../LOG-a-TEC-testbed /root/LOG-a-TEC-testbed/
-
 WORKDIR /root/LOG-a-TEC-testbed
+
+COPY ./ ./
 
 ENTRYPOINT ["deploy/docker/start.sh"]
 
