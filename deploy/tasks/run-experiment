@@ -3,9 +3,11 @@
 cd /root/LOG-a-TEC-testbed/applications
 
 # Start the experiment (TODO)
-make node-app.logatec3 -j2
-python3 serial_monitor.py -o node_results.txt
+#make node-app.logatec3 -j2
+#python3 serial_monitor.py -o node_results.txt
 
 # Transfer colected results to the server 
-cd /root/deploy/tasks/
-python3 client.py
+#cd /root/deploy/tasks/
+
+#TODO change this path to default solution
+#python3 client.py

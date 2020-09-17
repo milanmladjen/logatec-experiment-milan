@@ -18,6 +18,7 @@ except socket.error as err:
 	print("Connection error: ", err)
 	sys.exit(1)
 
+#TODO change this path to default solution
 filename= path.relpath("/root/LOG-a-TEC-testbed/applications/stats-app/node_results.txt")
 f=open(filename, "rb")  #with open (filename, "rb") as f:
 line=f.read(1024)
