@@ -7,31 +7,31 @@
 # Note that we don't want infinite recursion by allowing the current directory
 #  to be included in the list of directories with 'Makefile' inside
 #
-MAKEFILE_LIST = $(shell find Applications Examples VESNADriversDemo -name Makefile)
-PROJECT_DIRS = $(dir $(MAKEFILE_LIST))
+#MAKEFILE_LIST = $(shell find Applications Examples VESNADriversDemo -name Makefile)
+#PROJECT_DIRS = $(dir $(MAKEFILE_LIST))
 DEPLOY_LOCATION=ansible
 
 # default target, builds all project directories
-all : $(PROJECT_DIRS)
+#all : $(PROJECT_DIRS)
 
 # target used for testing the 
-directory_list:
-	@echo
-	echo "Found makefiles:"
-	@echo $(MAKEFILE_LIST)
-	@echo
-	@echo
-	echo "Makefile directories:"
-	@echo $(PROJECT_DIRS)
-	@echo
-	@echo
+#directory_list:
+#	@echo
+#	echo "Found makefiles:"
+#	@echo $(MAKEFILE_LIST)
+#	@echo
+#	@echo
+#	echo "Makefile directories:"
+#	@echo $(PROJECT_DIRS)
+#	@echo
+#	@echo
 
 # run a clean on all the project directories
-clean:
-	for dir in $(PROJECT_DIRS) ;         \
-	  do                                 \
-	    $(MAKE) --directory=$$dir clean; \
-	  done;
+#clean:
+#	for dir in $(PROJECT_DIRS) ;         \
+#	  do                                 \
+#	    $(MAKE) --directory=$$dir clean; \
+#	  done;
 
 # build one project directory; the force_look target, which is always
 #   out of date, launches the build process in each directory
@@ -42,8 +42,8 @@ clean:
 #  the files in the build directory are newer than the source files.
 #  Run 'make clean' in that directory, and then it should work
 #
-$(PROJECT_DIRS) : force_look
-	$(MAKE) --directory=$@
+#$(PROJECT_DIRS) : force_look
+#	$(MAKE) --directory=$@
 
 force_look :
 	@
@@ -57,4 +57,4 @@ cd:
 	$(DEPLOY_LOCATION)/release_controller
 	#$(DEPLOY_LOCATION)/collect_results
 
-.PHONY: all force_look clean
+.PHONY: cd force_look 
