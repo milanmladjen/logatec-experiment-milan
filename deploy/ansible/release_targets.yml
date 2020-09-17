@@ -19,7 +19,7 @@
       version: master
   
   - name: Build docker file
-    command: docker build -t vesna-drivers -f /deploy/docker/Dockerfile .
+    command: docker build -t vesna-drivers -f ~/LOG-a-TEC-testbed/deploy/docker/Dockerfile .
     args:
       chdir: ~/LOG-a-TEC-testbed
 
