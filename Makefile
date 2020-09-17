@@ -9,7 +9,7 @@
 #
 #MAKEFILE_LIST = $(shell find Applications Examples VESNADriversDemo -name Makefile)
 #PROJECT_DIRS = $(dir $(MAKEFILE_LIST))
-DEPLOY_LOCATION=ansible
+DEPLOY_LOCATION=deploy/ansible
 
 # default target, builds all project directories
 #all : $(PROJECT_DIRS)
