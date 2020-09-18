@@ -13,5 +13,5 @@ make $APP.logatec3 -j2
 python3 serial_monitor.py -o node_results.txt
 
 # Transfer colected results to the server 
-cd /root/deploy/tasks/
+cd /root/LOG-a-TEC-testbed/deploy/tasks/
 python3 client.py

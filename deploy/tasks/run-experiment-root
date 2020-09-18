@@ -8,7 +8,7 @@ pwd
 APP=${APP_DIR:3}
 echo $APP
 
-# Add a "-root" to the end of the app name
+# Add a "-root" to the end of the app name (TODO: not tested yet)
 APP_ROOT="${APP}-root"
 echo APP_ROOT
 
@@ -17,5 +17,5 @@ make $APP.logatec3 -j2
 python3 serial_monitor.py -o node_results.txt -r
 
 # Transfer colected results to the server 
-cd /root/deploy/tasks/
+cd /root/LOG-a-TEC-testbed/deploy/tasks/
 python3 client.py
