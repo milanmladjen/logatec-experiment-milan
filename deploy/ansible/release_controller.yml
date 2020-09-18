@@ -8,7 +8,7 @@
       state: directory
 
 # recursive will also download the submodules
-# on the version you can change the branch to pull TODO
+# on the version param you can change which branch to pull TODO
   - name: Pull all changes from github
     git:
       repo: git@github.com:logatec3/LOG-a-TEC-testbed.git
@@ -16,6 +16,7 @@
       recursive: no
       update: yes
       version: master
+      
 # -f flag so we can later copy whole LOG-a-TEC directory into container
 # with Dockerfile command COPY...else we get error "Forbidden path outside the build context"
   - name: Build docker file
@@ -31,4 +32,4 @@
       - docker rm controller
 
   - name: Run docker image
-    command: docker run --privileged --name controller -e TEST=deploy/tasks -e TARGET=server_socket -e NODES_NUM=19 -p 50000:50000 vesna-drivers 
+    command: docker run --privileged --name controller -e TARGET=server_socket -e NODES_NUM=19 -p 50000:50000 vesna-drivers 

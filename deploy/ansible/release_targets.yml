@@ -9,7 +9,7 @@
       state: directory
 
 # recursive will also download the submodules
-# on the version you can change the branch to pull TODO
+# on the version param you can change which branch to pull  TODO
   - name: Pull all changes from github
     git:
       repo: git@github.com:logatec3/LOG-a-TEC-testbed.git
@@ -40,5 +40,5 @@
 
     # Other nodes
   - name: Run docker image
-    command: docker run -d --name target --privileged --net=host -it -e TEST=deploy/tasks -e TARGET=run_experiment -e VESNA_DEV=/dev/ttyS2 -e APP_DURATION_MIN=60 vesna-drivers
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment -e VESNA_DEV=/dev/ttyS2 -e APP_DURATION_MIN=60 vesna-drivers
     when: inventory_hostname != '192.168.12.86'
