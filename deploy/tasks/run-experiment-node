@@ -2,13 +2,18 @@
 # Enter experiment directory (TODO popravi mapo eksperimenta)
 echo $APP_DIR
 cd /root/LOG-a-TEC-testbed/applications/$APP_DIR
+pwd
 
-# Start the experiment (TODO)
-#make node-app.logatec3 -j2
-#python3 serial_monitor.py -o node_results.txt
+# Remove first 3 characters from APP_DIR string to get the app name
+APP=${APP_DIR:3}
+echo $APP
+
+# Start the experiment
+make $APP.logatec3 -j2
+python3 serial_monitor.py -o node_results.txt
 
 # Transfer colected results to the server 
-#cd /root/deploy/tasks/
+cd /root/deploy/tasks/
 
 #TODO change this path to default solution
-#python3 client.py
+python3 client.py
