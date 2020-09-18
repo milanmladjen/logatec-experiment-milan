@@ -1,10 +1,10 @@
-run_experiment:
-	./run-experiment
+run_experiment_node:
+	./run-experiment-node
 
 run_experiment_root:
 	./run-experiment-root
 
-server_socket:
+run_server:
 	./server-socket
 
-.PHONY: run_experiment run_experiment_root server_socket
+.PHONY: run_experiment_node run_experiment_root run_server

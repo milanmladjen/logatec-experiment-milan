@@ -40,5 +40,5 @@
 
     # Other nodes
   - name: Run docker image
-    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment -e VESNA_DEV=/dev/ttyS2 -e APP_DURATION_MIN=60 vesna-drivers
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e VESNA_DEV=/dev/ttyS2 -e APP_DURATION_MIN=60 vesna-drivers
     when: inventory_hostname != '192.168.12.86'

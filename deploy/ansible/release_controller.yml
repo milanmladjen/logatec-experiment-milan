@@ -32,4 +32,4 @@
       - docker rm controller
 
   - name: Run docker image
-    command: docker run --privileged --name controller -e TARGET=server_socket -e NODES_NUM=19 -p 50000:50000 vesna-drivers 
+    command: docker run --privileged --name controller -e TARGET=run_server -e NODES_NUM=19 -p 50000:50000 vesna-drivers 
