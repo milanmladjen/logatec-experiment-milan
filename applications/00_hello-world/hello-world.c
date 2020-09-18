@@ -8,7 +8,7 @@
 #include "contiki.h"
 
 /*---------------------------------------------------------------------------*/
-#define APP_DURATION_IN_SEC    (60 * 60)
+#define APP_DURATION_IN_SEC    (60 * 1)
 
 /*---------------------------------------------------------------------------*/
 PROCESS(hello_world_process, "HelloWorld Process");

@@ -13,7 +13,7 @@ import os
 from datetime import datetime
 from timeit import default_timer as timer
 
-APP_DURATION_S  = (60 * 60)
+APP_DURATION_S  = (60 * 1)
 
 DEFAULT_FILE_NAME = "node_results.txt"
 
