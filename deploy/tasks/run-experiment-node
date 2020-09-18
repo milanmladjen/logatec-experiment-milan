@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Enter experiment directory (TODO popravi mapo eksperimenta)
-echo $APP_DIR
+
+# Enter experiment directory (APP_DIR is enviromental variable)
 cd /root/LOG-a-TEC-testbed/applications/$APP_DIR
 pwd
 
@@ -14,6 +14,4 @@ python3 serial_monitor.py -o node_results.txt
 
 # Transfer colected results to the server 
 cd /root/deploy/tasks/
-
-#TODO change this path to default solution
 python3 client.py
