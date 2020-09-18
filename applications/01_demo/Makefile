@@ -1,5 +1,5 @@
-PROJECT_SOURCES = node-app.c
-CONTIKI_PROJECT = node-app
+PROJECT_SOURCES = demo.c
+CONTIKI_PROJECT = demo
 
 all: $(CONTIKI_PROJECT)
 

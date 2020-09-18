@@ -1,5 +1,5 @@
-PROJECT_SOURCES = node-app.c
-CONTIKI_PROJECT = node-app
+PROJECT_SOURCES = noise-gen.c
+CONTIKI_PROJECT = noise-gen
 
 all: $(CONTIKI_PROJECT)
 

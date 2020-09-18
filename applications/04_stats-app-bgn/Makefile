@@ -1,5 +1,5 @@
-PROJECT_SOURCES = stats-app.c
-CONTIKI_PROJECT = stats-app
+PROJECT_SOURCES = stats-app-bgn.c
+CONTIKI_PROJECT = stats-app-bgn
 
 all: $(CONTIKI_PROJECT)
 
