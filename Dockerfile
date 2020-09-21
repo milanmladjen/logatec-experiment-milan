@@ -20,5 +20,5 @@ WORKDIR /root/LOG-a-TEC-testbed
 
 COPY ./ ./
 
-#ENTRYPOINT ["deploy/docker/start.sh"]
+ENTRYPOINT ["deploy/docker/start.sh"]
 
