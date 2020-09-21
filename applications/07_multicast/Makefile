@@ -1,5 +1,5 @@
-PROJECT_SOURCES = multicast.c
-CONTIKI_PROJECT = multicast
+PROJECT_SOURCES = multicast.c multicast-root.c
+CONTIKI_PROJECT = multicast multicast-root
 
 all: $(CONTIKI_PROJECT)
 

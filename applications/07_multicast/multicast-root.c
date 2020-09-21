@@ -181,7 +181,7 @@ PROCESS_THREAD(stats_process, ev, data)
 	while(1) {	
 
 		// After START_DELAY minutes, send MC message every second
-		if(counter > START_DELAY){
+		if(time_counter > START_DELAY){
 			STATS_multicast_send();
 		}
 
