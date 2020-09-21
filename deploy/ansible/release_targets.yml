@@ -1,5 +1,5 @@
 ---
-- hosts: 192.168.12.81
+- hosts: 192.168.12.81, 192.168.12.82
   remote_user: videk
   tasks:
   - name: Create directory
@@ -19,10 +19,11 @@
 
 # -f flag so we can later copy whole LOG-a-TEC directory into container
 # with Dockerfile command COPY...else we get error "Forbidden path outside the build context"
+#command: docker build -t vesna-drivers -f ~/LOG-a-TEC-testbed/deploy/docker/Dockerfile .
   - name: Build docker file
     command: docker build -t vesna-drivers .
     args:
-      chdir: ~/LOG-a-TEC-testbed/deploy/docker
+      chdir: ~/LOG-a-TEC-testbed
 
   - name: Cleanup old docker containers (target)
     register: target
