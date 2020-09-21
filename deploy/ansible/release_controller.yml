@@ -15,6 +15,7 @@
       dest: ~/LOG-a-TEC-testbed
       recursive: no
       update: yes
+      force: yes
       version: master
       
 # -f flag so we can later copy whole LOG-a-TEC directory into container

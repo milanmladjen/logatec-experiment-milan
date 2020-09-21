@@ -1,5 +1,5 @@
 ---
-- hosts: 192.168.12.81, 192.168.12.82
+- hosts: 192.168.12.81, 192.168.12.83
   remote_user: videk
   tasks:
   - name: Create directory
@@ -15,6 +15,7 @@
       dest: ~/LOG-a-TEC-testbed
       recursive: yes
       update: yes
+      force: yes
       version: master
 
 # -f flag so we can later copy whole LOG-a-TEC directory into container
