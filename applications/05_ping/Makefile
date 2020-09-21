@@ -1,5 +1,5 @@
-PROJECT_SOURCES = stats-app-bgn.c
-CONTIKI_PROJECT = stats-app-bgn
+PROJECT_SOURCES = ping.c
+CONTIKI_PROJECT = ping
 
 all: $(CONTIKI_PROJECT)
 
