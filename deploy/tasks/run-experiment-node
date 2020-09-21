@@ -15,3 +15,6 @@ python3 serial_monitor.py -o node_results.txt
 # Transfer colected results to the server 
 cd /root/LOG-a-TEC-testbed/deploy/tasks/
 python3 client.py
+
+# Put Vesna to reset state
+# python reset_vesna.py 0
