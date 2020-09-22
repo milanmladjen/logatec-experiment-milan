@@ -27,7 +27,7 @@
   - name: Fetch data file to out
     synchronize:
       src: "{{ item.path }}"
-      dest: ../../../out
+      dest: ../../../../out
       mode: pull
     with_items: "{{ file.files }}"
 
