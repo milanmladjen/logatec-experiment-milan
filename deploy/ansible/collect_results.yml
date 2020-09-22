@@ -11,7 +11,8 @@
     command: docker cp controller:/root/LOG-a-TEC-testbed/deploy/tasks/results/ .
     args:
       chdir: ~/LOG-a-TEC-testbed
-      
+
+# Get the measurements stored in .txt files      
   - name: Get files from folder
     find:
       paths: " ~/LOG-a-TEC-testbed/results"
@@ -26,7 +27,7 @@
   - name: Fetch data file to out
     fetch:
       src: "{{ item.path }}"
-      dest: ../../../out/
+      dest: ../../../out
       flat: yes
     with_items: "{{ file.files }}"
 
