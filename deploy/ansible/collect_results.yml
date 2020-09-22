@@ -27,7 +27,7 @@
   - name: Fetch data file to out
     fetch:
       src: "{{ item.path }}"
-      dest: ../../../out
+      dest: ../../../out/
       flat: yes
     with_items: "{{ file.files }}"
 
