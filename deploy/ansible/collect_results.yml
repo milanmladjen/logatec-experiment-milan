@@ -28,13 +28,8 @@
     synchronize:
       src: "{{ item.path }}"
       dest: ../../../out/
-      flat: yes
       mode: pull
     with_items: "{{ file.files }}"
-
-  - name: Display names
-    debug:
-      msg: "{{inventory_hostname}} and {{ansible_hostname}}"
 
   - name: Delete results
     file: 
