@@ -31,11 +31,12 @@
       flat: yes
     with_items: "{{ file.files }}"
 
-  - name: debug
-    msg: "{{inventory_hostname}}"
-    msg: "{{ansible_hostname}}"
+  - name: Display names
+    debug:
+      msg: "{{inventory_hostname}}"
+      msg: "{{ansible_hostname}}"
 
-#  - name: Delete results
-#    file: 
-#      path:  ~/LOG-a-TEC-testbed/results
-#      state: absent
+  - name: Delete results
+    file: 
+      path:  ~/LOG-a-TEC-testbed/results
+      state: absent
