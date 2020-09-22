@@ -5,11 +5,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Get dependencies
 RUN apt-get update --fix-missing && \
-	apt-get install -y python-pip python3-pip python-numpy python-lxml nano && \
+	apt-get install -y python-pip python3-pip python-numpy nano && \
 	apt-get clean && \
 	pip3 install pyserial
-
-#TODO why do we need lxml?
 
 RUN mkdir LOG-a-TEC-testbed
 
