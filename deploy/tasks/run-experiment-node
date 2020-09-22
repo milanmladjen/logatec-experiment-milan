@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# First update contiki-ng folder, if there were any changes from the last time we updated docker container
+cd /root/LOG-a-TEC-testbed/contiki-ng
+git pull
+
 # Enter experiment directory (APP_DIR is enviromental variable)
 cd /root/LOG-a-TEC-testbed/applications/$APP_DIR
 pwd
