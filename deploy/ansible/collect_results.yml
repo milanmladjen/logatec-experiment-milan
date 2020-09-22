@@ -25,16 +25,16 @@
 # Github repo) and a folder out. We are calling this script from LOG-a-TEC-testbed/deploy/ansible, so dest:
 # is then ../../../out
   - name: Fetch data file to out
-    fetch:
+    synchronize:
       src: "{{ item.path }}"
       dest: ../../../out/
       flat: yes
+      mode: pull
     with_items: "{{ file.files }}"
 
   - name: Display names
     debug:
-      msg: "{{inventory_hostname}}"
-      msg: "{{ansible_hostname}}"
+      msg: "{{inventory_hostname}} and {{ansible_hostname}}"
 
   - name: Delete results
     file: 
