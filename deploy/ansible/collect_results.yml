@@ -32,7 +32,7 @@
     with_items: "{{ file.files }}"
 
 
-- name: Run docker image
+  - name: Run fake docker image
     command: docker run --privileged --name brisi_me -e TARGET=run_server -e NODES_NUM=2 -p 50000:50000 vesna-drivers 
 
 #  - name: Delete results
