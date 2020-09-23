@@ -12,7 +12,7 @@
     args:
       chdir: ~/LOG-a-TEC-testbed
 
-# Get the measurements stored in .txt files      
+# Get the measurements stored in .txt files   (POSSIBLY REDUNDANT IF THIS WORKS)
   - name: Get files from folder
     find:
       paths: " ~/LOG-a-TEC-testbed/results"
@@ -24,16 +24,15 @@
 # On that container we have: videk-ci/<tag_name>/ folder...in it, there are LOG-a-TEC-testbed (a clone from
 # Github repo) and a folder out. We are calling this script from LOG-a-TEC-testbed/deploy/ansible, so dest:
 # is then ../../../out
-#  - name: Fetch data file to out folder
-#    synchronize:
-#      src: "{{ item.path }}"
-#      dest: ../../../out/
-#      mode: pull
-#    with_items: "{{ file.files }}"
-
-  - name: Copy results to out folder
-    command: docker cp {{item.path}} reverent_banach:/root/videk-ci/v0.0.47/out/
-    with_items: "{{file.files}}"
+  - name: Fetch data file to out folder
+    synchronize:
+      src: "{{ item.path }}"
+      dest: ../../../out/
+      mode: pull
+    with_items: "~/LOG-a-TEC-testbed/results/*.txt"
+#  - name: Copy results to out folder
+#    command: docker cp {{item.path}} reverent_banach:/root/videk-ci/v0.0.47/out/
+#    with_items: "{{file.files}}"
 
 #  - name: Delete results
 #    file: 
