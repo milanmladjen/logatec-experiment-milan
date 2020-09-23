@@ -31,8 +31,8 @@
 #      mode: pull
 #    with_items: "{{ file.files }}"
 
-  -name: Copy results to out folder
-    command: docker cp "{{item.path}}" reverent_banach:/root/videk-ci/v0.0.44/out/
+  - name: Copy results to out folder
+    command: docker cp {{item.path}} reverent_banach:/root/videk-ci/v0.0.45/out/
     with_items: "{{file.files}}"
 
 #  - name: Delete results
