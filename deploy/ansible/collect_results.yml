@@ -24,16 +24,16 @@
 # On that container we have: videk-ci/<tag_name>/ folder...in it, there are LOG-a-TEC-testbed (a clone from
 # Github repo) and a folder out. We are calling this script from LOG-a-TEC-testbed/deploy/ansible, so dest:
 # is then ../../../out
-  - name: Fetch data file to out folder
-    synchronize:
-      src: "{{ item.path }}"
-      dest: ../../../out/
-      mode: pull
-    with_items: "{{ file.files }}"
+#  - name: Fetch data file to out folder
+#    synchronize:
+#      src: "{{ item.path }}"
+#      dest: ../../../out/
+#      mode: pull
+#    with_items: "{{ file.files }}"
 
-
-  - name: Run fake docker image
-    command: docker run --privileged --name brisi_me -e TARGET=run_server -e NODES_NUM=2 -p 50000:50000 vesna-drivers 
+  -name: Copy results to out folder
+    command: docker cp "{{item.path}}" reverent_banach:/root/videk-ci/v0.0.44/out/
+    with_items: "{{file.files}}"
 
 #  - name: Delete results
 #    file: 
