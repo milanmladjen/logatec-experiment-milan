@@ -32,7 +32,7 @@
 #    with_items: "{{ file.files }}"
 
   - name: Copy results to out folder
-    command: docker cp {{item.path}} reverent_banach:/root/videk-ci/v0.0.45/out/
+    command: docker cp {{item.path}} reverent_banach:/root/videk-ci/v0.0.47/out/
     with_items: "{{file.files}}"
 
 #  - name: Delete results
