@@ -2,9 +2,8 @@
 - hosts: 172.17.0.1
   remote_user: videk
 
-# Define number of nodes in use and duration of an application - should be at least 10 minutes more than in release_targets 
-# Used in server.py for timeout so the controller doesn't hang. But it should wat for Vesna compiling and flashing. 
-# Used just for backup - if all results came from devices, controller will finish its execution. 
+# Define number of nodes in use and duration of an application. Used in server.py for timeout so the controller doesn't hang. 
+# Just for backup - if all results came from devices, controller will finish its execution. 
   vars:
     nodes: 2
     duration: 5

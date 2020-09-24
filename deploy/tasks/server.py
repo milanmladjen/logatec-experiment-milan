@@ -1,22 +1,27 @@
 import sys
 import socket
 import os
-# from _thread import *
 import threading
 import re
 import sys
 import glob
 
 port = 50000
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host = ""
-s.bind((host, port))
-
-s.listen(5)
 
 numnodes = int(os.environ['NODES_NUM'])
-print(numnodes)
-print('Server listening...')
+timeout = int(os.environ['APP_DURATION_MIN'])
+
+# Added 15 min as a reserve considering: 
+#  -- 5 min: Docker building and running (in case of the first time)
+#  -- 6 min: Vesna compiling and flashing
+#  -- 4 min: in case Vesna resets couple of times during app
+timeout = timeout * 60 + (60 * 15)	
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((host, port))
+s.settimeout(timeout)	# TODO: Will this work?
+s.listen(5)
 
 i = 0
 
@@ -27,7 +32,7 @@ def client_thread(conn, addr):
     filename = '%s.txt' % ip
 
     with open(os.path.join("results/", filename), "wb") as f:
-        print('file opened')
+        print('File opened')
         while True:
             data = conn.recv(1024)
             if not data:
@@ -58,52 +63,3 @@ while True:
 for t in threads:
 	t.join()
 sys.exit()
-
-
-"""
-import socket
-import os
-import sys
-
-port=50000
-s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host=""
-s.bind((host,port))
-s.settimeout(900)
-s.listen(5)
-
-print ('Server listening...')
-
-i=0
-
-while True:
-	try:
-		conn, addr = s.accept()
-		print ('Got connection from' , addr)
-		if os.path.exists('node_stats.txt') is True:
-			i+=1
-			filename='node_stats%s.txt' % i  #filename will be node_stats.txt ===> filename='node_stats%s.txt' % i
-		else:
-			filename="node_stats.txt"
-
-		with open (filename, "wb") as f:
-			print('file opened')
-			while True:
-				data=conn.recv(1024)
-				if not data:
-					break
-				f.write(data)
-		f.close()
-		print('Done receiving')
-		
-		os.system("rm -rf experiment_results")
-		os.system("mkdir experiment_results/")
-		os.system("mv node_stats* experiment_results/")
-		
-		# conn.close()
-		# sys.exit()
-
-	except socket.timeout as e:
-		s.close()
-		sys.exit()
-"""

@@ -2,5 +2,8 @@
 
 cd /root/LOG-a-TEC-testbed/deploy/tasks
 
+echo "Waiting for $NODES_NUM results. Timeout set to $APP_DURATION_MIN"
+echo "Server listening..."
+
 # Run the server script
 python3 server.py
