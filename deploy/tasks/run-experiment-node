@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
-# First update contiki-ng folder, if there were any changes from the last time we updated docker container
+# First wake-up Vesna device --> WE DON'T HAVE TO because flashing does it for us
+# cd /root/LOG-a-TEC-testbed/deploy/tasks/
+# python reset_vesna.py 1
+
+# Update contiki-ng folder, if there were any changes from the last time we updated docker container
 cd /root/LOG-a-TEC-testbed/contiki-ng
+echo "Pull changes from Contiki-NG repo"
 git pull
 
 # Enter experiment directory (APP_DIR is enviromental variable)
@@ -10,7 +15,7 @@ pwd
 
 # Remove first 3 characters from APP_DIR string to get the app name
 APP=${APP_DIR:3}
-echo $APP
+echo "Testing $APP application"
 
 # Start the experiment
 make $APP.logatec3 -j2
@@ -20,5 +25,5 @@ python3 serial_monitor.py -o node_results.txt
 cd /root/LOG-a-TEC-testbed/deploy/tasks/
 python3 client.py
 
-# Put Vesna to reset state
-# python reset_vesna.py 0
+# Put Vesna to reset state so it doesnt interfeer with other networks
+python reset_vesna.py 0
