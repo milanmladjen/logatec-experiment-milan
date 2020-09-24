@@ -1,0 +1,30 @@
+---
+- hosts: 172.17.0.1
+  remote_user: videk
+
+  tasks:
+  - name: Create directory
+    file:
+      path: ~/LOG-a-TEC-testbed
+      state: directory
+
+# recursive will also download the submodules
+# on the version param you can change which branch to pull TODO
+  - name: Pull all changes from github
+    git:
+      repo: git@github.com:logatec3/LOG-a-TEC-testbed.git
+      dest: ~/LOG-a-TEC-testbed
+      recursive: yes
+      update: yes
+      force: yes
+      depth: 1
+      version: master
+      
+# -f flag so we can later copy whole LOG-a-TEC directory into container
+# else we get error "Forbidden path outside the build context"
+  - name: Build docker file
+    command: docker build -t vesna-drivers -f deploy/docker/Dockerfile .
+    args:
+      chdir: ~/LOG-a-TEC-testbed
+
+# Send built image to the targets/nodes

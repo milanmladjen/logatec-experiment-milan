@@ -10,6 +10,7 @@ ci:
 	#TODO
 
 cd: 
+	$(DEPLOY_LOCATION)/build_docker_image
 	$(DEPLOY_LOCATION)/release_targets
 	$(DEPLOY_LOCATION)/release_controller
 	$(DEPLOY_LOCATION)/collect_results
