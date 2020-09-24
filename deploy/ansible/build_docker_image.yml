@@ -1,7 +1,6 @@
 ---
 - hosts: 172.17.0.1
   remote_user: videk
-  become: yes
 
   tasks:
   - name: Create directory
