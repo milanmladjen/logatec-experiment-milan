@@ -29,11 +29,11 @@
 
 # Save docker image
   - name: Save docker image as a tar file
-    command: docker save -o ~/LOG-a-TEC-testbed/Docker-image.tar vesna-drivers
+    command: sudo docker save -o ~/LOG-a-TEC-testbed/Docker-image.tar vesna-drivers
 
 # Send image to the targets/nodes
   - name: Send images to nodes
-    command: scp Docker-image.tar videk@"{{item}}":/home/videk/
+    command: sudo scp Docker-image.tar videk@"{{item}}":/home/videk/
     with_items: 
       - 192.168.12.81
       - 192.168.12.83
