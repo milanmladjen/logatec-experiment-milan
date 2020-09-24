@@ -20,6 +20,10 @@
       path: ~/LOG-a-TEC-testbed
       state: directory
 
+# Unpack image from server
+  - name: Unpack received docker image
+    command: docker load -i ~/Docker-image.tar
+
   - name: Cleanup old docker containers (target)
     register: target
     ignore_errors: yes
