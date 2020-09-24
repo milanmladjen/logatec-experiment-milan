@@ -1,6 +1,13 @@
 ---
 - hosts: 172.17.0.1
   remote_user: videk
+
+# Define number of nodes in use and duration of an application (should be the same 
+# (or few=5 minutes more) than in release_targets) - used for server timeout
+  vars:
+    nodes: 2
+    duration: 3
+
   tasks:
   - name: Create directory
     file:
@@ -19,7 +26,7 @@
       version: master
       
 # -f flag so we can later copy whole LOG-a-TEC directory into container
-# with Dockerfile command COPY...else we get error "Forbidden path outside the build context"
+# else we get error "Forbidden path outside the build context"
   - name: Build docker file
     command: docker build -t vesna-drivers -f deploy/docker/Dockerfile .
     args:
@@ -33,5 +40,4 @@
       - docker rm controller
 
   - name: Run docker image
-    command: docker run --privileged --name controller -e TARGET=run_server -e NODES_NUM=2 -p 50000:50000 vesna-drivers 
-    #command: docker run --privileged --name controller -e TARGET=run_server -e NODES_NUM={{nodes}} -e APP_DURATION_MIN={{duration}} -p 50000:50000 vesna-drivers 
+    command: docker run --privileged --name controller -e TARGET=run_server -e NODES_NUM={{nodes}} -e APP_DURATION_MIN={{duration}} -p 50000:50000 vesna-drivers 
