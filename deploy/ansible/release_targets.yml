@@ -46,10 +46,10 @@
 
     # Root node
   - name: Run docker image for root
-    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_root -e APP_DIR=07_multicast -e APP_DURATION_MIN=3 vesna-drivers #{{application}} -e APP_DURATION_MIN={{duration}} vesna-drivers
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_root -e APP_DIR={{application|quote}} -e APP_DURATION_MIN={{duration|quote}} vesna-drivers
     when: inventory_hostname == "{{root_node}}"
 
     # Other nodes
   - name: Run docker image
-    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR=07_multicast -e APP_DURATION_MIN=3 vesna-drivers #APP_DIR={{application}} -e APP_DURATION_MIN={{duration}} vesna-drivers
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
     when: inventory_hostname != "{{root_node}}"
