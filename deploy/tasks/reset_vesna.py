@@ -16,7 +16,6 @@ except:
 # Set the direction of the pin to output
 os.system('echo out > /sys/class/gpio/gpio66/direction')
 
-# Put Vesna into reset state, so it doesn't interfeer with other devices/measurements
 if (int(sys.argv[1]) == 0):
     # Set the value to 0 - reset Vesna
     os.system('echo 0 > /sys/class/gpio/gpio66/value')

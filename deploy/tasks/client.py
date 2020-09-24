@@ -23,7 +23,8 @@ except socket.error as err:
 
 filename= path.relpath("/root/LOG-a-TEC-testbed/applications/" + app_dir + "/node_results.txt")
 
-f=open(filename, "rb")  #with open (filename, "rb") as f:
+f=open(filename, "rb")
+
 line=f.read(1024)
 while(line):
 	s.send(line)
