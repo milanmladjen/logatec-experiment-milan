@@ -11,7 +11,7 @@
   tasks:
   - name: Abstract
     debug:
-      msg: "Testing {{application}}, duration {{duration}} minutes, root node is {{root_node}"
+      msg: "Testing {{application}}, duration {{duration}} minutes, root node is {{root_node}}"
 
   - name: Create directory
     file:
