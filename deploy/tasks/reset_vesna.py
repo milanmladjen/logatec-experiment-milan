@@ -1,4 +1,5 @@
 import sys
+import os
 
 # ---------------------------------------------------------------------
 # A script to hold Vesna in reset state and vice-versa 
