@@ -7,11 +7,13 @@
     application: 07_multicast
     duration: 3
     root_node: 192.168.12.83
-  
+
+# Display experiment abstract in build.log 
   tasks:
-  - name: Abstract
+  - name: Display abstract
     debug:
       msg: "Testing {{application}}, duration {{duration}} minutes, root node is {{root_node}}"
+    when: inventory_hostname == root_node
 
   - name: Create directory
     file:

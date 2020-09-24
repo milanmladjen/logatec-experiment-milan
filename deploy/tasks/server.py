@@ -13,18 +13,17 @@ numnodes = int(os.environ['NODES_NUM'])
 timeout = int(os.environ['APP_DURATION_MIN'])
 
 # Added 15 min as a reserve considering: 
-#  -- 5 min: Docker building and running (in case of the first time)
+#  -- 5 min: Docker building and running (in case of the first time build)
 #  -- 6 min: Vesna compiling and flashing
 #  -- 4 min: in case Vesna resets couple of times during app
 timeout = timeout * 60 + (60 * 15)	
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((host, port))
-s.settimeout(timeout)	# TODO: Will this work?
+s.settimeout(timeout)
 s.listen(5)
 
 i = 0
-
 
 def client_thread(conn, addr):
 
@@ -42,13 +41,14 @@ def client_thread(conn, addr):
     print('Done receiving')
 
     conn.close()
-
     
 
 if os.path.exists("results/") is False:
 	os.system("mkdir -m777 results/")
+
 threads = []
 totalthreads = 0
+
 while True:
 	if totalthreads == numnodes:
 		break
@@ -60,6 +60,8 @@ while True:
 	threads.append(t)
 	t.start()
     # start_new(client_thread, (conn, addr))
+
 for t in threads:
 	t.join()
+	
 sys.exit()
