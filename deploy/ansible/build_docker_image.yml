@@ -1,6 +1,7 @@
 ---
 - hosts: 172.17.0.1
   remote_user: videk
+  become: yes
 
   tasks:
   - name: Create directory
@@ -29,11 +30,11 @@
 
 # Save docker image
   - name: Save docker image as a tar file
-    command: sudo docker save -o ~/LOG-a-TEC-testbed/Docker-image.tar vesna-drivers
+    command: docker save -o ~/LOG-a-TEC-testbed/Docker-image.tar vesna-drivers
 
 # Send image to the targets/nodes
   - name: Send images to nodes
-    command: sudo scp Docker-image.tar videk@"{{item}}":/home/videk/
+    command: scp Docker-image.tar videk@"{{item}}":/home/videk/
     with_items: 
       - 192.168.12.81
       - 192.168.12.83
