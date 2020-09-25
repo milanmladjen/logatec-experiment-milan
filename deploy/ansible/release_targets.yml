@@ -20,6 +20,13 @@
       path: ~/LOG-a-TEC-testbed
       state: directory
 
+  - name: Synchronize directory
+    synchronize:
+      src: "{{ lookup('env','PWD') }}"
+      dest: ~/LOG-a-TEC-testbed
+      delete: yes
+      recursive: yes
+
 # Unpack image from server
   - name: Unpack received docker image
     command: docker load -i ~/Docker-image.tar

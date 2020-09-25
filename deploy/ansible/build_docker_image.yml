@@ -31,10 +31,18 @@
   - name: Save docker image as a tar file
     command: docker save -o ~/LOG-a-TEC-testbed/Docker-image.tar vesna-drivers
 
+# Copy image to vide-ci container into folder LOG-a-TEC
+  - name: Fetch image back to container
+    synchronize:
+      src: ~/LOG-a-TEC-testbed/Docker-image.tar
+      dest: ../../
+      mode: pull
+
+
 # Send image to the targets/nodes
-  - name: Send images to nodes
-    command: scp Docker-image.tar videk@"{{item}}":/home/videk/
-    with_items: 
-      - 192.168.12.81
-      - 192.168.12.83
-      - 192.168.12.87
+#  - name: Send images to nodes
+#    command: scp Docker-image.tar videk@"{{item}}":/home/videk/
+#    with_items: 
+#      - 192.168.12.81
+#      - 192.168.12.83
+#      - 192.168.12.87
