@@ -29,7 +29,7 @@
       
   - name: get OS image
     copy: 
-      src: "~/LOG-a-TEC-testbed/Docker-image.tar"
+      src: "../../Docker-image.tar"
       dest: "~/LOG-a-TEC-testbed/"
       
 # Unpack image from server
