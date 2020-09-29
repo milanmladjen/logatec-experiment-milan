@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-DIR=deploy/ansible
+DIR=deployment/ansible
 
 ansible-playbook $DIR/release_controller.yml

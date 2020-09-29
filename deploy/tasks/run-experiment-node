@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # First wake-up Vesna device --> WE DON'T HAVE TO because flashing does it for us
-# cd /root/LOG-a-TEC-testbed/deploy/tasks/
+# cd /root/LOG-a-TEC-testbed/deployment/tasks/
 # python reset_vesna.py 1
 
 # Update contiki-ng folder, if there were any changes from the last time we updated docker container
@@ -22,7 +22,7 @@ make $APP.logatec3 -j2
 python3 serial_monitor.py -o node_results.txt
 
 # Transfer colected results to the server 
-cd /root/LOG-a-TEC-testbed/deploy/tasks/
+cd /root/LOG-a-TEC-testbed/deployment/tasks/
 python3 client.py
 
 # Put Vesna to reset state so it doesnt interfeer with other networks

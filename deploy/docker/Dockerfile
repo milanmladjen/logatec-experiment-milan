@@ -22,4 +22,4 @@ RUN git clone --single-branch --branch master https://github.com/gcerar/contiki-
 COPY ./ ./
 
 # Start the deployment
-ENTRYPOINT ["deploy/docker/start.sh"]
+ENTRYPOINT ["deployment/docker/start.sh"]

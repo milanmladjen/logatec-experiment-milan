@@ -8,13 +8,13 @@
 
 # Script server.py makes dir results where measurements are stored
   - name: Copy file from the container
-    command: docker cp controller:/root/LOG-a-TEC-testbed/deploy/tasks/results/ .
+    command: docker cp controller:/root/LOG-a-TEC-testbed/deployment/tasks/results/ .
     args:
       chdir: ~/LOG-a-TEC-testbed
 
 # Fetch measurements to videk container --> from there they will be forwarded to Github
 # On that container we have: videk-ci/<tag_name>/ folder...in it, there are LOG-a-TEC-testbed (a clone from
-# Github repo) and a folder out. We are calling this script from LOG-a-TEC-testbed/deploy/ansible, so dest:
+# Github repo) and a folder out. We are calling this script from LOG-a-TEC-testbed/deployment/ansible, so dest:
 # is then ../../../out
   - name: Fetch data file to out folder
     synchronize:

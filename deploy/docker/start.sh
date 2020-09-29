@@ -10,7 +10,7 @@ else
       echo "Serial device missing!"
     fi
   fi
-  cd deploy/tasks/
+  cd deployment/tasks/
   pwd 
   make "$TARGET"
 fi

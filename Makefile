@@ -2,7 +2,7 @@
 #   Main Makefile
 #
 
-DEPLOY_LOCATION=deploy/ansible
+DEPLOY_LOCATION=deployment/ansible
 
 ci:
 	#$(DEPLOY_LOCATION)/deploy_targets

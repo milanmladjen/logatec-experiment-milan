@@ -29,7 +29,7 @@
 # -f flag so we can later copy whole LOG-a-TEC directory into container
 # else we get error "Forbidden path outside the build context"
   - name: Build docker file
-    command: docker build -t vesna-drivers -f deploy/docker/Dockerfile .
+    command: docker build -t vesna-drivers -f deployment/docker/Dockerfile .
     args:
       chdir: ~/LOG-a-TEC-testbed
 
