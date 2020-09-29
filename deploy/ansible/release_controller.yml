@@ -17,3 +17,9 @@
 
   - name: Run docker image
     command: docker run --privileged --name controller -e TARGET=run_server -e NODES_NUM="{{nodes}}" -e APP_DURATION_MIN="{{duration}}" -p 50000:50000 vesna-drivers 
+
+# We need this otherwise docker will use this one for the next experiment
+#  - name: Delete docker .tar file
+#    file: 
+#      path:  ~/LOG-a-TEC-testbed/Docker-image.tar
+#      state: absent

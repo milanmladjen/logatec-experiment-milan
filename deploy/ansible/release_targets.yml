@@ -20,12 +20,20 @@
       path: ~/LOG-a-TEC-testbed
       state: directory
 
-  - name: Synchronize directory
+  - name: OS image broadcast
     synchronize:
-      src: "{{ lookup('env','PWD') }}"
-      dest: ~/LOG-a-TEC-testbed
-      delete: yes
-      recursive: yes
+      src:  ~/LOG-a-TEC-testbed/Docker-image.tar
+      dest:  ~/LOG-a-TEC-testbed
+      mode: push
+    delegate_to: '172.17.0.1'
+
+
+#  - name: Synchronize directory
+#    synchronize:
+#      src: "{{ lookup('env','PWD') }}"
+#      dest: ~/LOG-a-TEC-testbed
+#      delete: yes
+#      recursive: yes
       
   #- name: get OS image
   #  copy: 

@@ -32,11 +32,11 @@
     command: docker save -o ~/LOG-a-TEC-testbed/Docker-image.tar vesna-drivers
 
 # Copy image to vide-ci container into folder LOG-a-TEC
-  - name: Fetch image back to container
-    synchronize:
-      src: ~/LOG-a-TEC-testbed/Docker-image.tar
-      dest: ../../
-      mode: pull
+#  - name: Fetch image back to container
+#    synchronize:
+#      src: ~/LOG-a-TEC-testbed/Docker-image.tar
+#      dest: ../../
+#      mode: pull
 
 
 # Send image to the targets/nodes
