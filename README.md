@@ -3,15 +3,15 @@
 Continuous delivery template - repository for making experiments in LOG-aTEC testbed with Contiki-NG OS.
 
 To get the repository:
-```$ git clone git@github.com:logatec3/LOG-a-TEC-testbed.git```
+```$ git clone git@github.com:logatec3/logatec-experiment.git```
 
 To get all sub-modules files:
 ```$ git submodule update --init```
 
 Do it in one step (but you will also get all nested sub-modules, which are usually useless)
-```$ git clone --recurse-submodules git@github.com:logatec3/LOG-a-TEC-testbed.git```
+```$ git clone --recurse-submodules git@github.com:logatec3/logatec-experiment.git```
 
-**IMPORTANT**
+**NOTE**
 `Git pull` is not enough - it will only pull the changes of the base repo.
 If you want to pull the changes on the sub-module as well, insert:
 ```$ git submodule update --remote```
