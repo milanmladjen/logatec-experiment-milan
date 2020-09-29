@@ -17,7 +17,7 @@
 
   - name: Create directory
     file:
-      path: ~/logatec-experiment
+      path: ~/deploy
       state: directory
 
 # recursive will also download the submodules
@@ -25,11 +25,12 @@
   - name: Pull all changes from github
     git:
       repo: git@github.com:logatec3/logatec-experiment.git
-      dest: ~/logatec-experiment
+      dest: ~/deploy/
       recursive: yes
       update: yes
       force: yes
       depth: 1
+      bare: yes
       version: master
 
 # -f flag so we can later copy whole LOG-a-TEC directory into container
@@ -37,7 +38,7 @@
   - name: Build docker file
     command: docker build -t vesna-drivers -f deployment/docker/Dockerfile .
     args:
-      chdir: ~/logatec-experiment
+      chdir: ~/deploy/logatec-experiment
 
   - name: Cleanup old docker containers (target)
     register: target

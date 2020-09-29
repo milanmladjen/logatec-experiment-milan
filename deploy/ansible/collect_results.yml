@@ -10,7 +10,7 @@
   - name: Copy file from the container
     command: docker cp controller:/root/logatec-experiment/deployment/tasks/results/ .
     args:
-      chdir: ~/logatec-experiment
+      chdir: ~/deploy/logatec-experiment
 
 # Fetch measurements to videk container --> from there they will be forwarded to Github
 # On that container we have: videk-ci/<tag_name>/ folder...in it, there are logatec-experiment (a clone from
@@ -21,9 +21,9 @@
       src: "{{ item }}"
       dest: ../../../out/
       mode: pull
-    with_items: "~/logatec-experiment/results/*.txt"
+    with_items: "~/deploy/logatec-experiment/results/*.txt"
 
   - name: Delete results
     file: 
-      path:  ~/logatec-experiment/results
+      path:  ~/deploy/logatec-experiment/results
       state: absent
