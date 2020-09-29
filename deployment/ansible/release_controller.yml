@@ -24,7 +24,6 @@
       update: yes
       force: yes
       depth: 1
-      bare: yes
       version: master
       
 # -f flag so we can later copy whole LOG-a-TEC directory into container
