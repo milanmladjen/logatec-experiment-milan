@@ -21,7 +21,7 @@ except socket.error as err:
 	print("Connection error: ", err)
 	sys.exit(1)
 
-filename= path.relpath("/root/LOG-a-TEC-testbed/applications/" + app_dir + "/node_results.txt")
+filename= path.relpath("/root/logatec-experiment/applications/" + app_dir + "/node_results.txt")
 
 f=open(filename, "rb")
 

@@ -17,15 +17,15 @@
 
   - name: Create directory
     file:
-      path: ~/LOG-a-TEC-testbed
+      path: ~/logatec-experiment
       state: directory
 
 # recursive will also download the submodules
 # on the version param you can change which branch to pull  TODO
   - name: Pull all changes from github
     git:
-      repo: git@github.com:logatec3/LOG-a-TEC-testbed.git
-      dest: ~/LOG-a-TEC-testbed
+      repo: git@github.com:logatec3/logatec-experiment.git
+      dest: ~/logatec-experiment
       recursive: yes
       update: yes
       force: yes
@@ -37,7 +37,7 @@
   - name: Build docker file
     command: docker build -t vesna-drivers -f deployment/docker/Dockerfile .
     args:
-      chdir: ~/LOG-a-TEC-testbed
+      chdir: ~/logatec-experiment
 
   - name: Cleanup old docker containers (target)
     register: target
