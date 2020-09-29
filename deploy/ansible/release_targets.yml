@@ -22,10 +22,11 @@
 
   - name: OS image broadcast
     synchronize:
-      src:  ~/LOG-a-TEC-testbed/Docker-image.tar
+      src:  home/videk/LOG-a-TEC-testbed/Docker-image.tar
       dest:  ~/LOG-a-TEC-testbed
       mode: push
     delegate_to: '172.17.0.1'
+    remote_user: videk
 
 
 #  - name: Synchronize directory
