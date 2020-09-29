@@ -11,7 +11,7 @@
   tasks:
   - name: Create directory
     file:
-      path: ~/deploy
+      path: ~/deploy/logatec-experiment
       state: directory
 
 # recursive will also download the submodules
@@ -19,7 +19,7 @@
   - name: Pull all changes from github
     git:
       repo: git@github.com:logatec3/logatec-experiment.git
-      dest: ~/deploy/
+      dest: ~/deploy/logatec-experiment
       recursive: no
       update: yes
       force: yes
