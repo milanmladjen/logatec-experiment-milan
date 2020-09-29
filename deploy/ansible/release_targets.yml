@@ -20,29 +20,24 @@
       path: ~/LOG-a-TEC-testbed
       state: directory
 
-  - name: OS image broadcast
-    synchronize:
-      src:  home/videk/LOG-a-TEC-testbed/Docker-image.tar
-      dest:  ~/LOG-a-TEC-testbed
-      mode: push
-    delegate_to: '172.17.0.1'
+# recursive will also download the submodules
+# on the version param you can change which branch to pull  TODO
+  - name: Pull all changes from github
+    git:
+      repo: git@github.com:logatec3/LOG-a-TEC-testbed.git
+      dest: ~/LOG-a-TEC-testbed
+      recursive: yes
+      update: yes
+      force: yes
+      depth: 1
+      version: master
 
-
-#  - name: Synchronize directory
-#    synchronize:
-#      src: "{{ lookup('env','PWD') }}"
-#      dest: ~/LOG-a-TEC-testbed
-#      delete: yes
-#      recursive: yes
-      
-  #- name: get OS image
-  #  copy: 
-  #    src: "../../../Docker-image.tar"
-  #    dest: "~/LOG-a-TEC-testbed/"
-      
-# Unpack image from server
-  - name: Unpack received docker image
-    command: docker load -i ~/LOG-a-TEC-testbed/Docker-image.tar
+# -f flag so we can later copy whole LOG-a-TEC directory into container
+# with Dockerfile command COPY...else we get error "Forbidden path outside the build context"
+  - name: Build docker file
+    command: docker build -t vesna-drivers -f deploy/docker/Dockerfile .
+    args:
+      chdir: ~/LOG-a-TEC-testbed
 
   - name: Cleanup old docker containers (target)
     register: target

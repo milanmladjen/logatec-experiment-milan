@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-DIR=deploy/ansible
-
-ansible-playbook $DIR/build_docker_image.yml
