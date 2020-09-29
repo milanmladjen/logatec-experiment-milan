@@ -26,7 +26,6 @@
       dest:  ~/LOG-a-TEC-testbed
       mode: push
     delegate_to: '172.17.0.1'
-    remote_user: videk
 
 
 #  - name: Synchronize directory
