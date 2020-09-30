@@ -4,7 +4,7 @@
   tasks:
 
   - name: Stop docker container (controller)
-    command: docker stop controller_SRDB
+    command: docker stop controller_SRDA
 
 # Script server.py makes dir results where measurements are stored
   - name: Copy file from the container
