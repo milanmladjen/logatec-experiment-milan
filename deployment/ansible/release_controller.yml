@@ -5,7 +5,7 @@
 # Define number of nodes in use and duration of an application. Used in server.py for timeout so the controller doesn't hang. 
 # Just for backup - if all results came from devices, controller will finish its execution. 
   vars:
-    nodes: 16
+    nodes: 21
     duration: 5
 
   tasks:
@@ -33,12 +33,12 @@
     args:
       chdir: ~/deploy/logatec-experiment
 
-  - name: Cleanup old docker container (controller_SRDB)
+  - name: Cleanup old docker container (controller_SRDA)
     ignore_errors: yes
     command: "{{ item }}"
     with_items:
-      - docker kill controller_SRDB
-      - docker rm controller_SRDB
+      - docker kill controller_SRDA
+      - docker rm controller_SRDA
 
   - name: Run docker image
-    command: docker run --privileged --name controller_SRDB -e TARGET=run_server -e NODES_NUM="{{nodes}}" -e APP_DURATION_MIN="{{duration}}" -p 50000:50000 vesna-drivers 
+    command: docker run --privileged --name controller_SRDA -e TARGET=run_server -e NODES_NUM="{{nodes}}" -e APP_DURATION_MIN="{{duration}}" -p 50000:50000 vesna-drivers 
