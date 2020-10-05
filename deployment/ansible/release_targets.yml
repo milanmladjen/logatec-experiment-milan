@@ -21,7 +21,9 @@
       state: directory
 
 # Recursive option will also download the sub-modules
-# on the version param you can change which branch to pull  TODO
+# Update will pull the changes from Github
+# Force will delete local changes (but it doesn't)
+# Version you can change which branch to pull
   - name: Pull changes from github
     git:
       repo: git@github.com:logatec3/logatec-experiment.git
@@ -38,6 +40,14 @@
     command: git submodule update --init
     args:
       chdir: ~/deploy/logatec-experiment
+
+# Delete local changes (since force option in git task doesn't work)
+  - name: Delete local changes
+    command: "{{ item }}"
+    with_items:
+      - git clean -f -d
+      - cd contiki-ng && git clean -f -d
+      - cd vesna-drivers && git clean -f -d
 
 # -f flag so we can later copy whole LOG-a-TEC directory into container
 # with Dockerfile command COPY...else we get error "Forbidden path outside the build context"
