@@ -43,9 +43,7 @@
 
 # Delete local changes (since force option in git task doesn't work)
   - name: Delete local changes
-    command: "{{ item }}"
-    args:
-      chdir: ~/deploy/logatec-experiment
+    command: "{{ item }} chdir=~/deploy/logatec-experiment"
     with_items:
       - "git clean -f -d"
       - "contiki-ng/git clean -f -d"
