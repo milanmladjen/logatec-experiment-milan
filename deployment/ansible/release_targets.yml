@@ -22,7 +22,7 @@
 
 # Recursive option will also download the sub-modules
 # Update will pull the changes from Github
-# Force will delete local changes (but it doesn't)
+# Force will delete local changes
 # Version you can change which branch to pull
   - name: Pull changes from github
     git:
@@ -41,11 +41,11 @@
     args:
       chdir: ~/deploy/logatec-experiment
 
-# Delete potential local changes (since force option in git task doesn't work)
+# Delete potential local changes (since force option in git task doesn't work for submodules)
   - name: Delete local changes
     shell: "{{ item }} "
     with_items:
-      - cd ~/deploy/logatec-experiment && git clean -f -d
+      #- cd ~/deploy/logatec-experiment && git clean -f -d
       - cd ~/deploy/logatec-experiment/contiki-ng && git clean -f -d
       - cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
 
