@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- * NOISE GENERATION - AT86RF231 CONTINUOUS TRANSMISSION TEST MODE 
+ * NOISE GENERATION - AT86RF212 CONTINUOUS TRANSMISSION TEST MODE 
  * 
  * You must enter the application duration here (and in serial_monitor.py)
  * ----------------------------------------------------------------------------
@@ -24,6 +24,7 @@ PROCESS_THREAD(continuous_transmission_test_mode_process, ev, data){
     PROCESS_BEGIN();
 
     printf("Set radio to: continuos transmission test mode. \n");
+    // TODO change the rf2xx.c file accordingly (reeadme.md!)
     rf2xx_CTTM_start();
 
     vsnTime_delayS(APP_DURATION_IN_SEC);
