@@ -47,9 +47,9 @@
     args:
       chdir: ~/deploy/logatec-experiment
     with_items:
-      - git clean -f -d
-      - cd ~/deploy/logatec-experiment/contiki-ng/ && git clean -f -d
-      - cd ~/deploy/logatec-experiment/vesna-drivers/ && git clean -f -d
+      - "git clean -f -d"
+      - "contiki-ng/git clean -f -d"
+      - "vesna-drivers/git clean -f -d"
 
 # -f flag so we can later copy whole LOG-a-TEC directory into container
 # with Dockerfile command COPY...else we get error "Forbidden path outside the build context"
