@@ -42,12 +42,12 @@
       chdir: ~/deploy/logatec-experiment
 
 # Delete local changes (since force option in git task doesn't work)
-  - name: Delete local changes
-    command: "{{ item }} chdir=~/deploy/logatec-experiment"
+  - name: Delete potential local changes
+    shell: "{{ item }} "
     with_items:
-      - git clean -f -d
-      - ~/deploy/logatec-experiment/contiki-ng/git clean -f -d
-      - ~/deploy/logatec-experiment/ vesna-drivers/git clean -f -d
+      - cd ~/deploy/logatec-experiment && git clean -f -d
+      - cd contiki-ng/ && git clean -f -d
+      - cd ../vesna-drivers && git clean -f -d
 
 # -f flag so we can later copy whole LOG-a-TEC directory into container
 # with Dockerfile command COPY...else we get error "Forbidden path outside the build context"
