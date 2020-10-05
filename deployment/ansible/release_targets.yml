@@ -22,7 +22,7 @@
 
 # Recursive option will also download the sub-modules
 # on the version param you can change which branch to pull  TODO
-  - name: Pull all changes from github
+  - name: Pull changes from github
     git:
       repo: git@github.com:logatec3/logatec-experiment.git
       dest: ~/deploy/logatec-experiment
@@ -33,9 +33,8 @@
       version: master
 
 # It is better to download sub-modules separately, otherwise you get 95MB of data instead 28MB
-# This happens because recursive option will download aaall sub-modules (also the ones from Contiki)
-# which we don't need
-  - name:
+# Recursive option will download all sub-modules (also the ones from Contiki) which we don't need
+  - name: Update submodules
     command: git submodule update --init
     args:
       chdir: ~/deploy/logatec-experiment
