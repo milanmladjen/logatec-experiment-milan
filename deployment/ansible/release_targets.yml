@@ -5,7 +5,7 @@
 # Select which application to test, duration in minutes and which device should be the root of the network
   vars:
     application: 07_multicast
-    duration: 3
+    duration: 1
     root_node: 192.168.12.83
 
 # Display experiment abstract in build.log 

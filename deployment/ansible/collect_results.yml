@@ -23,7 +23,7 @@
       mode: pull
     with_items: "~/deploy/logatec-experiment/results/*.txt"
 
-  - name: Delete results
-    file: 
-      path:  ~/deploy/logatec-experiment/results
-      state: absent
+#  - name: Delete results
+#    file: 
+#      path:  ~/deploy/logatec-experiment/results
+#      state: absent
