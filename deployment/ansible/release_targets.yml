@@ -20,17 +20,25 @@
       path: ~/deploy/logatec-experiment
       state: directory
 
-# recursive will also download the submodules
+# Recursive option will also download the sub-modules
 # on the version param you can change which branch to pull  TODO
   - name: Pull all changes from github
     git:
       repo: git@github.com:logatec3/logatec-experiment.git
       dest: ~/deploy/logatec-experiment
-      recursive: yes
+      recursive: no
       update: yes
       force: yes
       depth: 1
       version: master
+
+# It is better to download sub-modules separately, otherwise you get 95MB of data instead 28MB
+# This happens because recursive option will download aaall sub-modules (also the ones from Contiki)
+# which we don't need
+  - name:
+    command: git submodule update --init
+    args:
+      chdir: ~/deploy/logatec-experiment
 
 # -f flag so we can later copy whole LOG-a-TEC directory into container
 # with Dockerfile command COPY...else we get error "Forbidden path outside the build context"
