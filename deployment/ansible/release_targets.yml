@@ -41,8 +41,8 @@
     args:
       chdir: ~/deploy/logatec-experiment
 
-# Delete local changes (since force option in git task doesn't work)
-  - name: Delete potential local changes
+# Delete potential local changes (since force option in git task doesn't work)
+  - name: Delete local changes
     shell: "{{ item }} "
     with_items:
       - cd ~/deploy/logatec-experiment && git clean -f -d
