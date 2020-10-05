@@ -20,7 +20,7 @@
       path: ~/deploy/logatec-experiment
       state: directory
 
-# recursive will also download the sub-modules
+# Recursive option will also download the sub-modules
 # on the version param you can change which branch to pull  TODO
   - name: Pull all changes from github
     git:
