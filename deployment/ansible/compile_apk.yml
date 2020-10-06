@@ -42,7 +42,7 @@
 # Compile the application
 # If there is also a root apk, compile it separately
   - name: Compile the apk
-    command: {{item}}
+    command: "{{ item }}"
     args:
       chdir: ~/deploy/logatec-experiment/applications/{{app_dir}}
     with_items:
