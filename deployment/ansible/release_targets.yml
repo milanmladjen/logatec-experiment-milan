@@ -42,13 +42,7 @@
     args:
       chdir: ~/deploy/logatec-experiment
 
-
-# TODO
-# --------------------------------------------------------------------------------------------------------------------
-# Transfer the binary from server to all LGTC targets with synchronize
-# binarys name is {{application}}.vesna
-# Put it into application directory {{app_dir}}
-# Transfer root binaryes separately only to root node? or both to all the nodes?
+# Transfer the binary from server to all LGTC targets with synchronize push method (runs on the server)
   - name: Transfer binarys
     synchronize: 
       src: "{{ item }}"
