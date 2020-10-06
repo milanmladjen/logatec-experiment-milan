@@ -4,7 +4,8 @@
 
 # Select which application to test, duration in minutes and which device should be the root of the network
   vars:
-    application: 07_multicast
+    application: hello-world
+    app_dir: 00_hello-world
     duration: 3
     root_node: 192.168.12.83
 
@@ -41,13 +42,14 @@
     args:
       chdir: ~/deploy/logatec-experiment
 
-# Delete potential local changes (since force option in git task doesn't work for submodules)
-  - name: Delete local changes
-    shell: "{{ item }} "
-    with_items:
-      #- cd ~/deploy/logatec-experiment && git clean -f -d
-      - cd ~/deploy/logatec-experiment/contiki-ng && git clean -f -d
-      - cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
+
+# TODO
+# --------------------------------------------------------------------------------------------------------------------
+# Transfer the binary from server to all LGTC targets with synchronize
+# binarys name is {{application}}.vesna
+# Put it into application directory {{app_dir}}
+# Transfer root binaryes separately only to root node? or both to all the nodes?
+
 
 # -f flag so we can later copy whole LOG-a-TEC directory into container
 # with Dockerfile command COPY...else we get error "Forbidden path outside the build context"
@@ -66,10 +68,10 @@
 
     # Root node
   - name: Run docker image for root
-    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_root -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_root -e APP_DIR="{{app_dir}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
     when: inventory_hostname == root_node
 
     # Other nodes
   - name: Run docker image
-    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{app_dir}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
     when: inventory_hostname != root_node

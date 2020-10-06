@@ -10,6 +10,7 @@ ci:
 	#TODO
 
 cd: 
+	$(DEPLOY_LOCATION)/compile_apk
 	$(DEPLOY_LOCATION)/release_targets
 	$(DEPLOY_LOCATION)/release_controller
 	$(DEPLOY_LOCATION)/collect_results

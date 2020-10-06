@@ -1,0 +1,51 @@
+---
+- hosts: 172.17.0.1
+  remote_user: videk
+
+  vars:
+    application: hello-world
+    app_dir: 00_hello-world
+
+  tasks:
+  - name: Create directory
+    file:
+      path: ~/deploy/logatec-experiment
+      state: directory
+
+# recursive will also download the submodules
+# on the version param you can change which branch to pull TODO
+  - name: Pull all changes from github
+    git:
+      repo: git@github.com:logatec3/logatec-experiment.git
+      dest: ~/deploy/logatec-experiment
+      recursive: no
+      update: yes
+      force: yes
+      depth: 1
+      version: master
+
+# It is better to download sub-modules separately, otherwise you get 95MB of data instead 28MB
+# Recursive option will download all sub-modules (also the ones from Contiki) which we don't need
+  - name: Update submodules
+    command: git submodule update --init
+    args:
+      chdir: ~/deploy/logatec-experiment
+
+# Delete potential local changes (since force option in git task doesn't work for submodules)
+  - name: Delete local changes
+    shell: "{{ item }} "
+    with_items:
+      #- cd ~/deploy/logatec-experiment && git clean -f -d
+      - cd ~/deploy/logatec-experiment/contiki-ng && git clean -f -d
+      - cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
+
+# Compile the application
+# If there is also a root apk, compile it separately
+  - name: Compile the apk
+    command: {{item}}
+    args:
+      chdir: ~/deploy/logatec-experiment/applications/{{app_dir}}
+    with_items:
+      - make {{application}} -j5
+    #  - make {{application}}-root -j5
+
