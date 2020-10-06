@@ -5,7 +5,7 @@
 # Define number of nodes in use and duration of an application. Used in server.py for timeout so the controller doesn't hang. 
 # Just for backup - if all results came from devices, controller will finish its execution. 
   vars:
-    nodes: 18
+    nodes: 17
     duration: 5
 
   tasks:
