@@ -6,6 +6,7 @@
     application: 00_demo
     duration: 3
 
+  tasks:
   - name: Create directory
     file:
       path: ~/deploy/logatec-experiment
