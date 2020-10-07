@@ -5,13 +5,13 @@ Continuous delivery template - repository for making experiments in LOG-aTEC tes
 ## Get repository
 
 To get the repository:
-```$ git clone git@github.com:logatec3/logatec-experiment.git```
+>$ git clone git@github.com:logatec3/logatec-experiment.git
 
 To also get the sub-modules files:
-```$ git submodule update --init```
+>$ git submodule update --init
 
 Do it in one step (but you will also get all nested sub-modules, which we usually do not need)
-```$ git clone --recurse-submodules git@github.com:logatec3/logatec-experiment.git```
+>$ git clone --recurse-submodules git@github.com:logatec3/logatec-experiment.git
 
 **NOTE** \
 `git pull` will only pull the changes of the base repo.
