@@ -3,15 +3,17 @@
 from datetime import datetime
 from bluepy.btle import Scanner, DefaultDelegate
 import argparse
+import os
 
 # Filename must be named like this, so client.py will send it to servers
 filename = "node_results.txt"
 
 try:
     APP_DURATION = int(os.environ['APP_DURATION_MIN'])
+	APP_DURATION = APP_DURATION * 60
 except:
     print("No app duration was defined...going with default 1min")
-    APP_DURATION = 1
+    APP_DURATION = 60
 
 
 class ScanDelegate(DefaultDelegate):
