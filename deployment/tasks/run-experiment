@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+# Enter experiment directory (APP_DIR is enviromental variable)
+cd /root/logatec-experiment/applications/$APP_DIR
+pwd
+
+# Remove first 3 characters from APP_DIR string to get the app name
+APP=${APP_DIR:3}
+echo "Testing $APP application"
+
+# Start BT advertisment
+hciconfig hci0 leadv3
+
+# Start the experiment
+python3 $APP.py
+
+# Stop BT  advertisement: 
+hciconfig hci0 noleadv
+
+# Transfer colected results to the server 
+cd /root/logatec-experiment/deployment/tasks/
+python3 client.py

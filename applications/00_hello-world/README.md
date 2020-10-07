@@ -1,3 +1,0 @@
-# Hello World application
-
-TODO: description, how it works...
