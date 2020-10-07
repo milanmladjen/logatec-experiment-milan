@@ -1,35 +1,35 @@
-# LOG-a-TEC testbed
+# logatec-experiment
 
 Continuous delivery template - repository for making experiments in LOG-aTEC testbed with Contiki-NG OS.
+
+## Get repository
 
 To get the repository:
 ```$ git clone git@github.com:logatec3/logatec-experiment.git```
 
-To get all sub-modules files:
+To also get the sub-modules files:
 ```$ git submodule update --init```
 
-Do it in one step (but you will also get all nested sub-modules, which are usually useless)
+Do it in one step (but you will also get all nested sub-modules, which we usually do not need)
 ```$ git clone --recurse-submodules git@github.com:logatec3/logatec-experiment.git```
 
-**NOTE**
-`Git pull` is not enough - it will only pull the changes of the base repo.
-If you want to pull the changes on the sub-module as well, insert:
-```$ git submodule update --remote```
+**NOTE** \
+`git pull` will only pull the changes of the base repo.
+If you want to pull the changes of the sub-module as well use: ```$ git submodule update --remote``` \
 You can also add `--merge` or `--rebase` to merge/rebase your branch with remote.
 
-If you want to make some changes to sub-modules, first checkout to the branch you want, then commit changes and push them (nothing new here)
+If you want to make some changes to the sub-modules, first checkout to the branch you want, then commit changes and push them.
 
-## TODO
+## BLE branch
 
-Make few branches here --> do this on the end, when everything works
+Branch for experiments with LGTCs Bluetooth module ([WL18MODGI](https://www.ti.com/product/WL1835MOD "Datasheet")).
 
-* One for SRDA devices
-* One for SRDB devices
-* One for LoRa
+To start advertising use ```$ sudo hciconfig hci0 leadv3``` and to stop advertising use ```$ sudo hciconfig hci0 noleadv```. \
+If you want to get the MAC address of the device run ```sudo hciconfig | grep "BD Address"```. \
+Some extra packages have to be installed for Bluetooth to work (see *Dockerfile*).
 
-Make few more folders with examples
+**NOTE** \
+Contiki-NG and vesna-drivers are not needed for BT experiments (see *.dockerignore*). That's why:
 
-* /experiments/demo
-* /experiments/multicast
-* /experiments/neighbour-ping
-* ...
+* Sub-modules are not pulled from Github
+* There is a separate image for docker containers called *lgtc-ble-experiment*
