@@ -33,3 +33,7 @@ Contiki-NG and vesna-drivers are not needed for BT experiments (see *.dockerigno
 
 * Sub-modules are not pulled from Github
 * There is a separate image for docker containers called *lgtc-ble-experiment*
+
+## Experiments
+
+Follow the instructions in *readme.md* in folder applications.

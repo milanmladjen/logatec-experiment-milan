@@ -1,12 +1,17 @@
 # Description
 
-All applications and experiments are located in the folders. 
+All applications and experiments are located in the folders.
 
 ## Local test
 
-To test them locally, run:
-> make <app_name>.olimex -j9 \
-> python3 serial_monitor.py -o results.txt -p ttyUSB0 -r
+Demo application uses bluepy python library. To install it locally on the LGTC machine, run:
+> sudo apt-get install libglib2.0-dev python3-pip && sudo pip3 install bluepy
+
+### Optional debug
+
+In case that BT advertisement doesn't work in file */lib/systemd/system/bluetooth.service*
+add *--experimental* flag to line 9 (or there around). It should look like this:
+> ExecStart=/usr/lib/bluetooth/bluetoothd --experimental
 
 ## Testbed
 
@@ -14,6 +19,4 @@ To use autonomous testbed deployment, please follow already made templates or st
 
 * Application folder should have number indicator in front of the app name (XX_)
 * The application script must have the same name as the folder name
-* If there is a separate script for root node, it should have suffix "-root" at the end of its name. Otherwise root node will be flashed with the same file as normal nodes, just serial_monitor will send root command to it.
-
-For more information on why to do this, check comments in *logatec-experiment/deployment/tasks/run-experiment-root*.
+* Start and stop advertisement (if needed) in */deployment/tasks/run-experiment* script.
