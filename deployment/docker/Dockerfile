@@ -5,7 +5,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Get dependencies
 RUN apt-get update --fix-missing && \
-	apt-get install -y python-pip python3-pip nano libglib2.0-dev && \
+	apt-get install -y python-pip python3-pip nano \
+	bluetooth bluez bluez-tools libglib2.0-dev && \
 	apt-get clean && \
 	pip3 install pyserial bluepy
 
