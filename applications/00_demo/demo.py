@@ -9,11 +9,11 @@ import os
 filename = "node_results.txt"
 
 try:
-    APP_DURATION = int(os.environ['APP_DURATION_MIN'])
+	APP_DURATION = int(os.environ['APP_DURATION_MIN'])
 	APP_DURATION = APP_DURATION * 60
 except:
-    print("No app duration was defined...going with default 1min")
-    APP_DURATION = 60
+	print("No app duration was defined...going with default 1min")
+	APP_DURATION = 60
 
 
 class ScanDelegate(DefaultDelegate):
