@@ -24,8 +24,7 @@ If you want to make some changes to the sub-modules, first checkout to the branc
 
 Branch for experiments with LGTCs Bluetooth module ([WL18MODGI](https://www.ti.com/product/WL1835MOD "Datasheet")).
 
-To start advertising use ```$ sudo hciconfig hci0 leadv3``` and to stop advertising use ```$ sudo hciconfig hci0 noleadv```. \
-If you want to get the MAC address of the device run ```sudo hciconfig | grep "BD Address"```. \
+To get the MAC address of the device run ```sudo hciconfig | grep "BD Address"```. \
 Some extra packages have to be installed for Bluetooth to work (see *Dockerfile*).
 
 **NOTE** \
@@ -36,4 +35,4 @@ Contiki-NG and vesna-drivers are not needed for BT experiments (see *.dockerigno
 
 ## Experiments
 
-Follow the instructions in *readme.md* in folder applications.
+To make an experiment follow the instructions in *Readme.md* in folder applications.

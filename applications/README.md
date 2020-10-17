@@ -2,6 +2,18 @@
 
 All applications and experiments are located in the folders.
 
+To get the MAC address of the device enter:
+
+> sudo hciconfig | grep "BD Address:"
+
+Use this command to start BT advertisement:
+
+> sudo hciconfig hci0 leadv3
+
+Use this command to stop BT advertisement:
+
+>sudo hciconfig hci0 noleadv
+
 ## Local test
 
 Demo application uses bluepy python library. To install it locally on the LGTC machine, run:
