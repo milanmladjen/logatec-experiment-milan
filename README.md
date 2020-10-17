@@ -2,6 +2,8 @@
 
 Continuous delivery template - repository for making experiments in LOG-aTEC testbed with Contiki-NG OS.
 
+More info about the testbed can be found [here](http://log-a-tec.eu/ap-cradio.html#jsi-campus "Official web-site")
+
 ## Get the repository
 
 To get the repository:
