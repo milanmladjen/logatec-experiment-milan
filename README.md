@@ -22,7 +22,7 @@ You can also add `--merge` or `--rebase` to merge/rebase your branch with remote
 
 If you want to make some changes to the sub-modules, first checkout to the branch you want, then commit changes and push them.
 
-## SRDB branch
+## SRDA branch
 
 Branch for experiments with **SRD A** devices - Vesna equipped with Atmel AT86RF212 and Texas Instruments CC2500 radios. 
 [More info](http://log-a-tec.eu/ap-cradio.html#hardware "Official web-site").
