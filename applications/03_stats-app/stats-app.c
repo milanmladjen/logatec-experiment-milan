@@ -189,8 +189,6 @@ STATS_print_description(void){
 	printf("----------------------------------------------------------------------------\n");
 	printf("   STATISTICS\n");
 	printf("----------------------------------------------------------------------------\n");
-	printf("BGN [time-stamp (channel)RSSI] [time-stamp (channel)RSSI] [ ...\n");
-	printf("\n");
 	printf("Tx [time-stamp] packet-type  dest-addr (chn len sqn | pow) BC or UC \n");
 	printf("Rx [time-stamp] packet-type  sour-addr (chn len sqn | rssi lqi) \n");
 	printf("\n");
