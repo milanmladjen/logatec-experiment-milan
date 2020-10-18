@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
- * APPLICATION FOR PINGING NEIGHBOURS IN THE NETWORK
- * TODO not tested jet - just prepared (copied from last repo)
+ * APPLICATION FOR PINGING NEIGHBORS IN THE NETWORK
+ * TODO working in new testbed not tested jet - just prepared (copied from last repo)
  * -----------------------------------------------------------------------------
 */
 
