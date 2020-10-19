@@ -1,10 +1,9 @@
 # ----------------------------------------------------------------------
 # 
-# This script will just store everything that it gets on serial connection,
-# without checking if Vesna is alive
-#
-# Make sure to enter the same time (APP_DURATION_S) here and in hello-world.c
-# (APP_DURATION_IN_SEC)! 
+# This script first sends start command '>' to Vesna to start the app.
+# Then it waits for response from Vesna - if no response, exit monitor
+# Then it sends app duration.
+# No failsafe mechanism here.
 # ----------------------------------------------------------------------
 import sys
 import argparse
@@ -13,7 +12,14 @@ import os
 from datetime import datetime
 from timeit import default_timer as timer
 
-APP_DURATION_S  = (60 * 60)
+
+# Application duration should be defined as variable while running container
+try:
+    APP_DURATION = int(os.environ['APP_DURATION_MIN'])
+except:
+    print("No app duration was defined...going with default 60min")
+    APP_DURATION = 60
+
 
 DEFAULT_FILE_NAME = "node_results.txt"
 
@@ -58,6 +64,33 @@ class serial_monitor():
         value = self.ser.read_until(b'\n', None)
         return value
 
+
+    def send_cmd(self, cmd):
+        try:
+            self.ser.write((cmd + "\n").encode("ASCII"))
+        except:
+            print("Error writing to device!")
+
+
+    def wait_response(self, max_time):
+        startTime = timer()
+        while((timer() - startTime) < max_time):
+            try:
+                value = self.ser.readline()
+                if not value:
+                    break     
+                if(chr(value[0]) == '>'):
+                    self.gotResponse = True
+                    break
+            except KeyboardInterrupt:
+                print("\n Keyboard interrupt!..Exiting now")
+                sys.exit(1)
+
+
+    def flush(self):
+        self.ser.reset_input_buffer()
+        self.ser.reset_output_buffer()
+
 # ----------------------------------------------------------------------
 
     def prepare_file(self, filename):
@@ -66,15 +99,16 @@ class serial_monitor():
         self.file.write(str(datetime.now())+"\n")
         self.file.write("----------------------------------------------------------------------------------------------- \n")
         self.file.write("Serial input from port:" + monitor.port + "\n")
-        self.file.write("----------------------------------------------------------------------------------------------- \n")
         self.file.close()
-
     
     def store_to_file(self, data):
         self.file.write("[" + str(datetime.now().time())+"]: ")
         data = data.decode("ASCII")
         self.file.write(str(data))
 
+    def store_str_to_file(self,string):
+        self.file.write("[" + str(datetime.now().time())+"]: ")
+        self.file.write(string)
 
     def close(self):
         self.ser.close()
@@ -130,55 +164,87 @@ monitor.prepare_file(name)
 monitor.file = open(monitor.filename, "a")
 
 # ----------------------------------------------------------------------
-# Start the app
+# Send desired duration of the application (Vesna needs it in seconds)
 # ----------------------------------------------------------------------
-print("Start logging serial input:") 
+monitor.send_cmd("&" + str(APP_DURATION * 60))
+print("Application duration " + str(APP_DURATION) + "min")
 
 # ----------------------------------------------------------------------
-# Read input lines until the end of predefined time
+# Start the app
+# ----------------------------------------------------------------------
+print("Send start command")
+monitor.send_cmd(">")
+
+# Wait for response ('>' character) from Vesna for 3 seconds
+monitor.wait_response(3)
+
+# If device is not responding, try again
+if(not monitor.gotResponse):
+    print("No response -> send start cmd again...")
+    monitor.flush()
+    monitor.send_cmd("=")
+    monitor.send_cmd(">")
+    monitor.wait_response(3)
+
+if(not monitor.gotResponse):
+    print("No response...please reset the device and try again")
+    monitor.store_str_to_file("No response from Vesna...")
+    monitor.close()
+    sys.exit(1)
+
+print("Got response!")
+   
+# ----------------------------------------------------------------------
+# Read input lines until app stops sending data
 # ----------------------------------------------------------------------
 line = 1
 startTime = timer()
 elapsedMin = 0
 
+print("Start logging serial input...although there won't be any input from Vesna :)") 
+
 try:
     while(True):
-        
-        # Measure approximate elapsed time - just for a feeling (+- 10s)
-        if((timer() - startTime) > 59):
-            elapsedMin += 1
-            startTime = timer()
-
-        # If application come to an end - timing is not precise at all!!!
-        if elapsedMin > ((APP_DURATION_S/60)):
-            print("End of application time")
-            break
-        
+               
         # Read one line (until \n char)
         value = monitor.read_line()
 
         # Because of timeout setting, serial may return empty list
         if value:           
+            # If stop command '=' found, exit monitor
+            if(chr(value[0]) == '='):
+                print("Found stop command (" + str(APP_DURATION) +
+                " minutes has elapsed)..stored " + str(line) + " lines.")
+                break
 
             # Store value into file
             monitor.store_to_file(value)
-            line += 1
 
-        else:
-            print("Serial timeout occurred")
+            line += 1
 
         # Update status line in terminal
         print("Line: " + str(line) + " (~ " + str(elapsedMin) + "|" + 
-        str(int(APP_DURATION_S/60)) + " min)", end="\r")
+        str(int(APP_DURATION)) + " min)", end="\r")
     
     print("")
     print("Done!..Exiting serial monitor")
 
 except KeyboardInterrupt:
-    print("\n Keyboard interrupt!.. Exiting serial monitor")
+    print("\n Keyboard interrupt!..send stop command")
+    monitor.send_cmd("=")
+
+    while(True):
+        try:
+            value = monitor.read_line()
+            if(chr(value[0]) == '='):
+                break
+        except:
+            print("Error closing monitor, no response")  
+            break
+    print("Exiting serial monitor")
 
 except serial.SerialException:
-    print("Error opening port!.. Exiting serial monitor")
+    print("Error opening port!..Exiting serial monitor")
 
 except IOError:
     print("\n Serial port disconnected!.. Exiting serial monitor")
