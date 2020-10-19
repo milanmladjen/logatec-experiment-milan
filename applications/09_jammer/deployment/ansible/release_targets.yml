@@ -1,0 +1,109 @@
+---
+- hosts: 192.168.12.51, 192.168.12.52, 192.168.12.53, 192.168.12.54, 192.168.12.55, 192.168.12.56, 192.168.12.57, 192.168.12.58, 192.168.12.59, 192.168.12.60, 192.168.12.61, 192.168.12.62, 192.168.12.63, 192.168.12.64, 192.168.12.65, 192.168.12.66, 192.168.12.67, 192.168.12.68, 192.168.12.69, 192.168.12.70, 192.168.12.71  
+  remote_user: videk
+
+# Select which application to test, duration in minutes and which device should be the root of the network
+  vars:
+    application: 09_jammer
+    duration: 10
+
+# Display experiment abstract in build.log 
+  tasks:
+  - name: Display abstract
+    debug:
+      msg: "Testing {{application}}, duration {{duration}} minutes, root node is {{root_node}}"
+    when: inventory_hostname == root_node
+
+  - name: Create directory
+    file:
+      path: ~/deploy/logatec-experiment
+      state: directory
+
+# Recursive option will also download the sub-modules
+# Update will pull the changes from Github
+# Force will delete local changes (but it doesn't)
+# Version you can change which branch to pull
+  - name: Pull changes from github
+    git:
+      repo: git@github.com:logatec3/logatec-experiment.git
+      dest: ~/deploy/logatec-experiment
+      recursive: no
+      update: yes
+      force: yes
+      depth: 1
+      version: SRDA
+
+# It is better to download sub-modules separately, otherwise you get 95MB of data instead 28MB
+# Recursive option will download all sub-modules (also the ones from Contiki) which we don't need
+  - name: Update submodules
+    command: git submodule update --init
+    args:
+      chdir: ~/deploy/logatec-experiment
+
+# Delete potential local changes (since force option in git task doesn't work)
+  - name: Delete local changes
+    shell: "{{ item }} "
+    with_items:
+      - cd ~/deploy/logatec-experiment && git clean -f -d
+      - cd ~/deploy/logatec-experiment/contiki-ng && git clean -f -d
+      - cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
+
+# -f flag so we can later copy whole LOG-a-TEC directory into container
+# with Dockerfile command COPY...else we get error "Forbidden path outside the build context"
+  - name: Build docker file
+    command: docker build -t vesna-drivers -f deployment/docker/Dockerfile .
+    args:
+      chdir: ~/deploy/logatec-experiment
+
+  - name: Cleanup old docker containers (target)
+    register: target
+    ignore_errors: yes
+    command: "{{ item }}"
+    with_items:
+      - docker kill target
+      - docker rm target
+
+    # Nodes
+    # Each pair of nodes has different CC_NUM defined as environmental variable. CC_NUM is used to determine frequency on which will Vesna generate noise.
+    # You can calculate it with equation: FREQ = 857 + 0.1*CC_NUM
+    # In this example there is a pair of device for frequency in range from 865.5 MHz to 870 MHz --> jammer in 868 spectrum
+
+  - name: Run docker image 85
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" -e CC_NUM=85 vesna-drivers
+    when: (inventory_hostname == "192.168.12.71") or (inventory_hostname == "192.168.12.66")
+
+  - name: Run docker image 90
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" -e CC_NUM=90 vesna-drivers
+    when: (inventory_hostname == "192.168.12.57") or (inventory_hostname == "192.168.12.67")
+
+  - name: Run docker image 95
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" -e CC_NUM=95 vesna-drivers
+    when: (inventory_hostname == "192.168.12.58") or (inventory_hostname == "192.168.12.68")
+
+  - name: Run docker image 100
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" -e CC_NUM=100 vesna-drivers
+    when: (inventory_hostname == "192.168.12.59") or (inventory_hostname == "192.168.12.69")
+
+  - name: Run docker image 105
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" -e CC_NUM=105 vesna-drivers
+    when: (inventory_hostname == "192.168.12.60") or (inventory_hostname == "192.168.12.70") or (inventory_hostname == "192.168.12.55")
+
+  - name: Run docker image 110
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" -e CC_NUM=110 vesna-drivers
+    when: (inventory_hostname == "192.168.12.61") or (inventory_hostname == "192.168.12.52")
+
+  - name: Run docker image 115
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" -e CC_NUM=115 vesna-drivers
+    when: (inventory_hostname == "192.168.12.62") or (inventory_hostname == "192.168.12.54")
+
+  - name: Run docker image 120
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" -e CC_NUM=120 vesna-drivers
+    when: (inventory_hostname == "192.168.12.63") or (inventory_hostname == "192.168.12.56")
+
+  - name: Run docker image 125
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" -e CC_NUM=125 vesna-drivers
+    when: (inventory_hostname == "192.168.12.64") or (inventory_hostname == "192.168.12.51")
+
+  - name: Run docker image 130
+    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" -e CC_NUM=130 vesna-drivers
+    when: (inventory_hostname == "192.168.12.65") or (inventory_hostname == "192.168.12.53")
