@@ -10,7 +10,14 @@
 #include "../../vesna-drivers/VESNALib/inc/vsntime.h" // For delayS
 
 /*---------------------------------------------------------------------------*/
-#define APP_DURATION_IN_SEC    (60 * 60)
+// Set durration of the app in seconds
+#define APP_DURATION_IN_SEC     (60 * 60)
+
+// Set freq from 857 - 882.5 MHz (857 + 0.1*CC_NUMBER) (datasheet p. 123)
+#define CC_NUM                  (110) //868MHz
+
+// Set power of transmission, from -11dBm ti 2dBm...see rf2xx_registermap.h
+#define POWER                   (TX_POWER_n11)
 
 /*---------------------------------------------------------------------------*/
 PROCESS(continuous_transmission_test_mode_process, "CTTM process");
@@ -24,8 +31,7 @@ PROCESS_THREAD(continuous_transmission_test_mode_process, ev, data){
     PROCESS_BEGIN();
 
     printf("Set radio to: continuos transmission test mode. \n");
-    // TODO change the rf2xx.c file accordingly (reeadme.md!)
-    rf2xx_CTTM_start();
+    rf2xx_CTTM_start(POWER, CC_NUM);
 
     vsnTime_delayS(APP_DURATION_IN_SEC);
 
@@ -33,18 +39,6 @@ PROCESS_THREAD(continuous_transmission_test_mode_process, ev, data){
     printf("Stop continuos transmission test mode. \n");
 
     while(1){}
-
-    /* Setup a periodic timer that expires after 10 seconds. */
-    etimer_set(&timer, CLOCK_SECOND * 10);
-
-    while(1) {
-
-        printf("Main loop \n");
-
-        /* Wait for the periodic timer to expire and then restart the timer. */
-        PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
-        etimer_reset(&timer);
-    }
 
     PROCESS_END();
 }
