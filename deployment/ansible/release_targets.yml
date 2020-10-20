@@ -4,7 +4,7 @@
 
 # Select which application to test, duration in minutes and which device should be the root of the network
   vars:
-    application: 07_multicast
+    application: 05_ping
     duration: 3
     root_node: 192.168.12.83
 
