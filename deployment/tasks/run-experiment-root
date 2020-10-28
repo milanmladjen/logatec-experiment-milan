@@ -31,9 +31,5 @@ else
     python3 serial_monitor.py -o node_results.txt -r
 fi
 
-# Transfer colected results to the server 
-cd /root/logatec-experiment/deployment/tasks/
-python3 client.py
-
 # Put Vesna to reset state so it doesnt interfeer with other networks
 python reset_vesna.py 0
