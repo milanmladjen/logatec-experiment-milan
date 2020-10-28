@@ -9,17 +9,25 @@ cd /root/logatec-experiment/contiki-ng
 echo "Pull changes from Contiki-NG repo"
 git pull
 
+# Prepare folder for results
+cd /root/logatec-experiment
+mkdir results
+
+# Obtain node IP and store only IP address
+IPADDR=$(ifconfig | grep "inet addr:192.168.12")
+IPADDR=${IPADDR:10:24}
+
 # Enter experiment directory (APP_DIR is enviromental variable)
 cd /root/logatec-experiment/applications/$APP_DIR
 pwd
 
 # Remove first 3 characters from APP_DIR string to get the app name
 APP=${APP_DIR:3}
-echo "Testing $APP application"
+echo "Testing $APP application on node $IPADDR"
 
 # Start the experiment
 make $APP.logatec3 -j2
-python3 serial_monitor.py -o node_results.txt
+python3 serial_monitor.py -o /root/logatec-experiment/results/node_${IPADDR}.txt
 
 # Put Vesna to reset state so it doesnt interfeer with other networks
 python reset_vesna.py 0
