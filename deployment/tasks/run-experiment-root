@@ -9,10 +9,6 @@ cd /root/logatec-experiment/contiki-ng
 echo "Pull changes from Contiki-NG repo"
 git pull
 
-# Prepare folder for results
-cd /root/logatec-experiment
-mkdir results
-
 # Obtain node adresses
 IPADDR=$(hostname -I)
 # Get only our network address
@@ -41,6 +37,12 @@ else
     make $APP.logatec3 -j2
     python3 serial_monitor.py -o /root/logatec-experiment/results/node_${IPADDR}.txt -r
 fi
+
+# Prepare folder for results
+mkdir /root/logatec-experiment/results
+
+# Move results to that folder
+mv *.txt /root/logatec-experiment/results
 
 # Put Vesna to reset state so it doesnt interfeer with other networks
 cd /root/logatec-experiment/deployment/tasks
