@@ -10,7 +10,7 @@
 
 # Get measurements from container
   - name: Copy file from the container
-    command: docker cp controller:/root/logatec-experiment/results/ .
+    command: docker cp target:/root/logatec-experiment/results/ .
     args:
       chdir: ~/deploy/logatec-experiment
 
