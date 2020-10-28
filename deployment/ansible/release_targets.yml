@@ -66,10 +66,10 @@
 
     # Root node
   - name: Run docker image for root
-    command: docker run --name target --privileged -e TARGET=run_experiment_root -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
+    command: docker run --name target --privileged --net=host -e TARGET=run_experiment_root -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
     when: inventory_hostname == root_node
 
     # Other nodes
   - name: Run docker image
-    command: docker run --name target --privileged -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
+    command: docker run --name target --privileged --net=host -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
     when: inventory_hostname != root_node
