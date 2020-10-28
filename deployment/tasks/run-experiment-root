@@ -43,4 +43,5 @@ else
 fi
 
 # Put Vesna to reset state so it doesnt interfeer with other networks
+cd /root/logatec-experiment/deployment/tasks
 python reset_vesna.py 0

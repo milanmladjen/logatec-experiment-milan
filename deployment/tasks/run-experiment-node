@@ -33,4 +33,5 @@ make $APP.logatec3 -j2
 python3 serial_monitor.py -o /root/logatec-experiment/results/node_${IPADDR}.txt
 
 # Put Vesna to reset state so it doesnt interfeer with other networks
+cd /root/logatec-experiment/deployment/tasks
 python reset_vesna.py 0
