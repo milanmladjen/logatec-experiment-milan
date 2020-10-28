@@ -13,9 +13,12 @@ git pull
 cd /root/logatec-experiment
 mkdir results
 
-# Obtain node IP and store only IP address
-IPADDR=$(ifconfig | grep "inet addr:192.168.12")
-IPADDR=${IPADDR:10:24}
+# Obtain node adresses
+IPADDR=$(hostname -I)
+# Get only our network address
+IPADDR=${IPADDR#*"192.168.12."}
+# Get only last 3 digits of IP address
+IPADDR=${IPADDR:0:3}
 
 # Enter experiment directory (APP_DIR is enviromental variable)
 cd /root/logatec-experiment/applications/$APP_DIR
