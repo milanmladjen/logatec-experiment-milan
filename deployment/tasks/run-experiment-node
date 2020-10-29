@@ -28,10 +28,7 @@ echo "Testing $APP application on node $IPADDR"
 make $APP.logatec3 -j2
 python3 serial_monitor.py -o "node_${IPADDR}.txt"
 
-# Prepare folder for results #TODO do this in Dockerile
-mkdir /root/logatec-experiment/results/
-
-# Move results to that folder
+# Move results
 mv *.txt /root/logatec-experiment/results/
 
 # Put Vesna to reset state so it doesnt interfeer with other networks
