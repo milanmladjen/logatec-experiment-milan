@@ -3,32 +3,44 @@ import time
 import logging
 
 LOG_LEVEL = logging.DEBUG
-NUMBER_OF_DEVICES = 1
+NUMBER_OF_DEVICES = 2
+
 
 def main():
     
     # First wait for synchronization from all subscribers
     subscribers = 0
     while subscribers < NUMBER_OF_DEVICES:
-        # Wait for synchronization request
-        address, empty, empty = router.recv_multipart()
+        # Wait for synchronization request (msg is "Hi")
+        #address, msg = router.recv_multipart()
+        address, packet_type, msg = router.recv_multipart()
+
         # Send synchronization reply
-        resp = b''
-        router.send_multipart([address, resp, resp])
+        resp = "Hello there!"
+        router.send_multipart([address, b"SYNC", resp])
+
+        # Inform user about new device
         subscribers += 1
         logging.info("Device %s online (%i/%i)" % (address, subscribers, NUMBER_OF_DEVICES))
 
     
+# ------------------------------------------------------------------------------- #
+# Devices are synchronized - start the app
+# ------------------------------------------------------------------------------- #
 
     # Start pushing commands
-    user_command = 0
+    tx_msg_nbr = 0
     for i in range(60):
 
         # Push command
         if(i%6 == 0):
-            user_command = user_command + 1
-            publisher.send_string(u'%i' % user_command)
-            logging.debug("Send command: %i" % user_command)
+            tx_msg_nbr += 1
+
+            cmd = "Do-smth"
+
+            msg =b"%i %s" % (tx_msg_nbr, cmd)
+            publisher.send(msg)
+            logging.debug("Sent PUB_CMD [%i]: %s" % (tx_msg_nbr, cmd))
 
         # Check if we got any response from devices
         while True:
@@ -43,10 +55,11 @@ def main():
 
             # If there is any message in pollin queue
             if socks.get(router) == zmq.POLLIN:
-                naslov, empty, msg = router.recv_multipart()
-                logging.debug("Device %s sent: %s" % (naslov, msg))
-                resp = b''
-                router.send_multipart([naslov, resp, resp])
+                address, msg_type, rx_msg_nbr, msg = router.recv_multipart()
+                router.send_multipart([address, b"DATA_ACK", rx_msg_nbr, b""])
+
+
+                logging.debug("%s sent: %s" % (address, msg))
 
             # No response from devices
             else:
@@ -55,8 +68,11 @@ def main():
         print(".")
         time.sleep(0.5)
     
+    tx_msg_nbr += 1
+    cmd = "END"
+    msg =b"%i %s" % (tx_msg_nbr, cmd)
     # Send stop command
-    publisher.send(b'END')
+    publisher.send(msg)
 
 
 # ===================================================================================== #
