@@ -8,6 +8,34 @@ from datetime import datetime as timer
 LOG_LEVEL = logging.DEBUG
 DATA_RESP_RETRIES = 2
 
+
+def obtain_info(cmd):
+    # Return the requested info 
+
+    data = "42!"
+
+    if cmd == "END":
+        # Exit application
+        logging.debug("Got END command...exiting now!")
+        sys.exit(1)
+
+    elif cmd == "STATE":
+        # Return the current state of the LGTC deivce
+        logging.debug("Return the STATE of the device")
+
+    elif cmd == "START_APP":
+        # Send start command through serial_monitor.py
+        logging.debug("Start the application!")
+
+    elif cmd == "STOP_APP":
+        # Send stop command through serial_monitor.py
+        logging.debug("Stop the application!")
+
+    else:
+        logging.warning("Unknown command: %s" % cmd)
+
+    return data
+
 def main():
 
     # First sync with the server, so it knows we are online
@@ -32,6 +60,7 @@ def main():
     last_sent_time = 0
     
     rx_msg_nbr = 0
+    rx_pub_nbr = 0
     tx_msg_nbr = 0
     retires_nbr = 0
 
@@ -46,20 +75,16 @@ def main():
             msg = subscriber.recv()
 
             msg_s = msg.split()
-            tx_msg_nbr = int(msg_s[0])
+            rx_pub_nbr = int(msg_s[0])
             msg = msg_s[1]
 
-            logging.info("Received PUB_CMD [%i]: %s" % (tx_msg_nbr, msg))
+            logging.info("Received PUB_CMD [%i]: %s" % (rx_pub_nbr, msg))
             
-            if msg == b'END':
-                break
-
-            # Obtain the info    
-            time.sleep(0.5)
-            info = "It is 42!"
+            # Obtain the info upon received command 
+            info = obtain_info(msg)
 
             # Form reply
-            reply = ["PUB_DAT", str(tx_msg_nbr), info] 
+            reply = ["PUB_DAT", str(rx_pub_nbr), info] 
 
             # Respond to the server
             logging.debug("Sending data...")
@@ -67,10 +92,11 @@ def main():
 
             # If waiting is still true, that means that server did not hear us until now
             if waiting_for_ack:
-                logging.warning("Got new command but server didn't receive our previous message! Server is to slow..")
-                logging.warning("Old message will be discarted.. :/")
+                logging.warning("Got new command but server didn't receive our previous message!")
+                # logging.warning("Old message will be discarted.. :/")
+                # If user needs that message again, he will request for it.. 
             
-            waiting_for_ack = tx_msg_nbr
+            waiting_for_ack = rx_pub_nbr
             last_sent_info = reply
             last_sent_time = timer.now()
 
@@ -95,13 +121,38 @@ def main():
                     waiting_for_ack = None
                     retires_nbr = 0
                 else:
-                    # TODO: what to do here? Ad some queue? If even necessary?
-                    logging.warning("Got ACK for %s instead of %s.." % (rx_msg_nbr, waiting_for_ack))
+                    # This shouldn't occur to many times - here for possible upgrade
+                    # It is rare because if we send new data before we get prev ack, int waiting_for_ack will 
+                    # be overwritten...but it still can happen if we overwrite message and receive prev ack right after it
+                    logging.warning("Got ACK for msg %s instead of %s.." % (rx_msg_nbr, waiting_for_ack))
                     waiting_for_ack = None
                     retires_nbr = 0
 
             elif msg_type == "UNI_CMD":
-                logging.info("Got unicast command from server: %s" % msg)
+                logging.info("Received UNI_CMD [%s]: %s" % (rx_msg_nbr,msg))
+
+                # Obtain the info upon received command 
+                info = obtain_info(msg)
+
+                # Form reply
+                reply = ["UNI_DAT", rx_msg_nbr, info]
+
+                # Respond to the server
+                logging.debug("Sending data...")
+                client.send_multipart(reply)
+
+                # If waiting is still true, that means that server did not hear us until now
+                if waiting_for_ack:
+                    logging.warning("Got new command but server didn't ack our previous message!")
+                    # logging.warning("Old message will be discarted.. :/")
+                    # If user needs that message again, he will request for it.. 
+                
+                waiting_for_ack = rx_pub_nbr
+                last_sent_info = reply
+                last_sent_time = timer.now()
+
+            else:
+                loging.warning("Received unknown type of message...discarting.")
 
 
         # If we sent one message and there was no response for more than a second, resend it
@@ -128,7 +179,6 @@ def main():
         #logging.debug(".")
         time.sleep(0.1)
 
-    sys.exit(1)
 
 
 

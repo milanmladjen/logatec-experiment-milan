@@ -3,8 +3,9 @@ import time
 import logging
 
 LOG_LEVEL = logging.DEBUG
-NUMBER_OF_DEVICES = 2
+NUMBER_OF_DEVICES = 3
 
+lgtc_addr = []
 
 def main():
     
@@ -14,6 +15,10 @@ def main():
         # Wait for synchronization request (msg is "Hi")
         #address, msg = router.recv_multipart()
         address, packet_type, msg = router.recv_multipart()
+
+        # Add address to the list of LGTC addr
+        if address not in lgtc_addr:
+            lgtc_addr.append(address)
 
         # Send synchronization reply
         resp = "Hello there!"
@@ -31,6 +36,7 @@ def main():
     # Start pushing commands
     tx_msg_nbr = 0
     for i in range(60):
+        
 
         # Push command
         if(i%6 == 0):
@@ -41,6 +47,10 @@ def main():
             msg =b"%i %s" % (tx_msg_nbr, cmd)
             publisher.send(msg)
             logging.debug("Sent PUB_CMD [%i]: %s" % (tx_msg_nbr, cmd))
+
+        if(i%8 == 0):
+            adr = lgtc_addr[0]
+            router.send_multipart([adr, b"UNI_CMD", b"1", b"STATE"])
 
         # Check if we got any response from devices
         while True:
@@ -58,8 +68,10 @@ def main():
                 address, msg_type, rx_msg_nbr, msg = router.recv_multipart()
                 router.send_multipart([address, b"DATA_ACK", rx_msg_nbr, b""])
 
-
                 logging.debug("%s sent: %s" % (address, msg))
+
+                #tx_msg_nbr += 1
+                #router.send_multipart([address, b"UNI_CMD", tx_msg_nbr, b""])
 
             # No response from devices
             else:
