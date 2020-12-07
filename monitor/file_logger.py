@@ -1,0 +1,42 @@
+# ----------------------------------------------------------------------
+# FILE LOGGER
+# ----------------------------------------------------------------------
+import datetime
+
+# ----------------------------------------------------------------------
+DEFAULT_FILE_NAME = "node_results.txt"
+
+# ----------------------------------------------------------------------
+class file_loger():
+
+    def prepare_file(self, filename, deviceName):
+        # Prepare a file and add description to it (date, time)
+        self.filename = filename
+        self.file = open(filename, mode="w", encoding="ASCII")
+        self.file.write(str(datetime.now())+"\n")
+        self.file.write("----------------------------------------------------------------------------------------------- \n")
+        self.file.write("SERIAL INPUT FROM LGTC DEVICE " + deviceName + "\n")
+        self.file.write("----------------------------------------------------------------------------------------------- \n")
+        self.file.close()
+
+
+    def open_file(self):
+        self.file = open(self.filename, mode="a", encoding="ASCII")
+
+    
+    def store_line(self, data):
+        self.file.write("[" + str(datetime.now().time())+"]: ")
+        data = data.decode("ASCII")
+        self.file.write(str(data))
+
+    def store_str(self,s):
+        self.file.write("[" + str(datetime.now().time())+"]: ")
+        self.file.write(s)
+
+    def warning(self, s):
+        self.file.write("[" + str(datetime.now().time())+"] !WARNING!:")
+        self.file.write(s)
+
+    def close(self):
+        self.ser.close()
+        self.file.close()
