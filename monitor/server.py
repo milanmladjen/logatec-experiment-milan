@@ -3,7 +3,7 @@ import time
 import logging
 
 LOG_LEVEL = logging.DEBUG
-NUMBER_OF_DEVICES = 1
+NUMBER_OF_DEVICES = 3
 
 lgtc_addr = []
 
@@ -90,7 +90,7 @@ for i in range(60):
         # If there is any message in pollin queue
         if socks.get(router) == zmq.POLLIN:
             address, msg_type, rx_msg_nbr, msg = router.recv_multipart()
-            router.send_multipart([address, b"DATA_ACK", rx_msg_nbr, b""])
+            router.send_multipart([address, b"ACK", rx_msg_nbr, b""])
 
             logging.debug("%s sent: %s" % (address, msg))
 

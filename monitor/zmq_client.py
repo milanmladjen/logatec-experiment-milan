@@ -12,8 +12,7 @@ class zmq_client():
 
     ROUTER_HOSTNAME = "tcp://192.168.88.253:5562"
     SUBSCR_HOSTNAME = "tcp://192.168.88.253:5561"
-    SEND_RETRIES = 2
-    ACK_TIMEOUT = 1
+    ACK_TIMEOUT = 3
 
     rxCnt = 0
     txCnt = 0
@@ -47,7 +46,7 @@ class zmq_client():
         self.poller.register(self.dealer, zmq.POLLIN)
 
         # Class variables ... they are storing:
-        self.waitingForAck = None           # A sequence number of message that must receive an ACK
+        self.waitingForAck = []             # Buffer - a list with sequence number of messages that must receive an ACK
         self.lastSentInfo = []              # The last sent message
         self.nbrRetries = 0                 # A number of sending retries 
         #self.lastSentTime = timer.now()    # The last time we sent any message (it must be a type: datetime.datetime)
@@ -92,17 +91,13 @@ class zmq_client():
             msg_type, nbr, msg = self.dealer.recv_multipart()
 
             # If we got acknowledge on transmitted data
-            if msg_type == "DATA_ACK":
-                if nbr == self.waitingForAck:
+            if msg_type == "ACK":
+                if nbr in self.waitingForAck:
                     logging.info("Server acknowledged our data [" + nbr + "]")
-                    self.waitingForAck = None
+                    self.waitingForAck.remove(nbr)
                     self.nbrRetries = 0
                 else:
-                    # This shouldn't occur to many times - here for possible upgrade
-                    # It is rare because if we send new data before we get prev ack, int waitingForAck will 
-                    # be overwritten...but it still can happen if we overwrite message and receive prev ack right after it
-                    logging.warning("Got ACK for msg %s instead of %s.." % (nbr, self.waitingForAck))
-                    self.waitingForAck = None
+                    logging.warning("Got ACK for msg %s...in queue %s:" % (nbr, self.waitingForAck))
                     self.nbrRetries = 0
 
                 return None, None
@@ -126,19 +121,19 @@ class zmq_client():
             loging.warning("Unknown instance...check the code")
             return None, None
 
+
     def send(self, reply):
         # Send a message to the server - must be formed as a list: [type, nbr, msg]
 
         logging.debug("Sending data to server...")
         self.dealer.send_multipart(reply)
 
-        # If waiting is still true, that means that server did not hear us until now
-        if self.waitingForAck:
+        # Server sent another command before sending ACK to our previous message
+        if len(self.waitingForAck) != 0:
             logging.warning("New message sent but server didn't ack our previous message!")
-            # logging.warning("Old message will be discarted.. :/")
-            # If user needs that message again, he will request for it.. 
+            # logging.warning("Old message will be overwritten.. :/")
         
-        self.waitingForAck = reply[1]
+        self.waitingForAck.append(reply[1])
         self.lastSentInfo = reply
         self.lastSentTime = timer.now()
         
@@ -148,19 +143,18 @@ class zmq_client():
 
 
     def send_retry(self):
-        # Check how long we waited for ACK - if second passed, send message again
+        # Check how long we waited for ACK - if 3 seconds have passed, send message again
  
         if ((timer.now() - self.lastSentTime).total_seconds() > self.ACK_TIMEOUT):
-            logging.warning("Second has passed and no response from server.. Resending data!")
+            logging.warning("3 second have passed and no response from server.. Resending data!")
             # Resend info
             self.dealer.send_multipart(self.lastSentInfo)
-            self.waitingForAck = self.lastSentInfo[1] # tx_msg_nbr
             self.lastSentTime = timer.now()
 
             self.nbrRetries += 1
-            if self.nbrRetries > self.SEND_RETRIES:
+            if self.nbrRetries > 1:
                 # Server has died ?
-                self.waitingForAck = None
+                self.waitingForAck = []
                 self.nbrRetries = 0
                 logging.warning("Server has died :(")   #TODO
         else:
@@ -232,7 +226,7 @@ if __name__ == "__main__":
 
 
         # If we sent one message and there was no response for more than a second, resend it
-        if cliente.waitingForAck != None:
+        if len(cliente.waitingForAck) != 0:
             cliente.send_retry()
 
         
