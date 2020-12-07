@@ -3,7 +3,7 @@ import time
 import logging
 
 LOG_LEVEL = logging.DEBUG
-NUMBER_OF_DEVICES = 3
+NUMBER_OF_DEVICES = 1
 
 lgtc_addr = []
 
@@ -38,7 +38,7 @@ subscribers = 0
 while subscribers < NUMBER_OF_DEVICES:
     # Wait for synchronization request (msg is "Hi")
     #address, msg = router.recv_multipart()
-    address, packet_type, msg = router.recv_multipart()
+    address, packet_type, nbr, msg = router.recv_multipart()
 
     # Add address to the list of LGTC addr
     if address not in lgtc_addr:
@@ -46,7 +46,7 @@ while subscribers < NUMBER_OF_DEVICES:
 
     # Send synchronization reply
     resp = "Hello there!"
-    router.send_multipart([address, b"SYNC", resp])
+    router.send_multipart([address, b"SYNC", b"0", resp])
 
     # Inform user about new device
     subscribers += 1
