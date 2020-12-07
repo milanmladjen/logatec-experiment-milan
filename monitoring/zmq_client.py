@@ -3,6 +3,7 @@ import zmq
 import logging
 import sys
 from datetime import datetime as timer
+#from timeit import default_timer as timer #TODO test if better
 
 
 LOG_LEVEL = logging.DEBUG
