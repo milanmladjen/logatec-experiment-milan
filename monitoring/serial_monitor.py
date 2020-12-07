@@ -136,7 +136,7 @@ if __name__ == "__main__":
     monitor = serial_monitor(timeout=10)
 
     # Open serial monitor
-    if (sys.argv[1] == None)
+    if (sys.argv[1] == None):
         # Find port automatically - search for ttyUSB
         monitor.auto_connect()
     else:

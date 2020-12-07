@@ -19,12 +19,11 @@ class zmq_client():
     txCnt = 0
 
 
-    def __init__(self):
+    def __init__(self, deviceID):
         # Initialize sockets and poller 
 
         # Get device address
-        device_address = u'LGTC-%s' % sys.argv[1]       #TODO
-        device_address = device_address.encode("ascii")
+        device_address = deviceID.encode("ascii")
         logging.info("Device name: %s" % device_address)
 
         context = zmq.Context()
@@ -168,7 +167,9 @@ if __name__ == "__main__":
 
     logging.basicConfig(format='%(levelname)s:%(message)s', level=LOG_LEVEL)
 
-    cliente = zmq_client()
+    address = u'LGTC-%s' % sys.argv[1]       #TODO
+
+    cliente = zmq_client(address)
 
     # ------------------------------------------------------------------------------- #
     # First synchronize with the server

@@ -1,9 +1,22 @@
 #!/usr/bin/python3
 
 import subprocess
+import sys
+
+# Add path to import costum modules
+sys.path.insert(0, "../../monitoring")
+import serial_monitor
+import file_logger
+import zmq_client
+
+"""
+ser = serial_monitor.serial_monitor(10)
+fileloger = file_logger.file_loger()
+client = zmq_client.zmq_client("lgtc-3")"""
+
 
 # Update Contiki-NG 
-subprocess.run(["git", "pull"], cwd = "/root/logatec-experiment/contiki-ng")
+#subprocess.run(["git", "pull"], cwd = "/root/logatec-experiment/contiki-ng")
 
 # Get the IP address of the device
 # IPADDR = ...
@@ -15,10 +28,10 @@ subprocess.run(["git", "pull"], cwd = "/root/logatec-experiment/contiki-ng")
 # print("Testing " + APP + " on device " + IPADDR)
 
 # Compile the application
-subprocess.run(["make", APP, "-j2"], cwd = APP_LOC)
+#subprocess.run(["make", APP, "-j2"], cwd = APP_LOC)
 
 # Flash the application to the VESNA device
-subprocess.run(["make", APP + ".logatec"], cwd = APP_LOC)
+#subprocess.run(["make", APP + ".logatec"], cwd = APP_LOC)
 
 # Start the serial_monitor 
 
