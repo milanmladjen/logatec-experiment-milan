@@ -1,23 +1,21 @@
 # ----------------------------------------------------------------------
-# SERIAL MONITOR
+# SERIAL MONITOR: Communication between VESNA and LGTC via UART
 # ----------------------------------------------------------------------
 import sys
 import serial
 
-# ----------------------------------------------------------------------
-BASEPORT = "/dev/ttyS"
-BAUD = 460800
-PARITY = serial.PARITY_NONE
-STOPBIT = serial.STOPBITS_ONE
-BYTESIZE = serial.EIGHTBITS
-
 
 # ----------------------------------------------------------------------
 class serial_monitor():
-    port = ""
+
+    BASEPORT = "/dev/ttyS"
+    BAUD = 460800
+    PARITY = serial.PARITY_NONE
+    STOPBIT = serial.STOPBITS_ONE
+    BYTESIZE = serial.EIGHTBITS
     
-    def __init__(self, to):
-        self.timeout = to
+    def __init__(self, timeout):
+        self.timeout = timeout
         self.ser = None
         
 
@@ -26,7 +24,7 @@ class serial_monitor():
     def connect_to(self, p):
         try:
             port = "/dev/" + p
-            self.ser = serial.Serial(port, BAUD, BYTESIZE, PARITY, STOPBIT, timeout=self.timeout)
+            self.ser = serial.Serial(port, self.BAUD, self.BYTESIZE, self.PARITY, self.STOPBIT, timeout=self.timeout)
             print("Serial monitor opened on port: " + self.port)
             return
 
@@ -38,8 +36,8 @@ class serial_monitor():
     def auto_connect(self):
         for i in range(2, 5):
             try:
-                port = BASEPORT + str(i)
-                self.ser = serial.Serial(port, BAUD, BYTESIZE, PARITY, STOPBIT, timeout=self.timeout)
+                port = self.BASEPORT + str(i)
+                self.ser = serial.Serial(port, self.BAUD, self.BYTESIZE, self.PARITY, self.STOPBIT, timeout=self.timeout)
                 print("Serial monitor opened on port: " + self.port)
                 break
             except:
@@ -127,3 +125,53 @@ class serial_monitor():
             return "No response from VESNA"
         else:
             return value
+
+
+
+
+# ----------------------------------------------------------------------
+# Demo usage
+if __name__ == "__main__":
+
+    monitor = serial_monitor(timeout=10)
+
+    # Open serial monitor
+    if (sys.argv[1] == None)
+        # Find port automatically - search for ttyUSB
+        monitor.auto_connect()
+    else:
+        # Connect to given port
+        monitor.connect_to(sys.argv[1])
+
+    # Optional - send start command ">" to VESNA
+    monitor.sync_with_vesna()
+
+    try:
+        while(True):
+            
+            # Wait for incoming line and read it
+            data = monitor.read_line()
+
+            if data:
+                if(chr(data[0]) == "="):
+                    print("Found stop command")
+                    break
+
+                print(data)
+            else:
+                print("Serial timeout")
+            
+        print("\n Done!")
+
+    except KeyboardInterrupt:
+        print("\n Keyboard interrupt!..send stop command")
+        monitor.write_line("=")
+
+    except serial.SerialException:
+        print("Error opening port!..Exiting serial monitor")
+
+    except IOError:
+        print("\n Serial port disconnected!.. Exiting serial monitor")
+    
+    finally:
+        monitor.close()
