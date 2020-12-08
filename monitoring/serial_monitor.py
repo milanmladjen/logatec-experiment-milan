@@ -14,7 +14,7 @@ class serial_monitor():
     STOPBIT = serial.STOPBITS_ONE
     BYTESIZE = serial.EIGHTBITS
     
-    def __init__(self, timeout):
+    def __init__(self, timeout=10):
         self.timeout = timeout
         self.ser = None
         
@@ -26,11 +26,11 @@ class serial_monitor():
             port = "/dev/" + p
             self.ser = serial.Serial(port, self.BAUD, self.BYTESIZE, self.PARITY, self.STOPBIT, timeout=self.timeout)
             print("Serial monitor opened on port: " + self.port)
-            return
+            return True
 
         except:
-            print("Serial port not connected or in use!..Exiting now")
-            sys.exit(1)
+            print("Serial port not connected or in use.")
+            return False
 
 
     def auto_connect(self):
@@ -41,9 +41,9 @@ class serial_monitor():
                 print("Serial monitor opened on port: " + self.port)
                 break
             except:
-                print("No serial port connected or all in use!..Exiting now")
-                sys.exit(1)
-        return
+                print("No serial port connected or all in use.")
+                return False
+        return True
 
 
     def read_line(self):
@@ -88,13 +88,11 @@ class serial_monitor():
 
         if(not gotResponse):
             print("No response...please reset the device and try again")
-            # TODO: store_str_to_file("No response from Vesna...")
             close()
-            # TODO: Return 0 to client file and it can do sys.exit(1) 
-            # sys.exit(1)
+            return False
 
-        print("Got response!")
-        return
+        print("Got response...synced with VESNA")
+        return True
     
     def wait_start_response(self, max_time):
         startTime = timer()

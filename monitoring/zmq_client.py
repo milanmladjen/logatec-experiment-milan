@@ -6,39 +6,35 @@ from datetime import datetime as timer
 #from timeit import default_timer as timer #TODO test if better
 
 
-LOG_LEVEL = logging.DEBUG
-
-
 class zmq_client():
 
-    ROUTER_HOSTNAME = "tcp://192.168.88.253:5562"
-    SUBSCR_HOSTNAME = "tcp://192.168.88.253:5561"
+    
     ACK_TIMEOUT = 3
 
     rxCnt = 0
     txCnt = 0
 
 
-    def __init__(self, deviceID):
+    def __init__(self, SUBS_HOSTNAME, ROUT_HOSTNAME, deviceID="NoName"):
         # Initialize sockets and poller 
 
         # Get device address
         device_address = deviceID.encode("ascii")
-        logging.info("Device name: %s" % device_address)
+        #logging.info("Device name: %s" % device_address)
 
         context = zmq.Context()
 
         # Connect to subscribe socket (--> publish)
         logging.debug("Connecting to publish server...")
         self.subscriber = context.socket(zmq.SUB)
-        self.subscriber.connect(self.SUBSCR_HOSTNAME)
+        self.subscriber.connect(SUBS_HOSTNAME)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, b'')  #TODO
 
         # Connect to dealer socket (--> router)
         logging.debug("Connecting to router server...")
         self.dealer = context.socket(zmq.DEALER)
         self.dealer.identity = device_address
-        self.dealer.connect(self.ROUTER_HOSTNAME)
+        self.dealer.connect(ROUT_HOSTNAME)
 
         # Configure poller
         self.poller = zmq.Poller()
@@ -65,8 +61,10 @@ class zmq_client():
         msgType, nbr, msg = self.dealer.recv_multipart()
         if msgType == "SYNC":
             logging.info("Synced with server (%s)" % msg)
+            return True
         else:
             logging.error("Could not sync with server!")
+            return False
 
 
     def receive(self, instance):
@@ -100,7 +98,7 @@ class zmq_client():
                     logging.warning("Got ACK for msg %s...in queue %s:" % (nbr, self.waitingForAck))
                     self.nbrRetries = 0
 
-                return None, None
+                return True
 
             # If we received any unicast command
             elif msg_type == "UNI_CMD":
@@ -165,7 +163,8 @@ class zmq_client():
 # Demo usage
 if __name__ == "__main__":
 
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=LOG_LEVEL)
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO
+)
 
     address = u'LGTC-%s' % sys.argv[1]       #TODO
 
