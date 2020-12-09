@@ -78,8 +78,8 @@ client = zmq_client.zmq_client(SUBSCR_HOSTNAME, ROUTER_HOSTNAME, LGTC_ID)
 log.prepare_file(DEFAULT_FILENAME, LGTC_ID)
 log.open_file()
 
-# 1) Sync with server (tell him we are online) - start the client
-if not client.sync_with_server():
+# 1) Sync with server (tell him we are online) with timeout of 10 seconds
+if client.sync_with_server(10000) is False:
     print("Couldn't synchronize with server..exiting now.")
     force_exit()
 
@@ -99,26 +99,27 @@ if not ser.sync_with_vesna():
     print("Couldn't sync with VESNA...exiting now.")
     soft_exit("VesnaERR")
 
-# 5) Inform server that LGTC is ready to start the app
-msg = ["UNI_DAT", 0, "COMPILED"]
-client.send(msg)
-if client.check_input(1000):
-    if client.receive("DEALER") is not True:    
-        print("No ack from server...exiting now.")
-        force_exit()
-    # TODO Problem might occur if we receive something else rather than ACK packet
-
 
 # ----------------------------------------------------------------------------------------
-# Wait for incoming start command
+# Inform server that LGTC is ready to start the app
+# ----------------------------------------------------------------------------------------
+compiled_msg = [b"UNI_DAT", b"1", b"COMPILED"]
+client.transmit(compiled_msg)
+
+if client.wait_ack("1", 1000) is False:
+    print("No ack from server...exiting now.")
+    force_exit()
+
+# ----------------------------------------------------------------------------------------
+# Wait for incoming start command. You might also receive some other cmd in the mean time.
 # ----------------------------------------------------------------------------------------
 try:
     while True:
-        poller = dict(client.poller.poll(0))
+        inp = client.check_input(0)
 
-        if poller.get(client.subscriber) == 1:
+        if inp:
+            msg_type, msg_nbr, msg = client.receive_async(inp)
 
-            msg, nbr = client.receive("SUBSCRIBER")
             if msg == "START_APP"
 
                 # Inform server that app has started

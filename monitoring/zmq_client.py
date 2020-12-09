@@ -14,15 +14,13 @@ class zmq_client():
     rxCnt = 0
     txCnt = 0
 
-
+    # Initialize sockets and poller
     def __init__(self, SUBS_HOSTNAME, ROUT_HOSTNAME, deviceID="NoName"):
-        # Initialize sockets and poller 
+
+        context = zmq.Context()
 
         # Get device address
         device_address = deviceID.encode("ascii")
-        #logging.info("Device name: %s" % device_address)
-
-        context = zmq.Context()
 
         # Connect to subscribe socket (--> publish)
         logging.debug("Connecting to publish server...")
@@ -48,27 +46,9 @@ class zmq_client():
         #self.lastSentTime = timer.now()    # The last time we sent any message (it must be a type: datetime.datetime)
         
 
-
-
-    def sync_with_server(self):
-        # Send SYNC message to the server, so it knows we are online
-
-        logging.debug("Send a synchronization request.")
-
-        self.dealer.send_multipart(["SYNC", b"0", b"Hi"])
-
-        msgType, nbr, msg = self.dealer.recv_multipart()
-        if msgType == "SYNC":
-            logging.info("Synced with server (%s)" % msg)
-            return True
-        else:
-            logging.error("Could not sync with server!")
-            return False
-
-
+    # Poll the sockets for given amount of timeout (0 = return immediately)
     def check_input(self, timeout):
-        # Poll the sockets for given amount of timeout (0 = return immediately)
-
+        
         sockets = dict(self.poller.poll(timeout))
 
             if socks.get(self).subscriber) == zmq.POLLIN:
@@ -77,9 +57,68 @@ class zmq_client():
                 return "DEALER"
             else:
                 return None
+
+    
+    # Read received message...returns list (type_of_msg, nbr_of_msg, msg)
+    def receive(self, instance):
+
+        self.rxCnt += 1
+
+        if (instance == "SUBSCRIBER"):
+            msg = self.subscriber.recv()
+
+            ms = msg.split()
+            nbr = ms[0]
+            msg = ms[1]
+
+            logging.info("Received PUB_CMD [%s]: %s" % (nbr, msg))
+
+            return "PUB_CMD", nbr, msg
+
+        elif (instance == "DEALER"):
+            msg_type, nbr, msg = self.dealer.recv_multipart()
+
+            return msg_type, nbr, msg
+
+        else:
+            loging.error("Unknown instance...check the code")
+            return None, None, None
+
+
+    # Send a message to the server - must be formed as a list: [type, nbr, msg]
+    def transmit(self, msg):
+
+        if not isinstance(msg, list):
+            logging.error("Incorect format of message")
+            return False
+        
+        logging.debug("Sending data to server...")
+        self.dealer.send_multipart(msg)
+        
+        self.txCnt += 1
+        return True
+
+
+    # Force wait for ACK on given message number - discard all other received messages
+    def wait_ack(self, nbr, timeout):
+
+        startTime = timer.now()
+
+        while True:
+            if ((timer.now() - startTime).total_seconds() < timeout):
+                inp = client.check_input(0):
+                if inp:
+                    rec = client.receive(inp)
+                    # Nbr of transmitted and received msg must be the same
+                    if(rec[0] == "ACK" and rec[1] == str(nbr)):
+                        return True
+                    else:
+                        logging.warning("Received " + rec[0] + " message but waiting for ACK")
+            else:
+                return False
             
 
-    def receive(self, instance):
+    def receive_async(self, instance):
         # Read received message..returns:
         #       True if we received an ACK
         #       False if there is no message/error
@@ -97,7 +136,7 @@ class zmq_client():
 
             logging.info("Received PUB_CMD [%s]: %s" % (nbr, msg))
 
-            return "PUB_CMD", msg, nbr
+            return "PUB_CMD", nbr, msg
 
         # If it is a message from router socket
         elif (instance == "DEALER"):
@@ -132,25 +171,21 @@ class zmq_client():
         # If there is an error in calling the function
         else:
             loging.warning("Unknown instance...check the code")
-            return False
+            return None, None, None
 
 
-    def send(self, reply):
+    def transmit_async(self, msg):
         # Send a message to the server - must be formed as a list: [type, nbr, msg]
-
-        logging.debug("Sending data to server...")
-        self.dealer.send_multipart(reply)
-
+        transmit(msg)
+    
         # Server sent another command before sending ACK to our previous message
         if len(self.waitingForAck) != 0:
             logging.warning("New message sent but server didn't ack our previous message!")
             # logging.warning("Old message will be overwritten.. :/")
         
-        self.waitingForAck.append(reply[1])
-        self.lastSentInfo = reply
+        self.waitingForAck.append(msg[1])
+        self.lastSentInfo = msg
         self.lastSentTime = timer.now()
-        
-        self.txCnt += 1
 
         return
 
@@ -174,7 +209,31 @@ class zmq_client():
             return
 
 
-    
+
+
+    # Send SYNC message to the server, so it knows we are online
+    def sync_with_server(self, timeout):
+
+        logging.debug("Send a synchronization request.")
+
+        sync_request = ["SYNC", b"0", b""]
+        transmit(sync_request)
+        state = wait_ack("0", timeout)
+
+        if state is True:
+            logging.info("Synced with server!")
+            return True
+        else:
+            logging.error("Could not sync with server!")
+            return False
+
+
+
+
+
+
+
+  """  
 # Demo usage
 if __name__ == "__main__":
 
@@ -229,6 +288,6 @@ if __name__ == "__main__":
         print(".")
         time.sleep(1)
 
-
+"""
 
 
