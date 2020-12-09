@@ -51,12 +51,12 @@ class zmq_client():
         
         sockets = dict(self.poller.poll(timeout))
 
-            if socks.get(self).subscriber) == zmq.POLLIN:
-                return "SUBSCRIBER"
-            elif: sockets.get(self.dealer) == zmq.POLLIN:
-                return "DEALER"
-            else:
-                return None
+        if sockets.get(self.subscriber) == zmq.POLLIN:
+            return "SUBSCRIBER"
+        elif sockets.get(self.dealer) == zmq.POLLIN:
+            return "DEALER"
+        else:
+            return None
 
     
     # Read received message...returns list (type_of_msg, nbr_of_msg, msg)
@@ -100,15 +100,16 @@ class zmq_client():
 
 
     # Force wait for ACK on given message number - discard all other received messages
+    # Timeout is in seconds!!!
     def wait_ack(self, nbr, timeout):
 
         startTime = timer.now()
 
         while True:
             if ((timer.now() - startTime).total_seconds() < timeout):
-                inp = client.check_input(0):
+                inp = self.check_input(0)
                 if inp:
-                    rec = client.receive(inp)
+                    rec = self.receive(inp)
                     # Nbr of transmitted and received msg must be the same
                     if(rec[0] == "ACK" and rec[1] == str(nbr)):
                         return True
@@ -152,12 +153,12 @@ class zmq_client():
                     logging.warning("Got ACK for msg %s...in queue %s:" % (nbr, self.waitingForAck))
                     self.nbrRetries = 0
 
-                return True
+                return True, None, None
 
             # If we received any unicast command
             elif msg_type == "UNI_CMD":
                 logging.info("Received UNI_CMD [%s]: %s" % (nbr ,msg))
-                return msg_type, msg, nbr
+                return msg_type, nbr, msg
 
             elif ms_type == "SYNC":
                 print("Received SYNC message...something went wrong")
@@ -166,7 +167,7 @@ class zmq_client():
             # If we received unknown type of message
             else:
                 loging.warning("Received unknown type of message...discarting.")
-                return False
+                return False, None, None
 
         # If there is an error in calling the function
         else:
@@ -176,7 +177,7 @@ class zmq_client():
 
     def transmit_async(self, msg):
         # Send a message to the server - must be formed as a list: [type, nbr, msg]
-        transmit(msg)
+        self.transmit(msg)
     
         # Server sent another command before sending ACK to our previous message
         if len(self.waitingForAck) != 0:
@@ -216,9 +217,9 @@ class zmq_client():
 
         logging.debug("Send a synchronization request.")
 
-        sync_request = ["SYNC", b"0", b""]
-        transmit(sync_request)
-        state = wait_ack("0", timeout)
+        sync_request = ["SYNC", b"0", b" "]
+        self.transmit(sync_request)
+        state = self.wait_ack("0", timeout)
 
         if state is True:
             logging.info("Synced with server!")
@@ -233,7 +234,7 @@ class zmq_client():
 
 
 
-  """  
+"""  
 # Demo usage
 if __name__ == "__main__":
 
@@ -287,7 +288,6 @@ if __name__ == "__main__":
         # Do some other stuff
         print(".")
         time.sleep(1)
-
 """
 
 

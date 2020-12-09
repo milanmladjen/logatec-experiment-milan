@@ -13,6 +13,71 @@ import serial_monitor
 import file_logger
 import zmq_client
 
+
+# ----------------------------------------------------------------------------------------
+# FUNCTIONS
+# ----------------------------------------------------------------------------------------
+def obtain_info(cmd):
+    # Return the requested info 
+
+    data = "xyz"
+
+    if cmd == "END":
+        # Exit application
+        logging.debug("Got END command...exiting now!")
+        force_exit()
+
+    elif cmd == "STATE":
+        # Return the current state of the LGTC deivce
+        logging.debug("Return the STATE of the device")
+        data = "42!"
+
+    elif cmd == "START_APP":
+        # Send start command through serial_monitor.py
+        logging.info("Start the application!")
+        data ="App started"
+
+    elif cmd == "STOP_APP":
+        # Send stop command through serial_monitor.py
+        logging.info("Stop the application!")
+        data = "App stopped"
+
+    else:
+        logging.warning("Unknown command: %s" % cmd)
+
+    return data
+
+
+def force_exit():
+    ser.close()
+    client.close()
+    log.close()
+    sys.exit(1)
+
+# Soft exit also informs the server about this
+def soft_exit(reason):
+
+    info = ["SYS", b"-1", reason]  
+
+    client.send(info)
+
+    if client.check_input(1000):
+        if client.receive("DEALER") is True:    
+            force_exit()
+        # TODO: we might receive ACK for some other msg, not for this one ... 
+    else:
+        print("No ack from server...exiting now.")
+        force_exit()
+
+
+
+
+
+
+
+
+
+
 # ----------------------------------------------------------------------------------------
 # GLOBAL VARIABLES 
 # ----------------------------------------------------------------------------------------
@@ -56,7 +121,7 @@ APP_NAME = APP_DIR[3:]
 
 
 
-print("Testing application " + APP_NAME + "for " + str(APP_DURATION) + " minutes on device " + LGTC_ID)
+print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_ID)
 
 # ----------------------------------------------------------------------------------------
 # MODULE INITIALIZATION 
@@ -80,24 +145,37 @@ log.open_file()
 
 # 1) Sync with server (tell him we are online) with timeout of 10 seconds
 if client.sync_with_server(10000) is False:
-    print("Couldn't synchronize with server..exiting now.")
+    logging.error("Couldn't synchronize with server..exiting now.")
     force_exit()
 
 # 2) Compile the application
 #subprocess.run(["make", APP, "-j2"], cwd = APP_LOC)
 
+
+# TESTING PURPOSE - COMPILING TIME DELAY
+try:
+    time.sleep(10)
+except KeyboardInterrupt:
+    print(" ")
+finally:
+    print("Compiled application!")
+
+
 # 3) Flash the VESNA with app binary
 #subprocess.run(["make", APP + ".logatec"], cwd = APP_LOC)
 
 # 4) Connect to VESNA serial port
-if not ser.connect_to("ttyS2"):
-    print("Couldn't connect to VESNA...exiting now.")
-    soft_exit("VesnaERR")
+logging.info("Connect to VESNA serial port")
+#if not ser.connect_to("ttyS2"):
+    #logging.error("Couldn't connect to VESNA...exiting now.")
+    #soft_exit("VesnaERR")
 
 # Sync with VESNA - start the serial_monitor but not the app #TODO add while(1) to VESNA main loop
-if not ser.sync_with_vesna():
-    print("Couldn't sync with VESNA...exiting now.")
-    soft_exit("VesnaERR")
+logging.info("Sync with VESNA")
+#if not ser.sync_with_vesna():
+    #logging.error("Couldn't sync with VESNA...exiting now.")
+    #soft_exit("VesnaERR")
+
 
 
 # ----------------------------------------------------------------------------------------
@@ -106,105 +184,56 @@ if not ser.sync_with_vesna():
 compiled_msg = [b"UNI_DAT", b"1", b"COMPILED"]
 client.transmit(compiled_msg)
 
-if client.wait_ack("1", 1000) is False:
-    print("No ack from server...exiting now.")
+if client.wait_ack("1", 1) is False:
+    logging.error("No ack from server...exiting now.")
     force_exit()
 
+print("-------")
+logging.info("Starting the application!")
 # ----------------------------------------------------------------------------------------
-# Wait for incoming start command. You might also receive some other cmd in the mean time.
+# Wait for incoming start command. We might also receive some other cmd in the mean time.
 # ----------------------------------------------------------------------------------------
-try:
-    while True:
-        inp = client.check_input(0)
-
-        if inp:
-            msg_type, msg_nbr, msg = client.receive_async(inp)
-
-            if msg == "START_APP"
-
-                # Inform server that app has started
-                client.send(["PUB_DAT", nbr, msg])
-
-                break
-except:
-    print("Didn't want to wait for START command any more :(")
-
-ser.send_command("START")
-# ----------------------------------------------------------------------------------------
-# Log the output from VESNA devices and wait for incoming commands
-# ----------------------------------------------------------------------------------------
-
 try:
     while True:
         # --------------------------------------------------------------------------------
         # Wait for incoming line from VESNA serial port and read it
-        data = monitor.read_line()
+        #data = monitor.read_line()
+        time.sleep(1)
+        print(".")
 
-        if data:
-            log.store_line(data)
-        else:
-            print("Serial timeout")
+        #if data:
+            # ----------------------------------------------------------------------------
+            # Store the line into file
+        #    log.store_line(data)
+        #else:
+        #    print("Serial timeout")
 
         # --------------------------------------------------------------------------------
-        # Check if any incoming command
-        
+        # Check if there is some incoming commad 
+        # TODO: We can check only when we have some extra time? Ex. when there is timeout
+        # on serial connection, not every round.
+        inp = client.check_input(0)
 
-        print(".")
+        # If we received any message
+        if inp:
+            msg_type, msg_nbr, msg = client.receive_async(inp)
+
+            # If the message is command (else we got back None)
+            if msg:
+                info = obtain_info(msg)
+
+                # Form reply
+                reply = [msg_type, msg_nbr, info]
+
+                # Send it back to server
+                client.transmit_async(reply)
+
+        if (len(client.waitingForAck) != 0):
+            client.send_retry()    
+
 
 except KeyboardInterrupt:
     print("\n Keyboard interrupt!.. Stop the app")
 
 
-
-# ----------------------------------------------------------------------------------------
-# FUNCTIONS
-# ----------------------------------------------------------------------------------------
-def obtain_info(cmd):
-    # Return the requested info 
-
-    data = "42!"
-
-    if cmd == "END":
-        # Exit application
-        logging.debug("Got END command...exiting now!")
-        soft_exit("OK")
-
-    elif cmd == "STATE":
-        # Return the current state of the LGTC deivce
-        logging.debug("Return the STATE of the device")
-
-    elif cmd == "START_APP":
-        # Send start command through serial_monitor.py
-        logging.debug("Start the application!")
-
-    elif cmd == "STOP_APP":
-        # Send stop command through serial_monitor.py
-        logging.debug("Stop the application!")
-
-    else:
-        logging.warning("Unknown command: %s" % cmd)
-
-    return data
-
-
-def force_exit():
-    ser.close()
-    client.close()
-    log.close()
-    sys.exit(1)
-
-# Soft exit also informs the server about this
-def soft_exit(reason):
-
-    info = ["SYS", b"-1", reason]  
-
-    client.send(info)
-
-    if client.check_input(1000):
-        if client.receive("DEALER") is True:    
-            force_exit()
-        # TODO: we might receive ACK for some other msg, not for this one ... 
-    else:
-        print("No ack from server...exiting now.")
-        force_exit()
 

@@ -3,6 +3,7 @@
 # ----------------------------------------------------------------------
 import sys
 import serial
+from timeit import default_timer as timer
 
 
 # ----------------------------------------------------------------------
@@ -73,18 +74,18 @@ class serial_monitor():
 
     def sync_with_vesna(self):
         print("Send start command")
-        write_line(">")
+        self.write_line(">")
 
         # Wait for response ('>' character) from Vesna for 3 seconds
-        gotResponse = wait_start_response(3)
+        gotResponse = self.wait_start_response(3)
 
         # If device is not responding, try again
         if(not gotResponse):
             print("No response -> send start cmd again...")
-            flush()
-            write_line("=")
-            write_line(">")
-            gotResponse = wait_start_response(3)
+            self.flush()
+            self.write_line("=")
+            self.write_line(">")
+            gotResponse = self.wait_start_response(3)
 
         if(not gotResponse):
             print("No response...please reset the device and try again")
@@ -111,7 +112,7 @@ class serial_monitor():
 
     def send_command(self, command):
         print("Send %s command" % command)
-        write_line(command)
+        self.write_line(command)
 
         # Read the response
         value = self.ser.readline()

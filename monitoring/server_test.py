@@ -2,6 +2,9 @@ import zmq
 import time
 import logging
 
+import select, sys # For user input
+
+
 LOG_LEVEL = logging.DEBUG
 NUMBER_OF_DEVICES = 3
 
@@ -34,75 +37,95 @@ poller.register(router, zmq.POLLIN)
 # ------------------------------------------------------------------------------- #
 # First wait for synchronization from all subscribers
 # ------------------------------------------------------------------------------- #
+logging.info("Waiting for LGTC devices ... ")
+
 subscribers = 0
-while subscribers < NUMBER_OF_DEVICES:
-    # Wait for synchronization request (msg is "Hi")
-    #address, msg = router.recv_multipart()
-    address, packet_type, nbr, msg = router.recv_multipart()
+try:
+    while subscribers < NUMBER_OF_DEVICES:
+        # Wait for synchronization request (
+        address, packet_type, nbr, msg = router.recv_multipart()
 
-    # Add address to the list of LGTC addr
-    if address not in lgtc_addr:
-        lgtc_addr.append(address)
+        if packet_type == "SYNC":
+            # Add address to the list of LGTC addr
+            if address not in lgtc_addr:
+                lgtc_addr.append(address)
 
-    # Send synchronization reply
-    resp = "Hello there!"
-    router.send_multipart([address, b"SYNC", b"0", resp])
+            # Send synchronization reply
+            router.send_multipart([address, b"ACK", b"0", b" "])
 
-    # Inform user about new device
-    subscribers += 1
-    logging.info("Device %s online (%i/%i)" % (address, subscribers, NUMBER_OF_DEVICES))
+            # Inform user about new device
+            subscribers += 1
+            logging.info("Device %s online (%i/%i)" % (address, subscribers, NUMBER_OF_DEVICES))
+        else:
+            logging.warning("Got a message but not sync request...discarting.")
+
+except KeyboardInterrupt:
+    print("Keybopard interrupt...continuing application.")
 
 
 # ------------------------------------------------------------------------------- #
 # Devices are synchronized - start the app
 # ------------------------------------------------------------------------------- #
 
-# Start pushing commands
+print("-------------------------------------------------------------------------------")
+print("Type in the command. For multicast use prefix m, for unicast use prefix u.")
+print("Example: mSTATE, mSTART_APP, u81STATE, ...")
+print(" ")
 tx_msg_nbr = 0
-for i in range(60):
-    
+while True:
 
-    # Push command
-    if(i%6 == 0):
+    # Wait one second for any user input message
+    i, o, e = select.select( [sys.stdin], [], [], 1 )
+
+    # If there is any user input, act upon it
+    if (i):
+        cmd = sys.stdin.readline().strip()
+        #print("User input:" + cmd)
+        print (" ")
         tx_msg_nbr += 1
 
-        cmd = "Do-smth"
+        # PUBLISH COMMAND
+        if cmd[0] == "m":
 
-        msg =b"%i %s" % (tx_msg_nbr, cmd)
-        publisher.send(msg)
-        logging.debug("Sent PUB_CMD [%i]: %s" % (tx_msg_nbr, cmd))
-
-    if(i%8 == 0):
-        adr = lgtc_addr[0]
-        router.send_multipart([adr, b"UNI_CMD", b"1", b"STATE"])
-
-    # Check if we got any response from devices
-    while True:
+            msg =b"%i %s" % (tx_msg_nbr, cmd[1:])
+            publisher.send(msg)
+            logging.debug("Sent PUB_CMD [%i]: %s" % (tx_msg_nbr, cmd[1:]))
         
-        # Wait just a bit (10ms) to check if there is more incomeing messages
-        # If we go ahead too fast, we will miss them and client has to wait for us to come here again
-        # LGTC needs aprox 30ms if not even more
-        # But if we will go through the rest of the code fast, we don't need this timeout
-        # Problem is that now we wait here for 30ms or even more each time we get here..not good
+        # UNICAST COMMAND
+        if cmd[0] == "u":
+            adr = "LGTC" + cmd[1:3]
 
-        socks = dict(poller.poll(100))
+            print(cmd[3:])
 
-        # If there is any message in pollin queue
-        if socks.get(router) == zmq.POLLIN:
-            address, msg_type, rx_msg_nbr, msg = router.recv_multipart()
-            router.send_multipart([address, b"ACK", rx_msg_nbr, b""])
+            if adr in lgtc_addr:
+                msg = [adr, b"UNI_CMD", str(tx_msg_nbr), cmd[3:]]
+                router.send_multipart(msg)
+                logging.debug("Sent UNI_CMD [%i] to device %s: %s" % (tx_msg_nbr, adr, cmd[3:]))
+            else:
+                logging.warning("Incorect address input: %s (possible %s)!" % (adr, lgtc_addr))
 
-            logging.debug("%s sent: %s" % (address, msg))
+        
+    
+    # Wait just a bit (10ms) to check if there is more incomeing messages
+    # If we go ahead too fast, we will miss them and client has to wait for us to come here again
+    # LGTC needs aprox 30ms if not even more
+    # But if we will go through the rest of the code fast, we don't need this timeout
+    # Problem is that now we wait here for 30ms or even more each time we get here..not good
+    socks = dict(poller.poll(100))
 
-            #tx_msg_nbr += 1
-            #router.send_multipart([address, b"UNI_CMD", tx_msg_nbr, b""])
+    # If there is any message in pollin queue
+    if socks.get(router) == zmq.POLLIN:
+        address, msg_type, msg_nbr, msg = router.recv_multipart()
 
-        # No response from devices
-        else:
-            break
+        # TODO: Add some filtering here? If received SYNC, should we ACK or not?
+        router.send_multipart([address, b"ACK", msg_nbr, b" "])
 
-    print(".")
-    time.sleep(0.5)
+        logging.info("Received %s[%s] from device %s: %s" % (msg_type, msg_nbr, address, msg))
+        print(" ")
+
+
+
+    #print(".")
 
 tx_msg_nbr += 1
 cmd = "END"
