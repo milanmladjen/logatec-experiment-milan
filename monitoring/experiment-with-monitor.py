@@ -81,7 +81,7 @@ log.open_file()
 # 1) Sync with server (tell him we are online) - start the client
 if not client.sync_with_server():
     print("Couldn't synchronize with server..exiting now.")
-    hard_exit()
+    force_exit()
 
 # 2) Compile the application
 #subprocess.run(["make", APP, "-j2"], cwd = APP_LOC)
@@ -102,11 +102,12 @@ if not ser.sync_with_vesna():
 # 5) Inform server that LGTC is ready to start the app
 msg = ["UNI_DAT", 0, "COMPILED"]
 client.send(msg)
-time.sleep(1) # TODO
-if client.receive("DEALER") is not True:    # TODO test this True statement
-    print("No ack from server...exiting now.")
-    hard_exit()
-    
+if client.check_input(1000):
+    if client.receive("DEALER") is not True:    
+        print("No ack from server...exiting now.")
+        force_exit()
+    # TODO Problem might occur if we receive something else rather than ACK packet
+
 
 # ----------------------------------------------------------------------------------------
 # Wait for incoming start command
@@ -157,9 +158,35 @@ except KeyboardInterrupt:
 # ----------------------------------------------------------------------------------------
 # FUNCTIONS
 # ----------------------------------------------------------------------------------------
+def obtain_info(cmd):
+    # Return the requested info 
+
+    data = "42!"
+
+    if cmd == "END":
+        # Exit application
+        logging.debug("Got END command...exiting now!")
+        soft_exit("OK")
+
+    elif cmd == "STATE":
+        # Return the current state of the LGTC deivce
+        logging.debug("Return the STATE of the device")
+
+    elif cmd == "START_APP":
+        # Send start command through serial_monitor.py
+        logging.debug("Start the application!")
+
+    elif cmd == "STOP_APP":
+        # Send stop command through serial_monitor.py
+        logging.debug("Stop the application!")
+
+    else:
+        logging.warning("Unknown command: %s" % cmd)
+
+    return data
 
 
-def hard_exit():
+def force_exit():
     ser.close()
     client.close()
     log.close()
@@ -167,17 +194,16 @@ def hard_exit():
 
 # Soft exit also informs the server about this
 def soft_exit(reason):
+
     info = ["SYS", b"-1", reason]  
 
     client.send(info)
-    time.sleep(1)   # TODO
-    if client.receive("DEALER") is not True:
-        client.send(info)
 
-    ser.close()
-    client.close()
-    log.close()
-
-    sys.exit(1)
-
+    if client.check_input(1000):
+        if client.receive("DEALER") is True:    
+            force_exit()
+        # TODO: we might receive ACK for some other msg, not for this one ... 
+    else:
+        print("No ack from server...exiting now.")
+        force_exit()
 

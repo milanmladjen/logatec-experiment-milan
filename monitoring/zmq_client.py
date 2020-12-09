@@ -55,8 +55,7 @@ class zmq_client():
 
         logging.debug("Send a synchronization request.")
 
-        msgType = b"SYNC"
-        self.dealer.send_multipart([msgType, b"0", b"Hi"])
+        self.dealer.send_multipart(["SYNC", b"0", b"Hi"])
 
         msgType, nbr, msg = self.dealer.recv_multipart()
         if msgType == "SYNC":
@@ -67,8 +66,24 @@ class zmq_client():
             return False
 
 
+    def check_input(self, timeout):
+        # Poll the sockets for given amount of timeout (0 = return immediately)
+
+        sockets = dict(self.poller.poll(timeout))
+
+            if socks.get(self).subscriber) == zmq.POLLIN:
+                return "SUBSCRIBER"
+            elif: sockets.get(self.dealer) == zmq.POLLIN:
+                return "DEALER"
+            else:
+                return None
+            
+
     def receive(self, instance):
-        # Read received message
+        # Read received message..returns:
+        #       True if we received an ACK
+        #       False if there is no message/error
+        #       (type_of_msg, nbr_of_msg, msg) if we received some data
 
         self.rxCnt += 1
 
@@ -82,7 +97,7 @@ class zmq_client():
 
             logging.info("Received PUB_CMD [%s]: %s" % (nbr, msg))
 
-            return msg, nbr
+            return "PUB_CMD", msg, nbr
 
         # If it is a message from router socket
         elif (instance == "DEALER"):
@@ -103,7 +118,7 @@ class zmq_client():
             # If we received any unicast command
             elif msg_type == "UNI_CMD":
                 logging.info("Received UNI_CMD [%s]: %s" % (nbr ,msg))
-                return msg, nbr
+                return msg_type, msg, nbr
 
             elif ms_type == "SYNC":
                 print("Received SYNC message...something went wrong")
@@ -112,12 +127,12 @@ class zmq_client():
             # If we received unknown type of message
             else:
                 loging.warning("Received unknown type of message...discarting.")
-                return None, None
+                return False
 
         # If there is an error in calling the function
         else:
             loging.warning("Unknown instance...check the code")
-            return None, None
+            return False
 
 
     def send(self, reply):
@@ -180,20 +195,18 @@ if __name__ == "__main__":
 
     while True:
         # Check for any incoming messages
-        socks = dict(cliente.poller.poll(0))
-        
-        # If there are any command_messages from the publish server
-        if socks.get(cliente.subscriber) == 1:
+        input_message = cliente.check_input(0)
+        if input_message:
 
             # Read them
-            msg, rxPnbr = cliente.receive("SUBSCRIBER")
+            msg_type, msg, rxPnbr = cliente.receive(input_message)
             
             # Obtain the info upon received command 
             #info = obtain_info(msg)
             info = "42!"
 
             # Form reply
-            reply = ["PUB_DAT", rxPnbr, info] 
+            reply = [msg_type, rxPnbr, info] 
             
             # Respond to the server
             cliente.send(reply)
@@ -205,25 +218,6 @@ if __name__ == "__main__":
             # Or maybe use "continue" to return to poller check on the beginning
             # Beware that then you can stuck here if you got many messages in queue
             continue
-
-        
-        # If we received any direct messages from router server
-        if socks.get(cliente.dealer) == 1:
-
-            # Read them
-            msg, rxDnbr = cliente.receive("DEALER")
-
-            # If there is a message for us
-            if msg != None:
-                # Obtain the info upon received command 
-                #info = obtain_info(msg)
-                info = "41!"
-
-                # Form reply
-                reply = ["UNI_DAT", rxDnbr, info]
-
-                # Respond to the server
-                cliente.send(reply)
 
 
         # If we sent one message and there was no response for more than a second, resend it
