@@ -20,32 +20,30 @@ import zmq_client
 def obtain_info(cmd):
     # Return the requested info 
 
-    data = "xyz"
-
     if cmd == "END":
         # Exit application
-        logging.debug("Got END command...exiting now!")
+        logging.debug("Received END command...exiting now!")
         force_exit()
 
     elif cmd == "STATE":
-        # Return the current state of the LGTC deivce
-        logging.debug("Return the STATE of the device")
-        data = "42!"
+        data = " Stored " + str(serialLinesStored) + " lines."
+        tip = LGTC_COMMAND
 
     elif cmd == "START_APP":
-        # Send start command through serial_monitor.py
-        logging.info("Start the application!")
-        data ="App started"
+        data = ">"
+        tip = VESNA_COMMAND
 
     elif cmd == "STOP_APP":
-        # Send stop command through serial_monitor.py
-        logging.info("Stop the application!")
-        data = "App stopped"
+        data = "="
+        tip = VESNA_COMMAND
 
     else:
         logging.warning("Unknown command: %s" % cmd)
+        return LGTC_COMMAND, "Unknown cmd"
 
-    return data
+
+    logging.info("Received " + cmd + " command.")
+    return tip, data
 
 
 def force_exit():
@@ -92,6 +90,10 @@ SERIAL_TIMEOUT = 1  # In seconds
 DEFAULT_FILENAME = "node_results.txt"
 
 
+LGTC_COMMAND = "1"
+VESNA_COMMAND = "2"
+
+
 # ENVIRONMENTAL VARIABLES
 # Device id should be given as argument at start of the script
 try:
@@ -120,8 +122,12 @@ APP_PATH = "/root/logatec-experiment/application" + APP_DIR
 APP_NAME = APP_DIR[3:]
 
 
-
 print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_ID)
+
+# GLOBAL VARIABLES
+commandForVesna = []
+serialLinesStored = 0
+
 
 # ----------------------------------------------------------------------------------------
 # MODULE INITIALIZATION 
@@ -198,19 +204,41 @@ try:
     while True:
         # --------------------------------------------------------------------------------
         # Wait for incoming line from VESNA serial port and read it
-        data = monitor.read_line()
+        data = ser.read_line()
         time.sleep(1)
         print(".")
 
         if data:
             # Store the line into file
             log.store_line(data)
+            serialLinesStored += 1
+
+        # --------------------------------------------------------------------------------
+        # If we received some command from the server, send it to VESNA
+        elif commandForVesna:
+            # Get requested info from VESNA
+            data = ser.send_command(commandForVesna[2])
+
+            # Form a reply
+            response = commandForVesna
+            response[2] = data
+
+            # Send reply to the server
+            client.transmit_async(reply)
+
+            # Log it to file as well
+            log.store_line(commandForVesna[2])
+            log.store_line(data)
+
+            commandForVesna = []
+
 
         # --------------------------------------------------------------------------------
         # If there is no data from VESNA to read and store, do other stuff
         else:
-            
-            # Check if there is some incoming commad 
+
+            # ----------------------------------------------------------------------------
+            # Check if there is some incoming commad from the server
             inp = client.check_input(0)
 
             # If we received any message from the server
@@ -219,17 +247,25 @@ try:
 
                 # If the message is command (else (if we received ack) we got back None)
                 if msg:
-                    info = obtain_info(msg)
-
-                    # Form a reply
+                    tip, info = obtain_info(msg)
+                    
                     reply = [msg_type, msg_nbr, info]
 
-                    # Send it back to server
-                    client.transmit_async(reply)
+                    # Some commands can be replied right away
+                    if tip == LGTC_COMMAND:
+                        client.transmit_async(reply)
 
+                    # Store others and forward them to VESNA
+                    else:
+                        commandForVesna = reply
+
+            # If there is still some message that didn't receive ACK back, re send it
             if (len(client.waitingForAck) != 0):
                 client.send_retry()    
 
+        # TODO: Update status line in terminal.
+        #print("Line: " + str(line) + " (~ " + str(elapsedMin) + "|" + 
+        #str(int(APP_DURATION)) + " min)", end="\r")
 
 except KeyboardInterrupt:
     print("\n Keyboard interrupt!.. Stop the app")
