@@ -118,9 +118,9 @@ class zmq_client():
             else:
                 return False
             
-
+    # Receive message and return it...handel ACK without informing the user 
     def receive_async(self, instance):
-        # Read received message..returns:
+        # Returns:
         #       True if we received an ACK
         #       False if there is no message/error
         #       (type_of_msg, nbr_of_msg, msg) if we received some data

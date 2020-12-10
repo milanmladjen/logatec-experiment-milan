@@ -154,6 +154,7 @@ if client.sync_with_server(10000) is False:
 
 # TESTING PURPOSE - COMPILING TIME DELAY
 try:
+    print("Device is compiling the code for VESNA...")
     time.sleep(10)
 except KeyboardInterrupt:
     print(" ")
@@ -197,39 +198,37 @@ try:
     while True:
         # --------------------------------------------------------------------------------
         # Wait for incoming line from VESNA serial port and read it
-        #data = monitor.read_line()
+        data = monitor.read_line()
         time.sleep(1)
         print(".")
 
-        #if data:
-            # ----------------------------------------------------------------------------
+        if data:
             # Store the line into file
-        #    log.store_line(data)
-        #else:
-        #    print("Serial timeout")
+            log.store_line(data)
 
         # --------------------------------------------------------------------------------
-        # Check if there is some incoming commad 
-        # TODO: We can check only when we have some extra time? Ex. when there is timeout
-        # on serial connection, not every round.
-        inp = client.check_input(0)
+        # If there is no data from VESNA to read and store, do other stuff
+        else:
+            
+            # Check if there is some incoming commad 
+            inp = client.check_input(0)
 
-        # If we received any message
-        if inp:
-            msg_type, msg_nbr, msg = client.receive_async(inp)
+            # If we received any message from the server
+            if inp:
+                msg_type, msg_nbr, msg = client.receive_async(inp)
 
-            # If the message is command (else we got back None)
-            if msg:
-                info = obtain_info(msg)
+                # If the message is command (else (if we received ack) we got back None)
+                if msg:
+                    info = obtain_info(msg)
 
-                # Form reply
-                reply = [msg_type, msg_nbr, info]
+                    # Form a reply
+                    reply = [msg_type, msg_nbr, info]
 
-                # Send it back to server
-                client.transmit_async(reply)
+                    # Send it back to server
+                    client.transmit_async(reply)
 
-        if (len(client.waitingForAck) != 0):
-            client.send_retry()    
+            if (len(client.waitingForAck) != 0):
+                client.send_retry()    
 
 
 except KeyboardInterrupt:
