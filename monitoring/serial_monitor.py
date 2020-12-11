@@ -26,7 +26,7 @@ class serial_monitor():
         try:
             port = "/dev/" + p
             self.ser = serial.Serial(port, self.BAUD, self.BYTESIZE, self.PARITY, self.STOPBIT, timeout=self.timeout)
-            print("Serial monitor opened on port: " + self.port)
+            print("Serial monitor opened on port: " + port)
             return True
 
         except:
@@ -39,7 +39,7 @@ class serial_monitor():
             try:
                 port = self.BASEPORT + str(i)
                 self.ser = serial.Serial(port, self.BAUD, self.BYTESIZE, self.PARITY, self.STOPBIT, timeout=self.timeout)
-                print("Serial monitor opened on port: " + self.port)
+                print("Serial monitor opened on port: " + port)
                 break
             except:
                 print("No serial port connected or all in use.")
@@ -73,18 +73,18 @@ class serial_monitor():
     # ------------------------------------------------------------------
 
     def sync_with_vesna(self):
-        print("Send start command")
-        self.write_line(">")
+        print("Send sync command")
+        self.write_line("@")
 
-        # Wait for response ('>' character) from Vesna for 3 seconds
+        # Wait for response ('@' character) from Vesna for 3 seconds
         gotResponse = self.wait_start_response(3)
 
         # If device is not responding, try again
         if(not gotResponse):
-            print("No response -> send start cmd again...")
+            print("No response -> send sync cmd again...")
             self.flush()
-            self.write_line("=")
-            self.write_line(">")
+            self.write_line("=")    # Send stop command in case the app is running
+            self.write_line("@")
             gotResponse = self.wait_start_response(3)
 
         if(not gotResponse):
@@ -99,10 +99,10 @@ class serial_monitor():
         startTime = timer()
         while((timer() - startTime) < max_time):
             try:
-                value = self.ser.readline()
+                value = self.read_line()
                 if not value:
                     break     
-                if(chr(value[0]) == '>'):
+                if(chr(value[0]) == '@'):
                     return True
 
             except KeyboardInterrupt:
@@ -115,7 +115,7 @@ class serial_monitor():
         self.write_line(command)
 
         # Read the response
-        value = self.ser.readline()
+        value = self.read_line()
 
         # TODO: Vesna can return something else than our data...what to do then?
         # Ad some checking mechanism... if not our data, store it to file and wait for right response.
@@ -123,7 +123,7 @@ class serial_monitor():
         if not value:
             return "No response from VESNA"
         else:
-            return value
+            return value.decode()
 
 
 

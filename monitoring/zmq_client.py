@@ -68,8 +68,8 @@ class zmq_client():
             msg = self.subscriber.recv()
 
             ms = msg.split()
-            nbr = ms[0]
-            msg = ms[1]
+            nbr = ms[0].decode()
+            msg = ms[1].decode()
 
             logging.info("Received PUB_CMD [%s]: %s" % (nbr, msg))
 
@@ -78,7 +78,8 @@ class zmq_client():
         elif (instance == "DEALER"):
             msg_type, nbr, msg = self.dealer.recv_multipart()
 
-            return msg_type, nbr, msg
+            # Return as strings
+            return msg_type.decode(), nbr.decode(), msg.decode()
 
         else:
             loging.error("Unknown instance...check the code")
@@ -91,6 +92,9 @@ class zmq_client():
         if not isinstance(msg, list):
             logging.error("Incorect format of message")
             return False
+    
+        # Encode the message from string to bytes
+        msg = [msg[0].encode(), msg[1].encode(), msg[2].encode()]
         
         logging.debug("Sending data to server...")
         self.dealer.send_multipart(msg)
@@ -132,8 +136,8 @@ class zmq_client():
             msg = self.subscriber.recv()
 
             ms = msg.split()
-            nbr = ms[0]
-            msg = ms[1]
+            nbr = ms[0].decode()
+            msg = ms[1].decode()
 
             logging.info("Received PUB_CMD [%s]: %s" % (nbr, msg))
 
@@ -142,6 +146,11 @@ class zmq_client():
         # If it is a message from router socket
         elif (instance == "DEALER"):
             msg_type, nbr, msg = self.dealer.recv_multipart()
+
+            # Decode the message from bytes to string
+            msg_type = msg_type.decode()
+            nbr = nbr.decode()
+            msg = msg.decode()
 
             # If we got acknowledge on transmitted data
             if msg_type == "ACK":
@@ -176,14 +185,14 @@ class zmq_client():
 
 
     def transmit_async(self, msg):
-        # Send a message to the server - must be formed as a list: [type, nbr, msg]
+        # Send a message to the server - must be formed as a list of strings: [type, nbr, msg]
         self.transmit(msg)
-    
+
         # Server sent another command before sending ACK to our previous message
         if len(self.waitingForAck) != 0:
             logging.warning("New message sent but server didn't ack our previous message!")
             # logging.warning("Old message will be overwritten.. :/")
-        
+
         self.waitingForAck.append(msg[1])
         self.lastSentInfo = msg
         self.lastSentTime = timer.now()
@@ -197,7 +206,7 @@ class zmq_client():
         if ((timer.now() - self.lastSentTime).total_seconds() > self.ACK_TIMEOUT):
             logging.warning("3 second have passed and no response from server.. Resending data!")
             # Resend info
-            self.dealer.send_multipart(self.lastSentInfo)
+            self.transmit(self.lastSentInfo)
             self.lastSentTime = timer.now()
 
             self.nbrRetries += 1
@@ -217,7 +226,7 @@ class zmq_client():
 
         logging.debug("Send a synchronization request.")
 
-        sync_request = ["SYNC", b"0", b" "]
+        sync_request = ["SYNC", "0", " "]
         self.transmit(sync_request)
         state = self.wait_ack("0", timeout)
 

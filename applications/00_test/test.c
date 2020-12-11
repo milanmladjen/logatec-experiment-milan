@@ -47,6 +47,10 @@ input_command(char *data){
 	char time[8];
 	char *p;
     switch(cmd){
+		case '@':
+			printf("@ \n");
+			break;
+			
 		case '>':
 			process_start(&log_process, NULL);
 			break;
