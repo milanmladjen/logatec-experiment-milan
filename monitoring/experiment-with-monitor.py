@@ -42,8 +42,7 @@ def obtain_info(cmd):
         logging.warning("Unknown command: %s" % cmd)
         return LGTC_COMMAND, "Unknown cmd"
 
-
-    logging.info("Received " + cmd + " command.")
+    #logging.info("Received " + cmd + " command.")
     return tip, data
 
 
@@ -83,10 +82,10 @@ def soft_exit(reason):
 # DEFINITIONS
 LOG_LEVEL = logging.DEBUG
 
-ROUTER_HOSTNAME = "tcp://192.168.88.253:5562"
-SUBSCR_HOSTNAME = "tcp://192.168.88.253:5561"
+ROUTER_HOSTNAME = "tcp://192.168.88.252:5562"
+SUBSCR_HOSTNAME = "tcp://192.168.88.252:5561"
 
-SERIAL_TIMEOUT = 1  # In seconds
+SERIAL_TIMEOUT = 2  # In seconds
 
 DEFAULT_FILENAME = "node_results.txt"
 
@@ -135,7 +134,7 @@ serialLinesStored = 0
 # ----------------------------------------------------------------------------------------
 # MODULE INITIALIZATION 
 # ----------------------------------------------------------------------------------------
-logging.basicConfig(format='%(levelname)s:%(message)s', level=LOG_LEVEL)
+logging.basicConfig(format="[%(levelname)s: %(funcName)15s()] %(message)s", level=LOG_LEVEL)
 
 monitor = serial_monitor.serial_monitor(SERIAL_TIMEOUT)
 
@@ -156,6 +155,7 @@ log.open_file()
 if client.sync_with_server(10000) is False:
     logging.error("Couldn't synchronize with server..exiting now.")
     force_exit()
+logging.info("Synced with server!")
 
 # 2) Compile the application
 logging.info("Compile the application ... ")
@@ -163,9 +163,9 @@ logging.info("Compile the application ... ")
 procCompile = Popen(["make", APP_NAME, "-j2"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
 stdout, stderr = procCompile.communicate()
 
-logging.info(stdout)
+logging.debug(stdout)
 if(stderr):
-    logging.info(stderr)
+    logging.debug(stderr)
 
 # 3) Flash the VESNA with app binary
 logging.info("Flash the app to VESNA .. ")
@@ -173,9 +173,9 @@ logging.info("Flash the app to VESNA .. ")
 procFlash = Popen(["make", APP_NAME + ".logatec3"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
 stdout, stderr = procFlash.communicate()
 
-logging.info(stdout)
+logging.debug(stdout)
 if(stderr):
-    logging.info(stderr)
+    logging.debug(stderr)
 
 
 # TESTING PURPOSE - COMPILING TIME DELAY
@@ -225,15 +225,16 @@ try:
     while True:
         # --------------------------------------------------------------------------------
         # Wait for incoming line from VESNA serial port and read it
-        data = monitor.read_line()     
 
-        if data:
+        if monitor.input_waiting():
+            data = monitor.read_line()  
+            
             # Store the line into file
             log.store_line(data)
             serialLinesStored += 1
 
         # --------------------------------------------------------------------------------
-        # If we received some command from the server, send it to VESNA
+        # If we received some command from the server, send it to VESNA and get response
         elif commandForVesna:
             # Get requested info from VESNA
             data = monitor.send_command(commandForVesna[2])
@@ -246,8 +247,8 @@ try:
             client.transmit_async(response)
 
             # Log it to file as well
-            log.store_str(commandForVesna[2])
-            log.store_str(data)
+            log.store_lgtc_line("Got command: " + commandForVesna[2])
+            log.store_lgtc_line(" Got response: " + data)
 
             commandForVesna = []
 
@@ -285,7 +286,6 @@ try:
         # TODO: Update status line in terminal.
         #print("Line: " + str(line) + " (~ " + str(elapsedMin) + "|" + 
         #str(int(APP_DURATION)) + " min)", end="\r")
-        print(".")
 
 except KeyboardInterrupt:
     print("\n Keyboard interrupt!.. Stop the app")

@@ -71,16 +71,19 @@ class zmq_client():
             nbr = ms[0].decode()
             msg = ms[1].decode()
 
-            logging.info("Received PUB_CMD [%s]: %s" % (nbr, msg))
+            logging.debug("Received PUB_CMD [%s]: %s" % (nbr, msg))
 
             return "PUB_CMD", nbr, msg
 
         elif (instance == "DEALER"):
-            msg_type, nbr, msg = self.dealer.recv_multipart()
+            msg_type, nbr, data = self.dealer.recv_multipart()
 
-            # Return as strings
-            return msg_type.decode(), nbr.decode(), msg.decode()
+            # Decode message from bytes to string
+            msg = [msg_type.decode(), nbr.decode(), data.decode()]
 
+            logging.debug("Received %s [%s]: %s" % (msg[0], msg[1], msg[2]))
+
+            return msg
         else:
             loging.error("Unknown instance...check the code")
             return None, None, None
@@ -139,7 +142,7 @@ class zmq_client():
             nbr = ms[0].decode()
             msg = ms[1].decode()
 
-            logging.info("Received PUB_CMD [%s]: %s" % (nbr, msg))
+            logging.debug("Received PUB_CMD [%s]: %s" % (nbr, msg))
 
             return "PUB_CMD", nbr, msg
 
@@ -155,7 +158,7 @@ class zmq_client():
             # If we got acknowledge on transmitted data
             if msg_type == "ACK":
                 if nbr in self.waitingForAck:
-                    logging.info("Server acknowledged our data [" + nbr + "]")
+                    logging.debug("Server acknowledged our data [" + nbr + "]")
                     self.waitingForAck.remove(nbr)
                     self.nbrRetries = 0
                 else:
@@ -166,7 +169,7 @@ class zmq_client():
 
             # If we received any unicast command
             elif msg_type == "UNI_CMD":
-                logging.info("Received UNI_CMD [%s]: %s" % (nbr ,msg))
+                logging.debug("Received UNI_CMD [%s]: %s" % (nbr ,msg))
                 return msg_type, nbr, msg
 
             elif ms_type == "SYNC":
@@ -230,12 +233,7 @@ class zmq_client():
         self.transmit(sync_request)
         state = self.wait_ack("0", timeout)
 
-        if state is True:
-            logging.info("Synced with server!")
-            return True
-        else:
-            logging.error("Could not sync with server!")
-            return False
+        return state
 
 
 

@@ -3,6 +3,7 @@
 # ----------------------------------------------------------------------
 import sys
 import serial
+import logging
 from timeit import default_timer as timer
 
 
@@ -26,11 +27,11 @@ class serial_monitor():
         try:
             port = "/dev/" + p
             self.ser = serial.Serial(port, self.BAUD, self.BYTESIZE, self.PARITY, self.STOPBIT, timeout=self.timeout)
-            print("Serial monitor opened on port: " + port)
+            logging.debug("Serial monitor opened on port: " + port)
             return True
 
         except:
-            print("Serial port not connected or in use.")
+            logging.error("Serial port not connected or in use.")
             return False
 
 
@@ -39,26 +40,37 @@ class serial_monitor():
             try:
                 port = self.BASEPORT + str(i)
                 self.ser = serial.Serial(port, self.BAUD, self.BYTESIZE, self.PARITY, self.STOPBIT, timeout=self.timeout)
-                print("Serial monitor opened on port: " + port)
+                logging.debug("Serial monitor opened on port: " + port)
                 break
             except:
-                print("No serial port connected or all in use.")
+                logging.error("No serial port connected or all in use.")
                 return False
         return True
 
 
     def read_line(self):
+        #logging.debug("Serial read")
+        #data = self.ser.readline()
         data = self.ser.read_until(b'\n', None)
+        data = data.decode()
         return data
 
 
     def write_line(self, data):
+        # Convert data to string and add \n | send over serial
+        #logging.debug("Serial write")
         try:
             self.ser.write((data + "\n").encode("ASCII"))
         except:
-            print("Error writing to device!")
+            logging.error("Error writing to device!")
         finally:
             return
+
+    def input_waiting(self):
+        if self.ser.inWaiting() > 0:
+            return True
+        else:
+            return False
 
     def flush(self):
         self.ser.reset_input_buffer()
@@ -66,6 +78,7 @@ class serial_monitor():
         return
 
     def close(self):
+        logging.debug("Serial close!")
         self.ser.close()
 
 
@@ -73,7 +86,7 @@ class serial_monitor():
     # ------------------------------------------------------------------
 
     def sync_with_vesna(self):
-        print("Send sync command")
+        logging.debug("Send sync command to VESNA")
         self.write_line("@")
 
         # Wait for response ('@' character) from Vesna for 3 seconds
@@ -81,18 +94,18 @@ class serial_monitor():
 
         # If device is not responding, try again
         if(not gotResponse):
-            print("No response -> send sync cmd again...")
+            logging.debug("No response -> send sync cmd again...")
             self.flush()
             self.write_line("=")    # Send stop command in case the app is running
             self.write_line("@")
             gotResponse = self.wait_start_response(3)
 
         if(not gotResponse):
-            print("No response...please reset the device and try again")
+            logging.error("No response...please reset the device and try again")
             close()
             return False
 
-        print("Got response...synced with VESNA")
+        logging.debug("Got response...synced with VESNA")
         return True
     
     def wait_start_response(self, max_time):
@@ -102,7 +115,7 @@ class serial_monitor():
                 value = self.read_line()
                 if not value:
                     break     
-                if(chr(value[0]) == '@'):
+                if(value[0] == '@'):
                     return True
 
             except KeyboardInterrupt:
@@ -111,7 +124,7 @@ class serial_monitor():
         return False
 
     def send_command(self, command):
-        print("Send %s command" % command)
+        logging.debug("Serial send %s command to VESNA" % command)
         self.write_line(command)
 
         # Read the response
@@ -119,11 +132,13 @@ class serial_monitor():
 
         # TODO: Vesna can return something else than our data...what to do then?
         # Ad some checking mechanism... if not our data, store it to file and wait for right response.
-        # If no response for more than 3 seconds, send command again
+        # TODO: response may also be formed in multiple lines...
         if not value:
+            logging.warning("No response from VESNA")
             return "No response from VESNA"
         else:
-            return value.decode()
+            logging.debug("VESNA responded")
+            return value
 
 
 
@@ -152,7 +167,7 @@ if __name__ == "__main__":
             data = monitor.read_line()
 
             if data:
-                if(chr(data[0]) == "="):
+                if(data[0] == "="):
                     print("Found stop command")
                     break
 

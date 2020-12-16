@@ -25,11 +25,10 @@ class file_loger():
 
     def store_line(self, data):
         self.file.write("[" + str(datetime.now().time())+"]: ")
-        data = data.decode("ASCII")
-        self.file.write(str(data))
+        self.file.write(data)
 
-    def store_str(self,s):
-        self.file.write("[" + str(datetime.now().time())+"]: ")
+    def store_lgtc_line(self,s):
+        self.file.write("[" + str(datetime.now().time())+" LGTC]: ")
         self.file.write(s)
 
     def warning(self, s):

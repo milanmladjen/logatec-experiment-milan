@@ -60,7 +60,7 @@ input_command(char *data){
 			break;
 
 		case '=':
-			printf("= \n");	// Confirm received stop command
+			printf("= Application stopped.\n");	// Confirm received stop command
 			process_exit(&log_process);
 			break;
 
@@ -86,7 +86,7 @@ PROCESS_THREAD(log_process, ev, data)
 	PROCESS_BEGIN();
 
 	// Send start command ('>') back to LGTC so it knows we started log_process
-	printf("> \n");
+	printf("> Application started!\n");
 
 	// Setup a periodic timer that expires after 1 second
 	etimer_set(&timer, SECOND);
@@ -94,7 +94,8 @@ PROCESS_THREAD(log_process, ev, data)
 	time_counter = 0;
 
 	while(1) {
-		printf("Hello there!\n");
+
+		printf("Hello there %ld!\n", time_counter);
 
 		// If elapsed seconds are equal to APP_DURATION, exit process
 		if(time_counter == app_duration) {
