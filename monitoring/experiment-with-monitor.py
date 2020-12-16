@@ -48,7 +48,7 @@ def obtain_info(cmd):
 
 def force_exit():
     monitor.close()
-    client.close()
+    #client.close() #TODO
     log.close()
     sys.exit(1)
 
@@ -284,7 +284,7 @@ print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minute
 # MODULE INITIALIZATION 
 # ----------------------------------------------------------------------------------------
 #logging.basicConfig(format="[%(module)15s: %(funcName)16s()] %(message)s", level=LOG_LEVEL) # To long module names
-logging.basicConfig(format="[%(levelname)6s: %(funcName)16s()] %(message)s", level=LOG_LEVEL)
+logging.basicConfig(format="[%(levelname)5s:%(funcName)16s()] %(message)s", level=LOG_LEVEL)
 
 monitor = serial_monitor.serial_monitor(SERIAL_TIMEOUT)
 
