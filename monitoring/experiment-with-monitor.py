@@ -10,9 +10,9 @@ import logging
 import time
 from subprocess import Popen, PIPE
 
-import serial_monitor
-import file_logger
-import zmq_client
+from lib import serial_monitor
+from lib import file_logger
+from lib import zmq_client
 
 
 # ----------------------------------------------------------------------------------------

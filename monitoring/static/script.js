@@ -42,7 +42,7 @@ $(document).ready(function(){
 
         console.log("Send new command [" + nbr + "]");
         socket.emit("new command", {
-            device: "LGTC1",
+            device: "LGTC66",
             count: nbr,
             data: $("#input_cmd").val()
         });

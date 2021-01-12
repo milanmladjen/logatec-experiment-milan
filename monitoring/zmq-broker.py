@@ -49,7 +49,7 @@ poller.register(frontend, zmq.POLLIN)
 # ------------------------------------------------------------------------------- #
 # First wait for synchronization from all subscribers
 # ------------------------------------------------------------------------------- #
-logging.info("Waiting for LGTC devices ... interrupt it with Ctrl+C")
+logging.info("Waiting for %i LGTC devices ... interrupt it with Ctrl+C" % NUMBER_OF_DEVICES)
 
 subscribers = 0
 try:
@@ -85,12 +85,12 @@ tx_msg_nbr = 0
 try:
     while True:
 
-        sockets = dict(poller.poll(0))
+        sockets = dict(poller.poll(100))
 
         # If there is a message in polling queue from the flask server, forward it to LGTC devices
         if sockets.get(frontend) == zmq.POLLIN:
 
-            flask_script_id, device, count, data = frontend.recv_multipart()
+            dummy_flask_script_id, device, count, data = frontend.recv_multipart()
 
             # From bytes to string for loging output [device, count, data]
             msg = [device.decode(), count.decode(), data.decode()]
@@ -120,23 +120,26 @@ try:
         # If there is any message in pollin queue from LGTC devices, forward it to flask_server
         elif sockets.get(backend) == zmq.POLLIN:
             
-            address, msg_type, msg_nbr, msg = backend.recv_multipart()
+            address, data_type, data_nbr, data = backend.recv_multipart()
 
             # TODO: Add some filtering here? If received SYNC, should we ACK or not?
-            backend.send_multipart([address, b"ACK", msg_nbr, b" "])
+            backend.send_multipart([address, b"ACK", data_nbr, b" "])
 
-            logging.info("Received %s[%s] from device %s: %s" % (msg_type, msg_nbr, address, msg))
+            # From bytes to string for loging output [device, count, data]
+            msg = [address.decode(), data_nbr.decode(), data.decode(), data_type.decode()]
+
+            logging.info("Received %s[%s] from device %s: %s" % (msg[3], msg[1], msg[0], msg[2]))
             print(" ")
 
             # Send response back to the server [device, count, data]
-            frontend.send_multipart([flask_script_id, address, msg_nbr, msg])
+            frontend.send_multipart([flask_script_id, address, data_nbr, data])
 
         # Check status of devices and update it in DB
         #else ...
 
         #print(".")
-    except KeyboardInterrupt:
-        Print("Keyboard interrupt...exiting now.")
+except KeyboardInterrupt:
+    Print("Keyboard interrupt...exiting now.")
 
 tx_msg_nbr += 1
 cmd = "END"
