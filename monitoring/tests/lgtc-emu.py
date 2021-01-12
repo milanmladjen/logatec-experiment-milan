@@ -10,9 +10,9 @@ import logging
 import time
 from subprocess import Popen, PIPE
 
-import serial_monitor
-import file_logger
-import zmq_client
+from lib import serial_monitor
+from lib import file_logger
+from lib import zmq_client
 
 
 # ----------------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ def main():
     log.open_file()
 
     # 1) Sync with server (tell him we are online) with timeout of 10 seconds
-    if client.sync_with_server(10000) is False:
+    if client.sync_with_broker(10000) is False:
         logging.error("Couldn't synchronize with server..exiting now.")
         force_exit()
     logging.info("Synced with server!")
@@ -183,7 +183,7 @@ def main():
 
                 # Log it to file as well
                 log.store_lgtc_line("Got command: " + commandForVesna[2])
-                log.store_lgtc_line(" Got response: " + data)
+                #log.store_lgtc_line(" Got response: " + data)
 
                 commandForVesna = []
 
@@ -257,7 +257,7 @@ try:
     LGTC_ID = "LGTC" + LGTC_ID
 except:
     print("No device name was given...going with default")
-    LGTC_ID = "LGTCxy"
+    LGTC_ID = "LGTC66"
 
 # Application name and duration should be defined as variable while running container
 try:
