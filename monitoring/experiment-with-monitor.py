@@ -52,7 +52,7 @@ def force_exit():
     log.close()
     sys.exit(1)
 
-# Soft exit also informs the server about this
+# Soft exit also informs the broker about this
 def soft_exit(reason):
 
     info = ["SYS", "-1", reason]  
@@ -64,7 +64,7 @@ def soft_exit(reason):
             force_exit()
         # TODO: we might receive ACK for some other msg, not for this one ... 
     else:
-        print("No ack from server...exiting now.")
+        print("No ack from broker...exiting now.")
         force_exit()
 
 
@@ -84,11 +84,11 @@ def main():
     log.prepare_file(DEFAULT_FILENAME, LGTC_ID)
     log.open_file()
 
-    # 1) Sync with server (tell him we are online) with timeout of 10 seconds
-    if client.sync_with_server(10000) is False:
-        logging.error("Couldn't synchronize with server..exiting now.")
+    # 1) Sync with broker (tell him we are online) with timeout of 10 seconds
+    if client.sync_with_broker(10000) is False:
+        logging.error("Couldn't synchronize with broker..exiting now.")
         force_exit()
-    logging.info("Synced with server!")
+    logging.info("Synced with broker!")
 
     # 2) Compile the application
     logging.info("Compile the application ... ")
@@ -139,12 +139,12 @@ def main():
     monitor.send_command("&" + str(APP_DURATION * 60))
 
 
-    # Inform server that LGTC is ready to start the app
+    # Inform broker that LGTC is ready to start the app
     compiled_msg = ["UNI_DAT", "1", "COMPILED"]
     client.transmit(compiled_msg)
 
     if client.wait_ack("1", 1) is False:
-        logging.error("No ack from server...exiting now.")
+        logging.error("No ack from broker...exiting now.")
         force_exit()
 
 
@@ -168,7 +168,7 @@ def main():
                 serialLinesStored += 1
 
             # --------------------------------------------------------------------------------
-            # If we received some command from the server, send it to VESNA and get response
+            # If we received some command from the broker, send it to VESNA and get response
             elif commandForVesna:
                 # Get requested info from VESNA
                 data = monitor.send_command(commandForVesna[2])
@@ -177,7 +177,7 @@ def main():
                 response = commandForVesna
                 response[2] = data
 
-                # Send reply to the server
+                # Send reply to the broker
                 client.transmit_async(response)
 
                 # Log it to file as well
@@ -192,10 +192,10 @@ def main():
             else:
 
                 # ----------------------------------------------------------------------------
-                # Check if there is some incoming commad from the server
+                # Check if there is some incoming commad from the broker
                 inp = client.check_input(0)
 
-                # If we received any message from the server
+                # If we received any message from the broker
                 if inp:
                     msg_type, msg_nbr, msg = client.receive_async(inp)
 

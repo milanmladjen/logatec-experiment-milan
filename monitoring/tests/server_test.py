@@ -1,3 +1,8 @@
+# 
+#   Server test - server that talks to the LGTC clients over 0MQ
+#   User can input commands in the terminal, which are sent to synced devices
+#
+
 import zmq 
 import time
 import logging

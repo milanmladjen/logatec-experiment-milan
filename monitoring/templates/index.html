@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<meta charset = "UTF-8">
+
+<html>  
+	<head> 
+		<meta charset = "utf-8"> 
+		<title>LOG-a-TEC testbed {{ example_string }}</title> 
+		<!-- Include some libraries -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
+		<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+		<script type="text/javascript" src="/static/script.js"></script>
+	</head> 
+
+	<body> 
+		<header>
+			<div style="display: block; text-align: center; margin:auto;">
+				<h1 style = "color:blue;">LOG-a-TEC testbed experiment monitor</h1> 
+				<p>A tool for real time monitoring and control over the running experiment in LOG-a-TEC testbed.</p> 
+
+				<nav> 
+					TODO: index |  home | how to use?
+				</nav> 
+			</div>
+
+			<!-- Straight line -->
+			<hr />
+		</header> 
+
+		<div style = "background-color: rgb(165, 245, 237); height:500px; width:40%; float:left;">
+			<h2 style = "text-align: center;">Monitor</h2>
+
+			<!-- INPUT DIV -->
+			<div style = "width:fit-content; margin-left: 10px;">
+				<form >
+					Command: 
+					<input type = "text" name = "input_cmd" id = "input_cmd" value="START_APP"/>
+
+					<select name = "select_device" id="select_device" style = "width: 100px;"> <!-- is width necessary? -->
+						<option value = "All" selected>All</option>
+					</select>
+
+					<input type = "button" name = "send_cmd" id = "send_cmd" value = "Send" />
+				</form>
+			</div>
+
+			<hr style = "border: dashed thin;" />
+
+			<!-- OUTPUT DIV -->
+			<div style = "width:fit-content; margin-left: 10px;">
+				Output: <br />
+				<!--output -->
+					<textarea rows = "15" cols = "70" name = "output-field"> LGTC output...
+					</textarea>
+				<!-- output -->
+			</div>
+
+		</div>
+
+		<div style = "background-color: rgb(5, 252, 252); height: 500px; width: 60%; float:right;">
+			<h2 style = "text-align: center;">Tloris</h2>
+
+			<div style="margin-left: 20px;">
+				<img src="/static/img/tloris.png" alt="Testbed tloris" style="max-width:100%; max-height:100%; object-fit: contain;" height="400px">
+			</div>
+		</div>
+
+		<div style= "background-color: turquoise; clear:both">
+			<p>Possible commands and explanation what they do.</p>
+		</div>
+		
+		<footer> 
+			<br />
+			<hr />
+			<div style = "margin:auto; text-align: center;">
+				<p>External links?</a></p> 
+			</div>
+		</footer> 
+
+	</body> 
+</html> 

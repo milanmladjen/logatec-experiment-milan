@@ -225,7 +225,7 @@ class zmq_client():
 
 
     # Send SYNC message to the server, so it knows we are online
-    def sync_with_server(self, timeout):
+    def sync_with_broker(self, timeout):
 
         logging.debug("Send a synchronization request.")
 
