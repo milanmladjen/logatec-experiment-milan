@@ -95,15 +95,15 @@ try:
             # From bytes to string for loging output [device, count, data]
             msg = [device.decode(), count.decode(), data.decode()]
 
-            print("Received CMD [%s] from server: %s for: %s" % (msg[1],msg[2], msg[0]))
+            logging.info("Received CMD [%s] from server: %s for: %s" % (msg[1],msg[2], msg[0]))
 
             tx_msg_nbr += 1
 
             # PUBLISH COMMAND - if message is for all devices
             if msg[0] == "All":
 
-                cmd =b"%s %s" % (msg[1], msg[2])
-                backend_pub.send(cmd)
+                cmd ="%s %s" % (msg[1], msg[2])
+                backend_pub.send(cmd.encode())
                 logging.debug("Sent PUB_CMD [%s]: %s" % (msg[1], msg[2]))
             
             # UNICAST COMMAND - if message is only for one device

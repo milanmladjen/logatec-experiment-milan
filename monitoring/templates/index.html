@@ -35,8 +35,10 @@
 					Command: 
 					<input type = "text" name = "input_cmd" id = "input_cmd" value="START_APP"/>
 
-					<select name = "select_device" id="select_device" style = "width: 100px;"> <!-- is width necessary? -->
-						<option value = "All" selected>All</option>
+					<select name = "select_device" id="select_device" style = "width: 120px;"> <!-- is width necessary? -->
+						<option value = "None">--- Device ---</option>
+						<option value = "All">All</option>
+						<option value = "LGTC66">LGTC66</option>
 					</select>
 
 					<input type = "button" name = "send_cmd" id = "send_cmd" value = "Send" />
@@ -49,7 +51,7 @@
 			<div style = "width:fit-content; margin-left: 10px;">
 				Output: <br />
 				<!--output -->
-					<textarea rows = "15" cols = "70" name = "output-field"> LGTC output...
+					<textarea rows = "15" cols = "70" name = "output_field" id="output_field"> LGTC output...
 					</textarea>
 				<!-- output -->
 			</div>

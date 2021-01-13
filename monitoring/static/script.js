@@ -24,8 +24,24 @@ function dropdownDeleteDevice(dev){
     // dropdown.options.length = 1;
 }
 
+// Check if input command is in list of supported commands
+function commandSupported(c){
+    possible_commands = [
+        "START_APP",
+        "RESET_APP",
+        "STOP_APP",
+        "STATUS"
+    ];
 
-// Websocket config 
+    if(possible_commands.includes(c)){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+// Websocket config (using jQuery on document ready)
 $(document).ready(function(){
 
     // sending a connect request to the server.
@@ -37,17 +53,39 @@ $(document).ready(function(){
 // Handlers for events on client browser (using jQuery)
 
     $("#send_cmd").on("click", function(event){
+
+        // Get message number
         tx_msg_nbr += 1;
         var nbr = tx_msg_nbr.toString();
 
-        console.log("Send new command [" + nbr + "]");
+        // Check which device is selected
+        var dev = "";
+        dev_list = document.getElementById("select_device");
+        if(dev_list.selectedIndex == 0){
+            alert("Please select device!");
+            return false;
+        }
+        else {
+            dev = dev_list.options[dev_list.selectedIndex].text;
+        }
+
+        // Check if command is supported
+        cmd = $("#input_cmd").val();
+        if(!commandSupported(cmd)){
+            alert("Command not supported!")
+            return false;
+        }
+
+        console.log("Send command [" + nbr + "] to device: " + dev );
+        
+        // Send it to server
         socket.emit("new command", {
-            device: "LGTC66",
+            device: dev,
             count: nbr,
-            data: $("#input_cmd").val()
+            data: cmd
         });
         return false;
-        // TODO: add filtering for incorrect commands
+
     });
 
 
@@ -60,7 +98,10 @@ $(document).ready(function(){
     socket.on("command response", function(msg){
         console.log("Received response [" + msg.count +"] from device: " + msg.device +" :" + msg.data);
 
+        var formated_msg = "[" + msg.count + "] " + msg.device + ":";
 
+        output = document.getElementById("output_field");
+        output.append(formated_msg);
 
     });
 
