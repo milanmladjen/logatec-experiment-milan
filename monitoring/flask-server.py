@@ -16,7 +16,9 @@ lock = Lock()
 
 # Flask and SocketIO config
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode=None)
+
+thread = Thread()
 
 # ------------------------------------------------------------------------------- #
 # Flask
@@ -75,69 +77,76 @@ def socketio_send_status_update():
 # Another thread only for receiving messages from 0MQ broker script
 # 0MQ communication between 2 processes (IPC transport)
 # ------------------------------------------------------------------------------- #
-class zmqWorker(Thread):
-    def __init__(self):
-        Thread.__init__(self)
-        self.active = True
-        self.context = zmq.Context()
-        self.zmq_soc = self.context.socket(zmq.DEALER)
-        self.zmq_soc.setsockopt(zmq.IDENTITY, b"flask_process")
-        self.zmq_soc.connect("ipc:///tmp/zmq_ipc")
+def zmqThread():
 
-        self.poller = zmq.Poller()
-        self.poller.register(self.zmq_soc, zmq.POLLIN)
+    active = True
+    context = zmq.Context()
+    zmq_soc = context.socket(zmq.DEALER)
+    zmq_soc.setsockopt(zmq.IDENTITY, b"flask_process")
+    zmq_soc.connect("ipc:///tmp/zmq_ipc")
+
+    poller = zmq.Poller()
+    poller.register(zmq_soc, zmq.POLLIN)
+
+    print("Initialized 0MQ")
+
+    socketio.sleep(1)
  
-    def run(self):
+    while active:
         
+        # print("Thread")
 
-        while self.active:
-            
-            lock.acquire()
-            global message_to_send
+        lock.acquire()
+        global message_to_send
 
-            # If there is any message to be sent
-            if message_to_send:
-                print("Send message to broker!")
-                print(message_to_send)
-                self.zmq_soc.send_multipart(message_to_send)
-                message_to_send = []
-                lock.release()
+        # If there is any message to be sent
+        if message_to_send:
+            print("Send message to broker!")
+            print(message_to_send)
+            zmq_soc.send_multipart(message_to_send)
+            message_to_send = []
+            lock.release()
 
+        else:
+            lock.release()
+
+            socks = dict(poller.poll(0))
+
+            if socks.get(zmq_soc) == zmq.POLLIN:
+
+                print("Received message from broker!")
+
+                device, count, data = zmq_soc.recv_multipart()
+
+                # From bytes to string [device, count, data]
+                msg = [device.decode(), count.decode(), data.decode()]
+
+                if msg[0] == "All":
+                    socketio.emit("status update", {"data":"update smth"}, broadcast=True)
+                
+                else:
+                    # Form response in dict
+                    response = {
+                        "device" : msg[0],
+                        "count" : msg[1],
+                        "data" : msg[2]
+                    }
+                    print("Forwarding it to client...")
+                    # Forward message to the client over websockets
+                    socketio.emit("command response", response, broadcast=True)
             else:
-                lock.release()
-
-                # Check if there is any message for us in queue (reduce it to 100ms or such)
-                socks = dict(self.poller.poll(1000))
-
-                if socks.get(self.zmq_soc) == zmq.POLLIN:
-
-                    print("Received message from broker!")
-
-                    device, count, data = self.zmq_soc.recv_multipart()
-
-                    # From bytes to string [device, count, data]
-                    msg = [device.decode(), count.decode(), data.decode()]
-
-                    if msg[0] == "all":
-                        socketio_send_status_update()
-                    
-                    else:
-                        # Form response in dict
-                        response = {
-                            "device" : msg[0],
-                            "count" : msg[1],
-                            "data" : msg[2]
-                        }
-                        # Forward message to the client over websockets
-                        socketio_send_response(response)
+                socketio.sleep(0.5)
 
 
 
 
 if __name__ == '__main__':
 
-    worker = zmqWorker()
-    worker.start()
+    #worker = zmqWorker()
+    #worker.start()
+
+    thread = socketio.start_background_task(zmqThread)
+
 
     print("Start the server!")
     socketio.run(app, host='0.0.0.0', debug=False)
