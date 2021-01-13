@@ -139,7 +139,7 @@ try:
 
         #print(".")
 except KeyboardInterrupt:
-    Print("Keyboard interrupt...exiting now.")
+    print("Keyboard interrupt...exiting now.")
 
 tx_msg_nbr += 1
 cmd = "END"

@@ -30,7 +30,7 @@ function commandSupported(c){
         "START_APP",
         "RESET_APP",
         "STOP_APP",
-        "STATUS"
+        "STATE"
     ];
 
     if(possible_commands.includes(c)){
@@ -98,7 +98,7 @@ $(document).ready(function(){
     socket.on("command response", function(msg){
         console.log("Received response [" + msg.count +"] from device: " + msg.device +" :" + msg.data);
 
-        var formated_msg = "[" + msg.count + "] " + msg.device + ":";
+        var formated_msg = "[" + msg.count + "] " + msg.device + ":" + msg.data + "\n";
 
         output = document.getElementById("output_field");
         output.append(formated_msg);
