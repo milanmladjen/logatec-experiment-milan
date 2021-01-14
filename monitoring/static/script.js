@@ -41,6 +41,8 @@ function commandSupported(c){
     }
 }
 
+
+
 // Websocket config (using jQuery on document ready)
 $(document).ready(function(){
 
@@ -100,14 +102,22 @@ $(document).ready(function(){
 
         var formated_msg = "[" + msg.count + "] " + msg.device + ":" + msg.data + "\n";
 
-        output = document.getElementById("output_field");
-        output.append(formated_msg);
-
+        // Append text into textarea (don't delete old one)
+        $("#output_field").val( $("#output_field").val() + formated_msg);
+        // Scroll to bottom
+        $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
     });
 
     socket.on("update devices", function(msg){
         console.log("Update device list");
 
+    });
+
+
+    // Button to clear output text
+    $("#clear_output").on("click", function(event){
+        console.log("Clear output");
+        $("#output_field").val("");
     });
 
 });
