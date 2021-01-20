@@ -41,6 +41,11 @@ class mongodb_client():
             print("WARNING: Device " + addr + " is already in the collection!")
             #print(self.col.find_one({"address":addr}))
 
+    # Remove device from collection
+    def removeDevice(delf, addr):
+        dev = {"address":addr}
+        self.col.delete_one(dev)
+
 
     # Update device state (input a string!)
     def updateDeviceState(self, addr, state):
