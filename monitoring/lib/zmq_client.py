@@ -47,7 +47,50 @@ class zmq_client():
         self.lastSentInfo = []              # The last sent message
         self.nbrRetries = 0                 # A number of sending retries 
         #self.lastSentTime = timer.now()    # The last time we sent any message (it must be a type: datetime.datetime)
+
+
+    # ----------------------------------------------------------------------------------------
+    # Send a message to the broker via DEALER socket
+    # 
+    #   @params:    message made with list of strings: [number, data]
+    #   @return:    True if success
+    # ----------------------------------------------------------------------------------------
+    def transmit(self, msg):
+
+        if not isinstance(msg, list):
+            logging.error("transmit: Incorect format of message")
+            return False
+    
+        # Encode the message from string to bytes
+        msg = [msg[0].encode(), msg[1].encode()]
         
+        logging.debug("Sending data to broker...")
+        self.dealer.send_multipart(msg)
+        
+        self.txCnt += 1
+        return True
+
+
+    # ----------------------------------------------------------------------------------------
+    # Send a message to the broker via DEALER socket (same as transmit)
+    # But also put message number in ack queue
+    #
+    #   @params:    message made with list of strings: [number, data]
+    # ----------------------------------------------------------------------------------------
+    def transmit_async(self, msg):
+        self.transmit(msg)
+
+        # Broker sent another command before sending ACK to our previous message
+        if len(self.waitingForAck) != 0:
+            logging.warning("New message sent but broker didn't ack our previous message!")
+            # logging.warning("Old message will be overwritten.. :/")
+
+        self.waitingForAck.append(msg[0]) 
+        self.lastSentInfo = msg
+        self.lastSentTime = timer.now()
+
+        return
+
 
     # ----------------------------------------------------------------------------------------
     # Check if there is any message in the poll queue
@@ -100,7 +143,7 @@ class zmq_client():
 
             return msg
         else:
-            loging.error("Unknown instance...check the code")
+            loging.error("receive: Unknown instance...check the code")
             return None, None
 
 
@@ -156,78 +199,8 @@ class zmq_client():
 
         # If there is an error in calling the function
         else:
-            loging.warning("Unknown instance...check the code")
+            loging.warning("receive_async: Unknown instance...check the code")
             return None, None
-
-
-    # ----------------------------------------------------------------------------------------
-    # Send a message to the broker via DEALER socket
-    # 
-    #   @params:    message made with list of strings: [number, data]
-    #   @return:    True if success
-    # ----------------------------------------------------------------------------------------
-    def transmit(self, msg):
-
-        if not isinstance(msg, list):
-            logging.error("Incorect format of message")
-            return False
-    
-        # Encode the message from string to bytes
-        msg = [msg[0].encode(), msg[1].encode()]
-        
-        logging.debug("Sending data to broker...")
-        self.dealer.send_multipart(msg)
-        
-        self.txCnt += 1
-        return True
-
-
-    # ----------------------------------------------------------------------------------------
-    # Send a message to the broker via DEALER socket (same as transmit)
-    # But also put message number in ack queue
-    #
-    #   @params:    message made with list of strings: [number, data]
-    # ----------------------------------------------------------------------------------------
-    def transmit_async(self, msg):
-        self.transmit(msg)
-
-        # Broker sent another command before sending ACK to our previous message
-        if len(self.waitingForAck) != 0:
-            logging.warning("New message sent but broker didn't ack our previous message!")
-            # logging.warning("Old message will be overwritten.. :/")
-
-        self.waitingForAck.append(msg[0]) 
-        self.lastSentInfo = msg
-        self.lastSentTime = timer.now()
-
-        return
-
-
-    # ----------------------------------------------------------------------------------------
-    # Force wait for ACK on given message number - it will block the code and discard all 
-    # other received messages.
-    # 
-    #   @params:    nbr     - a message number on which we are waiting for ACK...must be in string!
-    #               timeout - time to wait in seconds!
-    #   @return:    True when received ACK, False if timeout passes
-    # ----------------------------------------------------------------------------------------
-    def wait_ack(self, nbr, timeout):
-
-        startTime = timer.now()
-
-        while True:
-            if ((timer.now() - startTime).total_seconds() < timeout):
-                inp = self.check_input(0)
-                if inp:
-
-                    rec = self.receive(inp)     # rec = [nbr, data]
-                    # Nbr of transmitted and received msg must be the same
-                    if(rec[0] == nbr and rec[1] == "ACK"):
-                        return True
-                    else:
-                        logging.warning("Received: " + rec[1] + " message but waiting for ACK")
-            else:
-                return False
 
 
     # ----------------------------------------------------------------------------------------
@@ -255,21 +228,36 @@ class zmq_client():
 
 
     # ----------------------------------------------------------------------------------------
-    # Costum function to sync the LGTC with BROKER script on the begining of experiment.
-    #
-    #   @params:    timeout - how long to wait for BROKER response
-    #   @return:    True if success, False if couldn't sync with broker
+    # Force wait for ACK on given message number - it will block the code and discard all 
+    # other received messages.
+    # 
+    #   @params:    nbr     - a message number on which we are waiting for ACK...must be in string!
+    #               timeout - time to wait in seconds!
+    #   @return:    True when received ACK, False if timeout passes
     # ----------------------------------------------------------------------------------------
-    # Send SYNC message to the broker, so it knows we are online
-    def sync_with_broker(self, timeout):
+    def wait_ack(self, nbr, timeout):
 
-        logging.debug("Send a synchronization request.")
+        if not isinstance(nbr, str):
+            logging.error("wait_ack: Input data must be string")
+            return False
 
-        sync_request = ["-1", "SYNC"]
-        self.transmit(sync_request)
-        state = self.wait_ack("-1", timeout)
+        startTime = timer.now()
 
-        return state
+        while True:
+            if ((timer.now() - startTime).total_seconds() < timeout):
+                inp = self.check_input(0)
+                if inp:
+
+                    rec = self.receive(inp)     # rec = [nbr, data]
+                    # Nbr of transmitted and received msg must be the same
+                    if(rec[0] == nbr and rec[1] == "ACK"):
+                        return True
+                    else:
+                        logging.warning("Received: " + rec[1] + " message but waiting for ACK")
+            else:
+                return False
+
+
 
 
 
