@@ -6,14 +6,10 @@ import zmq
 import time
 import logging
 
-import select, sys # For user input
-
+from lib import mongodb_client
 
 LOG_LEVEL = logging.DEBUG
 NUMBER_OF_DEVICES = 3
-
-lgtc_addr = []
-
 
 # ------------------------------------------------------------------------------- #
 # Configuration
@@ -23,6 +19,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=LOG_LEVEL)
 
 #if __name__ == '__main__':
 
+mdb = mongodb_client.mongodb_client("active-devices", DATABASE="experiment-monitor")
 
 context = zmq.Context.instance()
 
@@ -58,14 +55,15 @@ try:
         address, packet_type, nbr, msg = backend.recv_multipart()
 
         if packet_type == b"SYNC":
-            # Add address to the list of LGTC addr
-            if address not in lgtc_addr:
-                lgtc_addr.append(address)
 
             # Send synchronization reply
             backend.send_multipart([address, b"ACK", b"0", b" "])
+            
+            # Add device to the database
+            if not mdb.isDeviceActive(address.decode()):
+                mdb.insertDevice(address.decode(), "ONLINE")
 
-            # Inform user about new device (TODO store it to DB)
+            # Inform user about new device in terminal
             subscribers += 1
             logging.info("Device %s online (%i/%i)" % (address, subscribers, NUMBER_OF_DEVICES))
         else:
@@ -78,8 +76,9 @@ except KeyboardInterrupt:
 # ------------------------------------------------------------------------------- #
 # Devices are synchronized - start the main loop
 # ------------------------------------------------------------------------------- #
+mdb.printTestbedState()
 
-print("Starting main loop") #TODO make it multitherad?
+print("Starting main loop...") #TODO make it multitherad?
 tx_msg_nbr = 0
 
 try:
@@ -108,13 +107,13 @@ try:
             
             # UNICAST COMMAND - if message is only for one device
             else:
-                # Addres must be in list of available devices
-                if device in lgtc_addr:
+                # Addres must be in database, otherwise it is not active
+                if mdb.isDeviceActive(device):
                     cmd = [device, b"UNI_CMD", count, data]
                     backend.send_multipart(cmd)
                     logging.debug("Sent UNI_CMD [%s]: %s to device %s" % (msg[1], msg[2], msg[0]))
                 else:
-                    logging.warning("Incorect address input: %s (possible %s)!" % (device, lgtc_addr))
+                    logging.warning("Device address is not in DB")
 
 
         # If there is any message in pollin queue from LGTC devices, forward it to flask_server
@@ -122,19 +121,31 @@ try:
             
             address, data_type, data_nbr, data = backend.recv_multipart()
 
-            # TODO: Add some filtering here? If received SYNC, should we ACK or not?
+            # Send ACK back
             backend.send_multipart([address, b"ACK", data_nbr, b" "])
 
-            # From bytes to string for loging output [device, count, data]
+            # From bytes to string for loging output [address, count, data, type]
             msg = [address.decode(), data_nbr.decode(), data.decode(), data_type.decode()]
+
+            # If we received state packet, update the database only
+            if msg[3] == "STATE":
+                mdb.updateDeviceState(msg[0], msg[2])
+                # TODO inform frontend
+
+            # If device come to experiment later than sync process, add it do database
+            else if msg[3] == "SYNC":
+                # Add device to the database
+                if not mdb.isDeviceActive(msg[0]):
+                    mdb.insertDevice(msg[0], "ONLINE")
+
+            else:
+                # Send response back to the server [device, count, data]
+                frontend.send_multipart([flask_script_id, address, data_nbr, data])
 
             logging.info("Received %s[%s] from device %s: %s" % (msg[3], msg[1], msg[0], msg[2]))
             print(" ")
 
-            # Send response back to the server [device, count, data]
-            frontend.send_multipart([flask_script_id, address, data_nbr, data])
-
-        # Check status of devices and update it in DB
+        # TODO Heatbeat: Check status of devices and update it in DB
         #else ...
 
         #print(".")
