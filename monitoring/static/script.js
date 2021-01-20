@@ -41,8 +41,6 @@ function commandSupported(c){
     }
 }
 
-
-
 // Websocket config (using jQuery on document ready)
 $(document).ready(function(){
 

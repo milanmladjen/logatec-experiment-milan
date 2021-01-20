@@ -161,7 +161,7 @@ def main():
                             client.transmit_async(reply)
                         
                         # If the message is SYNC
-                        else if msg_nbr == "-1":
+                        elif msg_nbr == "-1":
                             if msg == "END":
                                 force_exit()
 
@@ -174,7 +174,7 @@ def main():
                             
                 # ----------------------------------------------------------------------------
                 # If there is still some message that didn't receive ACK back, re send it
-                if (len(client.waitingForAck) != 0):
+                elif (len(client.waitingForAck) != 0):
                     client.send_retry()    
 
             # TODO: Update status line in terminal.
