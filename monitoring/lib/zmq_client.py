@@ -81,12 +81,12 @@ class zmq_client():
         self.transmit(msg)
 
         # Broker sent another command before sending ACK to our previous message
-        if len(self.waitingForAck) != 0:
-            logging.warning("New message sent but broker didn't ack our previous message!")
-            # logging.warning("Old message will be overwritten.. :/")
+        if len(self.waitingForAck) > 1:
+            logging.warning("New message sent but broker didn't ack our previous one!")
+            # TODO: stop receiveing messages after 3 already in queue?
 
         self.waitingForAck.append(msg[0]) 
-        self.lastSentInfo = msg
+        self.lastSentInfo.append(msg)
         self.lastSentTime = timer.now()
 
         return
@@ -153,7 +153,7 @@ class zmq_client():
     # 
     #   @params:    instance - which socket has received message 
     #   @return:    [number, data] of received message in format string
-    #               [True, None] if we received ACK
+    #               [None, True] if we received ACK
     #               [None, None] if instance is unknown
     # ----------------------------------------------------------------------------------------  
     def receive_async(self, instance):
@@ -184,12 +184,20 @@ class zmq_client():
             if msg == "ACK":
                 if nbr in self.waitingForAck:
                     logging.debug("Broker acknowledged our data [" + nbr + "]")
+                    self.nbrRetries = 0
+
+                    # Delete messages waiting in queue with number nbr
                     self.waitingForAck.remove(nbr)
-                    self.nbrRetries = 0
+                    i = 0
+                    for info in self.lastSentInfo:
+                        if info[0] == nbr:
+                            del self.lastSentInfo[i]
+                        i += 1
                 else:
-                    logging.warning("Got ACK for msg %s...in queue %s:" % (nbr, self.waitingForAck))
+                    logging.warning("Got ACK for msg %s but in queue we have:" % nbr)
+                    logging.warning(self.waitingForAck)
                     self.nbrRetries = 0
-                # Return None so script will know we got ACK message
+
                 return None, True
 
             # If we received any unicast command
@@ -213,16 +221,27 @@ class zmq_client():
 
         if ((timer.now() - self.lastSentTime).total_seconds() > self.ACK_TIMEOUT):
             logging.warning("3 second have passed and no response from broker.. Resending data!")
-            # Resend info
-            self.transmit(self.lastSentInfo)
-            self.lastSentTime = timer.now()
+
+            # Resend info with lowest number...Example:
+            # waitingForAck = [15, 16, 17]
+            # lastSentInfo = [[15, START], [16, STOP], [17, START]]
+
+            oldest = self.waitingForAck[0]
+
+            for info in self.lastSentInfo:
+                if info[0] == oldest:
+                    self.transmit(info)
+                    self.lastSentTime = timer.now()
+                    break
 
             self.nbrRetries += 1
             if self.nbrRetries > 1:
                 # Server has died ?
                 self.waitingForAck = []
+                self.lastSentInfo = []
                 self.nbrRetries = 0
-                logging.warning("Broker has died :(")   #TODO
+                logging.warning("Broker has died :(")
+                #TODO clean the resources (zmq.close)
         else:
             return
 
@@ -262,63 +281,5 @@ class zmq_client():
 
 
 
-
-
-
-"""  
-# Demo usage TODO: deprecated
-if __name__ == "__main__":
-
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO
-)
-
-    address = u'LGTC-%s' % sys.argv[1]       #TODO
-
-    cliente = zmq_client(address)
-
-    # ------------------------------------------------------------------------------- #
-    # First synchronize with the server
-    cliente.sync_with_server()
-
-    # ------------------------------------------------------------------------------- #
-    # Than start the app
-
-
-    while True:
-        # Check for any incoming messages
-        input_message = cliente.check_input(0)
-        if input_message:
-
-            # Read them
-            msg_type, msg, rxPnbr = cliente.receive(input_message)
-            
-            # Obtain the info upon received command 
-            #info = obtain_info(msg)
-            info = "42!"
-
-            # Form reply
-            reply = [msg_type, rxPnbr, info] 
-            
-            # Respond to the server
-            cliente.send(reply)
-
-            # Maybe add a just a bit of delay here. Because without it, client won't receive the ACK right
-            # away and will go work some other stuff. Which is ok, but it must come here fast enough (rest 
-            # of the code shouldn't delay for too long)
-
-            # Or maybe use "continue" to return to poller check on the beginning
-            # Beware that then you can stuck here if you got many messages in queue
-            continue
-
-
-        # If we sent one message and there was no response for more than a second, resend it
-        if len(cliente.waitingForAck) != 0:
-            cliente.send_retry()
-
-        
-        # Do some other stuff
-        print(".")
-        time.sleep(1)
-"""
-
-
+# TODO: Demo usage?
+# if __name__ == "__main__":
