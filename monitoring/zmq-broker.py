@@ -52,12 +52,12 @@ subscribers = 0
 try:
     while subscribers < NUMBER_OF_DEVICES:
         # Wait for synchronization request (
-        address, packet_type, nbr, msg = backend.recv_multipart()
+        address, nbr, msg = backend.recv_multipart()
 
-        if packet_type == b"SYNC":
+        if nbr == b"-1":
 
             # Send synchronization reply
-            backend.send_multipart([address, b"ACK", b"0", b" "])
+            backend.send_multipart([address, b"-1", b"ACK"])
             
             # Add device to the database
             if not mdb.isDeviceActive(address.decode()):
@@ -103,15 +103,15 @@ try:
 
                 cmd ="%s %s" % (msg[1], msg[2])
                 backend_pub.send(cmd.encode())
-                logging.debug("Sent PUB_CMD [%s]: %s" % (msg[1], msg[2]))
+                logging.debug("Published message [%s]: %s" % (msg[1], msg[2]))
             
             # UNICAST COMMAND - if message is only for one device
             else:
                 # Addres must be in database, otherwise it is not active
                 if mdb.isDeviceActive(device):
-                    cmd = [device, b"UNI_CMD", count, data]
+                    cmd = [device, count, data]
                     backend.send_multipart(cmd)
-                    logging.debug("Sent UNI_CMD [%s]: %s to device %s" % (msg[1], msg[2], msg[0]))
+                    logging.debug("Router sent message [%s]: %s to device %s" % (msg[1], msg[2], msg[0]))
                 else:
                     logging.warning("Device address is not in DB")
 
@@ -119,21 +119,21 @@ try:
         # If there is any message in pollin queue from LGTC devices, forward it to flask_server
         elif sockets.get(backend) == zmq.POLLIN:
             
-            address, data_type, data_nbr, data = backend.recv_multipart()
+            address, data_nbr, data = backend.recv_multipart()
 
             # Send ACK back
-            backend.send_multipart([address, b"ACK", data_nbr, b" "])
+            backend.send_multipart([address, data_nbr, b"ACK"])
 
-            # From bytes to string for loging output [address, count, data, type]
-            msg = [address.decode(), data_nbr.decode(), data.decode(), data_type.decode()]
+            # From bytes to string for loging output [address, count, data]
+            msg = [address.decode(), data_nbr.decode(), data.decode()]
 
             # If we received state packet, update the database only
-            if msg[3] == "STATE":
+            if msg[1] == "0":
                 mdb.updateDeviceState(msg[0], msg[2])
                 # TODO inform frontend
 
             # If device come to experiment later than sync process, add it do database
-            else if msg[3] == "SYNC":
+            else if msg[1] == "-1":
                 # Add device to the database
                 if not mdb.isDeviceActive(msg[0]):
                     mdb.insertDevice(msg[0], "ONLINE")
@@ -142,7 +142,7 @@ try:
                 # Send response back to the server [device, count, data]
                 frontend.send_multipart([flask_script_id, address, data_nbr, data])
 
-            logging.info("Received %s[%s] from device %s: %s" % (msg[3], msg[1], msg[0], msg[2]))
+            logging.info("Received [%s] from device %s: %s" % (msg[1], msg[0], msg[2]))
             print(" ")
 
         # TODO Heatbeat: Check status of devices and update it in DB
@@ -153,8 +153,9 @@ except KeyboardInterrupt:
     print("Keyboard interrupt...exiting now.")
 
 tx_msg_nbr += 1
-cmd = "END"
-msg =b"%i %s" % (tx_msg_nbr, cmd)
+print("Sent messages %i" % tx_msg_nbr)
+
+msg =b"-1 END"
 # Send stop command
 backend_pub.send(msg)
 

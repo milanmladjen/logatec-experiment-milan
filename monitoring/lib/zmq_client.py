@@ -14,7 +14,10 @@ class zmq_client():
     rxCnt = 0
     txCnt = 0
 
+    # ----------------------------------------------------------------------------------------
     # Initialize sockets and poller
+    #
+    # ----------------------------------------------------------------------------------------
     def __init__(self, SUBS_HOSTNAME, ROUT_HOSTNAME, deviceID="NoName"):
 
         context = zmq.Context()
@@ -23,13 +26,13 @@ class zmq_client():
         device_address = deviceID.encode("ascii")
 
         # Connect to subscribe socket (--> publish)
-        logging.debug("Connecting to publish server...")
+        logging.debug("Connecting to publish socket...")
         self.subscriber = context.socket(zmq.SUB)
         self.subscriber.connect(SUBS_HOSTNAME)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, b'')  #TODO
 
         # Connect to dealer socket (--> router)
-        logging.debug("Connecting to router server...")
+        logging.debug("Connecting to router socket...")
         self.dealer = context.socket(zmq.DEALER)
         self.dealer.identity = device_address
         self.dealer.connect(ROUT_HOSTNAME)
@@ -46,7 +49,12 @@ class zmq_client():
         #self.lastSentTime = timer.now()    # The last time we sent any message (it must be a type: datetime.datetime)
         
 
-    # Poll the sockets for given amount of timeout (0 = return immediately)
+    # ----------------------------------------------------------------------------------------
+    # Check if there is any message in the poll queue
+    #
+    #   @params:    timeout - number of ms to wait (0 = return immediately)
+    #   @return:    name of instance that received the message
+    # ----------------------------------------------------------------------------------------
     def check_input(self, timeout):
         
         sockets = dict(self.poller.poll(timeout))
@@ -58,38 +66,106 @@ class zmq_client():
         else:
             return None
 
-    
-    # Read received message...returns list (type_of_msg, nbr_of_msg, msg)
+
+    # ----------------------------------------------------------------------------------------
+    # Read received message of given instance (use with func check_input). 
+    # 
+    #   @params:    instance - which socket has received message 
+    #   @return:    [number, data] of received message in format string
+    #               [None, None] if instance is unknown
+    # ----------------------------------------------------------------------------------------
     def receive(self, instance):
 
         self.rxCnt += 1
 
         if (instance == "SUBSCRIBER"):
-            msg = self.subscriber.recv()
+            packet = self.subscriber.recv()
 
-            ms = msg.split()
-            nbr = ms[0].decode()
-            msg = ms[1].decode()
+            # Decode message manually
+            p = packet.split()
+            nbr = p[0].decode()
+            data = p[1].decode()
 
-            logging.debug("Received PUB_CMD [%s]: %s" % (nbr, msg))
+            logging.debug("Subscriber got [%s]: %s" % (nbr, data))
 
-            return "PUB_CMD", nbr, msg
+            return nbr, data
 
         elif (instance == "DEALER"):
-            msg_type, nbr, data = self.dealer.recv_multipart()
+            nbr, data = self.dealer.recv_multipart()
 
             # Decode message from bytes to string
-            msg = [msg_type.decode(), nbr.decode(), data.decode()]
+            msg = [nbr.decode(), data.decode()]
 
-            logging.debug("Received %s [%s]: %s" % (msg[0], msg[1], msg[2]))
+            logging.debug("Dealer got [%s]: %s" % (msg[0], msg[1]))
 
             return msg
         else:
             loging.error("Unknown instance...check the code")
-            return None, None, None
+            return None, None
 
 
-    # Send a message to the server - must be formed as a list: [type, nbr, msg]
+    # ----------------------------------------------------------------------------------------
+    # Read received message of given instance (use with func check_input).
+    # Handle received ACK without informing the user.
+    # 
+    #   @params:    instance - which socket has received message 
+    #   @return:    [number, data] of received message in format string
+    #               [True, None] if we received ACK
+    #               [None, None] if instance is unknown
+    # ----------------------------------------------------------------------------------------  
+    def receive_async(self, instance):
+
+        self.rxCnt += 1
+
+        # If it is a message from publish socket
+        if (instance == "SUBSCRIBER"):
+            packet = self.subscriber.recv()
+
+            p = packet.split()
+            nbr = p[0].decode()
+            data = p[1].decode()
+
+            logging.debug("aSubscriber got [%s]: %s" % (nbr, data))
+
+            return nbr, data
+
+        # If it is a message from router socket
+        elif (instance == "DEALER"):
+            nbr, msg = self.dealer.recv_multipart()
+
+            # Decode the message from bytes to string
+            nbr = nbr.decode()
+            msg = msg.decode()
+
+            # If we got acknowledge on transmitted data
+            if msg == "ACK":
+                if nbr in self.waitingForAck:
+                    logging.debug("Broker acknowledged our data [" + nbr + "]")
+                    self.waitingForAck.remove(nbr)
+                    self.nbrRetries = 0
+                else:
+                    logging.warning("Got ACK for msg %s...in queue %s:" % (nbr, self.waitingForAck))
+                    self.nbrRetries = 0
+                # Return None so script will know we got ACK message
+                return None, True
+
+            # If we received any unicast command
+            else:
+                logging.debug("aDealer got [%s]: %s" % (nbr ,msg))
+                return nbr, msg
+
+        # If there is an error in calling the function
+        else:
+            loging.warning("Unknown instance...check the code")
+            return None, None
+
+
+    # ----------------------------------------------------------------------------------------
+    # Send a message to the broker via DEALER socket
+    # 
+    #   @params:    message made with list of strings: [number, data]
+    #   @return:    True if success
+    # ----------------------------------------------------------------------------------------
     def transmit(self, msg):
 
         if not isinstance(msg, list):
@@ -97,17 +173,44 @@ class zmq_client():
             return False
     
         # Encode the message from string to bytes
-        msg = [msg[0].encode(), msg[1].encode(), msg[2].encode()]
+        msg = [msg[0].encode(), msg[1].encode()]
         
-        logging.debug("Sending data to server...")
+        logging.debug("Sending data to broker...")
         self.dealer.send_multipart(msg)
         
         self.txCnt += 1
         return True
 
 
-    # Force wait for ACK on given message number - discard all other received messages
-    # Timeout is in seconds!!!
+    # ----------------------------------------------------------------------------------------
+    # Send a message to the broker via DEALER socket (same as transmit)
+    # But also put message number in ack queue
+    #
+    #   @params:    message made with list of strings: [number, data]
+    # ----------------------------------------------------------------------------------------
+    def transmit_async(self, msg):
+        self.transmit(msg)
+
+        # Broker sent another command before sending ACK to our previous message
+        if len(self.waitingForAck) != 0:
+            logging.warning("New message sent but broker didn't ack our previous message!")
+            # logging.warning("Old message will be overwritten.. :/")
+
+        self.waitingForAck.append(msg[0]) 
+        self.lastSentInfo = msg
+        self.lastSentTime = timer.now()
+
+        return
+
+
+    # ----------------------------------------------------------------------------------------
+    # Force wait for ACK on given message number - it will block the code and discard all 
+    # other received messages.
+    # 
+    #   @params:    nbr     - a message number on which we are waiting for ACK...must be in string!
+    #               timeout - time to wait in seconds!
+    #   @return:    True when received ACK, False if timeout passes
+    # ----------------------------------------------------------------------------------------
     def wait_ack(self, nbr, timeout):
 
         startTime = timer.now()
@@ -116,98 +219,27 @@ class zmq_client():
             if ((timer.now() - startTime).total_seconds() < timeout):
                 inp = self.check_input(0)
                 if inp:
-                    rec = self.receive(inp)
+
+                    rec = self.receive(inp)     # rec = [nbr, data]
                     # Nbr of transmitted and received msg must be the same
-                    if(rec[0] == "ACK" and rec[1] == str(nbr)):
+                    if(rec[0] == nbr and rec[1] == "ACK"):
                         return True
                     else:
-                        logging.warning("Received " + rec[0] + " message but waiting for ACK")
+                        logging.warning("Received: " + rec[1] + " message but waiting for ACK")
             else:
                 return False
-            
-    # Receive message and return it...handel ACK without informing the user 
-    def receive_async(self, instance):
-        # Returns:
-        #       True if we received an ACK
-        #       False if there is no message/error
-        #       (type_of_msg, nbr_of_msg, msg) if we received some data
-
-        self.rxCnt += 1
-
-        # If it is a message from publish socket
-        if (instance == "SUBSCRIBER"):
-            msg = self.subscriber.recv()
-
-            ms = msg.split()
-            nbr = ms[0].decode()
-            msg = ms[1].decode()
-
-            logging.debug("Received PUB_CMD [%s]: %s" % (nbr, msg))
-
-            return "PUB_CMD", nbr, msg
-
-        # If it is a message from router socket
-        elif (instance == "DEALER"):
-            msg_type, nbr, msg = self.dealer.recv_multipart()
-
-            # Decode the message from bytes to string
-            msg_type = msg_type.decode()
-            nbr = nbr.decode()
-            msg = msg.decode()
-
-            # If we got acknowledge on transmitted data
-            if msg_type == "ACK":
-                if nbr in self.waitingForAck:
-                    logging.debug("Server acknowledged our data [" + nbr + "]")
-                    self.waitingForAck.remove(nbr)
-                    self.nbrRetries = 0
-                else:
-                    logging.warning("Got ACK for msg %s...in queue %s:" % (nbr, self.waitingForAck))
-                    self.nbrRetries = 0
-
-                return True, None, None
-
-            # If we received any unicast command
-            elif msg_type == "UNI_CMD":
-                logging.debug("Received UNI_CMD [%s]: %s" % (nbr ,msg))
-                return msg_type, nbr, msg
-
-            elif ms_type == "SYNC":
-                print("Received SYNC message...something went wrong")
-                sys.exit(1) #TODO
-
-            # If we received unknown type of message
-            else:
-                loging.warning("Received unknown type of message...discarting.")
-                return False, None, None
-
-        # If there is an error in calling the function
-        else:
-            loging.warning("Unknown instance...check the code")
-            return None, None, None
 
 
-    def transmit_async(self, msg):
-        # Send a message to the server - must be formed as a list of strings: [type, nbr, msg]
-        self.transmit(msg)
-
-        # Server sent another command before sending ACK to our previous message
-        if len(self.waitingForAck) != 0:
-            logging.warning("New message sent but server didn't ack our previous message!")
-            # logging.warning("Old message will be overwritten.. :/")
-
-        self.waitingForAck.append(msg[1])
-        self.lastSentInfo = msg
-        self.lastSentTime = timer.now()
-
-        return
-
-
+    # ----------------------------------------------------------------------------------------
+    # Check how long we waited for ACK on sent package. If ACK_TIMEOUT seconds have passed,
+    # send message again. Should be called periodically, whenever LGTC has some spare time.
+    # 
+    #   @params:    / (everything is stored in class variables)
+    # ----------------------------------------------------------------------------------------
     def send_retry(self):
-        # Check how long we waited for ACK - if 3 seconds have passed, send message again
- 
+
         if ((timer.now() - self.lastSentTime).total_seconds() > self.ACK_TIMEOUT):
-            logging.warning("3 second have passed and no response from server.. Resending data!")
+            logging.warning("3 second have passed and no response from broker.. Resending data!")
             # Resend info
             self.transmit(self.lastSentInfo)
             self.lastSentTime = timer.now()
@@ -217,21 +249,25 @@ class zmq_client():
                 # Server has died ?
                 self.waitingForAck = []
                 self.nbrRetries = 0
-                logging.warning("Server has died :(")   #TODO
+                logging.warning("Broker has died :(")   #TODO
         else:
             return
 
 
-
-
-    # Send SYNC message to the server, so it knows we are online
+    # ----------------------------------------------------------------------------------------
+    # Costum function to sync the LGTC with BROKER script on the begining of experiment.
+    #
+    #   @params:    timeout - how long to wait for BROKER response
+    #   @return:    True if success, False if couldn't sync with broker
+    # ----------------------------------------------------------------------------------------
+    # Send SYNC message to the broker, so it knows we are online
     def sync_with_broker(self, timeout):
 
         logging.debug("Send a synchronization request.")
 
-        sync_request = ["SYNC", "0", " "]
+        sync_request = ["-1", "SYNC"]
         self.transmit(sync_request)
-        state = self.wait_ack("0", timeout)
+        state = self.wait_ack("-1", timeout)
 
         return state
 
@@ -242,7 +278,7 @@ class zmq_client():
 
 
 """  
-# Demo usage
+# Demo usage TODO: deprecated
 if __name__ == "__main__":
 
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO

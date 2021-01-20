@@ -15,59 +15,6 @@ from lib import file_logger
 from lib import zmq_client
 
 
-# ----------------------------------------------------------------------------------------
-# FUNCTIONS
-# ----------------------------------------------------------------------------------------
-def obtain_info(cmd):
-    # Return the requested info 
-
-    if cmd == "END":
-        # Exit application
-        logging.debug("Received END command...exiting now!")
-        force_exit()
-
-    elif cmd == "STATE":
-        data = " Stored " + str(serialLinesStored) + " lines."
-        tip = LGTC_COMMAND
-
-    elif cmd == "START_APP":
-        data = ">"
-        tip = VESNA_COMMAND
-
-    elif cmd == "STOP_APP":
-        data = "="
-        tip = VESNA_COMMAND
-
-    else:
-        logging.warning("Unknown command: %s" % cmd)
-        return LGTC_COMMAND, "Unknown cmd"
-
-    #logging.info("Received " + cmd + " command.")
-    return tip, data
-
-
-def force_exit():
-    monitor.close()
-    #client.close() #TODO
-    log.close()
-    sys.exit(1)
-
-# Soft exit also informs the broker about this
-def soft_exit(reason):
-
-    info = ["SYS", "-1", reason]  
-
-    client.send(info)
-
-    if client.check_input(1000):
-        if client.receive("DEALER") is True:    
-            force_exit()
-        # TODO: we might receive ACK for some other msg, not for this one ... 
-    else:
-        print("No ack from broker...exiting now.")
-        force_exit()
-
-
 
 def main():
     # VARIABLES
@@ -85,10 +32,13 @@ def main():
     log.open_file()
 
     # 1) Sync with broker (tell him we are online) with timeout of 10 seconds
-    if client.sync_with_broker(10000) is False:
+    logging.info("Sync with broker ... ")
+    client.transmit(["-1", "SYNC"])
+
+    if client.wait_ack("-1", 10) is False:
         logging.error("Couldn't synchronize with broker..exiting now.")
         force_exit()
-    logging.info("Synced with broker!")
+    
 
     # 2) Compile the application
     logging.info("Compile the application ... ")
@@ -124,13 +74,13 @@ def main():
 
 
     # 4) Connect to VESNA serial port
-    logging.info("Connect to VESNA serial port.")
+    logging.info("Connect to VESNA serial port ....")
     if not monitor.connect_to("ttyS2"):
         logging.error("Couldn't connect to VESNA...exiting now.")
         soft_exit("VesnaERR")
 
-    # Sync with VESNA - start the serial_monitor but not the app #TODO add while(1) to VESNA main loop
-    logging.info("Sync with VESNA.")
+    # 5) Sync with VESNA - start the serial_monitor but not the app #TODO add while(1) to VESNA main loop
+    logging.info("Sync with VESNA ...")
     if not monitor.sync_with_vesna():
         logging.error("Couldn't sync with VESNA...exiting now.")
         soft_exit("VesnaERR")
@@ -139,11 +89,10 @@ def main():
     monitor.send_command("&" + str(APP_DURATION * 60))
 
 
-    # Inform broker that LGTC is ready to start the app
-    compiled_msg = ["UNI_DAT", "1", "COMPILED"]
-    client.transmit(compiled_msg)
+    # 6) Inform broker that LGTC is ready to start the app, timeout of 2 seconds
+    client.transmit(["0", "COMPILED"])
 
-    if client.wait_ack("1", 1) is False:
+    if client.wait_ack("0", 2) is False:
         logging.error("No ack from broker...exiting now.")
         force_exit()
 
@@ -171,11 +120,11 @@ def main():
             # If we received some command from the broker, send it to VESNA and get response
             elif commandForVesna:
                 # Get requested info from VESNA
-                data = monitor.send_command(commandForVesna[2])
+                data = monitor.send_command(commandForVesna[1])
 
                 # Form a reply
                 response = commandForVesna
-                response[2] = data
+                response[1] = data
 
                 # Send reply to the broker
                 client.transmit_async(response)
@@ -184,6 +133,7 @@ def main():
                 log.store_lgtc_line("Got command: " + commandForVesna[2])
                 log.store_lgtc_line(" Got response: " + data)
 
+                # Empty VESNA command queue
                 commandForVesna = []
 
 
@@ -197,22 +147,32 @@ def main():
 
                 # If we received any message from the broker
                 if inp:
-                    msg_type, msg_nbr, msg = client.receive_async(inp)
+                    msg_nbr, msg = client.receive_async(inp)
 
                     # If the message is command (else (if we received ack) we got back None)
-                    if msg:
-                        tip, info = obtain_info(msg)
+                    if msg_nbr:
                         
-                        reply = [msg_type, msg_nbr, info]
+                        # If the message is STATE 
+                        if msg_nbr == "0":
+                            # Get LGTC state
+                            reply = ["0", "RUNNING"]
 
-                        # Some commands can be replied right away
-                        if tip == LGTC_COMMAND:
+                            # Send the sate to broker (use transmit if you don't need ACK back)
                             client.transmit_async(reply)
+                        
+                        # If the message is SYNC
+                        else if msg_nbr == "-1":
+                            if msg == "END":
+                                force_exit()
 
-                        # Store others and forward them to VESNA
+                        #If the message is CMD
                         else:
+                            # Store the cmd and forward it to VESNA later
+                            reply = [msg_nbr, msg]
                             commandForVesna = reply
 
+                            
+                # ----------------------------------------------------------------------------
                 # If there is still some message that didn't receive ACK back, re send it
                 if (len(client.waitingForAck) != 0):
                     client.send_retry()    
@@ -225,7 +185,30 @@ def main():
         print("\n Keyboard interrupt!.. Stop the app")
 
 
+# ----------------------------------------------------------------------------------------
+# FUNCTIONS
+# ----------------------------------------------------------------------------------------
 
+def force_exit():
+    monitor.close()
+    #client.close() #TODO
+    log.close()
+    sys.exit(1)
+
+# Soft exit also informs the broker about this
+def soft_exit(reason):
+
+    info = ["-1", "SOFT_EXIT"]  
+
+    client.transmit(info)
+
+    # Force wait ACK for 3 seconds
+    if client.wait_ack("-1", 3):
+        # Server acknowledged
+        force_exit()
+    else:
+        print("No ack from broker...exiting now.")
+        force_exit()
 
 
 
