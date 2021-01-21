@@ -7,11 +7,14 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 import zmq
 
+import ast  # From str to json conversion
+
 
 # Global variable - command in queue, which needs to be sent to LGTC device
 # If array is empty that means that no message needs to be sent. 
 # Because it is thread shared variable, use lock before using it 
 message_to_send = []
+update_testbed = False
 lock = Lock()
 
 # Flask and SocketIO config
@@ -53,17 +56,24 @@ def received_command(cmd):
     print("Client sent: ")
     print(cmd)
 
-    
     # Forward the received command from client browser to the 0MQ broker script
     # Can't send it from here, because 0MQ is in other thread - using 0MQ context
     # in multiple threads may cause problems (it is not thread safe)
     lock.acquire()
     global message_to_send
     message_to_send = [cmd["device"].encode(), cmd["count"].encode(), cmd["data"].encode()] # From dict to byte array
-    #print(message_to_send)
     lock.release()
 
-    
+@socketio.on("testbed update")
+def get_testbed_state():
+    print("Client wants to update testbed state")
+
+    # Same goes here
+    lock.acquire()
+    global update_testbed 
+    update_testbed = True
+    lock.release()
+
 
 def socketio_send_response(resp):
     socketio.emit("command response", resp, broadcast=True)
@@ -94,10 +104,10 @@ def zmqThread():
  
     while active:
         
-        # print("Thread")
 
         lock.acquire()
         global message_to_send
+        global update_testbed
 
         # If there is any message to be sent
         if message_to_send:
@@ -106,7 +116,15 @@ def zmqThread():
             zmq_soc.send_multipart(message_to_send)
             message_to_send = []
             lock.release()
+        
+        # Or if user wants to update the testbed state
+        elif update_testbed:
+            print("Get testbed state from brokers database.")
+            zmq_soc.send_multipart([b"Update", b"", b""])
+            update_testbed = False
+            lock.release()
 
+        # Else check for incoming messages
         else:
             lock.release()
 
@@ -114,26 +132,45 @@ def zmqThread():
 
             if socks.get(zmq_soc) == zmq.POLLIN:
 
-                print("Received message from broker!")
-
                 device, count, data = zmq_soc.recv_multipart()
 
                 # From bytes to string [device, count, data]
                 msg = [device.decode(), count.decode(), data.decode()]
 
-                if msg[0] == "All":
-                    socketio.emit("status update", {"data":"update smth"}, broadcast=True)
-                
-                else:
-                    # Form response in dict
-                    response = {
-                        "device" : msg[0],
+                if msg[0] == "Update":
+                    print("Received testbed state from brokers database!")
+
+                    # From string to list of dicts
+                    json_data = ast.literal_eval(msg[2])
+
+                    state = {
+                        "device" : "Update",
                         "count" : msg[1],
-                        "data" : msg[2]
+                        "data" : json_data
                     }
-                    print("Forwarding it to client...")
-                    # Forward message to the client over websockets
-                    socketio.emit("command response", response, broadcast=True)
+                    socketio.emit("testbed state update", state, broadcast=True)
+
+                else:
+                    print("Received message from broker!")
+                    # STATE update from one device
+                    if msg[1] == "0":
+                        update = {
+                            "device" : msg[0],
+                            "count" : msg[1],
+                            "data" : msg[2]
+                        }
+                        socketio.emit("device state update", update, broadcast=True)
+                    
+                    # DATA - response to a command
+                    else:
+                        response = {
+                            "device" : msg[0],
+                            "count" : msg[1],
+                            "data" : msg[2]
+                        }
+                        print("Forwarding it to client...")
+                        # Forward message to the client over websockets
+                        socketio.emit("command response", response, broadcast=True)
             else:
                 socketio.sleep(0.5)
 

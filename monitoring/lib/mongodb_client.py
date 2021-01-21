@@ -65,13 +65,26 @@ class mongodb_client():
         else:
             return ("ERR: Device is not in database " + addr)
 
+
+    # Return the state of all devices (string and count)
+    # "LGTC66:ONLINE|LGTC77:OFFLINE|"
+    def getTestbedStateStr(self):
+        tb = ""
+        count = 0
+        for x in self.col.find():
+            tb += x.get("address") + ":" + x.get("state") + "|"
+            count += 1
+        return tb, count
+
+
     # Return the state of all devices (list of dicts)
-    # [{'address': '66', 'state': 'COMPILING'}, {'address': '77', 'state': 'ONLINE'}]
-    def getTestbedState(self):
+    def getTestbedStateJson(self):
         tb = []
+        count = 0
         for x in self.col.find():
             tb.append( {"address":x.get("address"), "state":x.get("state")} )
-        return tb
+            count += 1
+        return tb, count
 
 
     # Debug purpose - print the state of all devices

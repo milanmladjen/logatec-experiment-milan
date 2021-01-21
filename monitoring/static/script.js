@@ -1,6 +1,8 @@
 var tx_msg_nbr = 0;
 var rx_msg_nbr = 0;
 
+var available_devices = [];
+
 function dropdownAddDevice(dev){
     var dropdown = document.getElementById("select_device");
     var newOption = document.createElement("option");
@@ -58,7 +60,7 @@ $(document).ready(function(){
         tx_msg_nbr += 1;
         var nbr = tx_msg_nbr.toString();
 
-        // Check which device is selected
+        // Check which device is selected from dropdown list
         var dev = "";
         dev_list = document.getElementById("select_device");
         if(dev_list.selectedIndex == 0){
@@ -74,6 +76,11 @@ $(document).ready(function(){
         if(!commandSupported(cmd)){
             alert("Command not supported!")
             return false;
+        }
+
+        // If command is STATE command, give it number 0, so broker will know
+        if(cmd == "STATE"){
+            nbr = "0";
         }
 
         console.log("Send command [" + nbr + "] to device: " + dev );
@@ -106,16 +113,42 @@ $(document).ready(function(){
         $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
     });
 
-    socket.on("update devices", function(msg){
-        console.log("Update device list");
+    socket.on("device state update", function(msg){
+        console.log("Update only one device state.");
+        console.log(msg);
+
+        
+        // If this address appears for the first time, add it to dropdown
+        var dev = msg.device;
+        if (available_devices.indexOf(dev) < 0){
+            console.log("Nev available device in testbed");
+            available_devices.push(dev);
+            dropdownAddDevice(dev);
+        }
 
     });
 
+    socket.on("testbed state update", function(msg){
+        console.log("Update whole testbed state.");
+        console.log(msg);
+    });
 
-    // Button to clear output text
+
+
+
+
+
+
+// Button to clear output text
     $("#clear_output").on("click", function(event){
         console.log("Clear output");
         $("#output_field").val("");
+    });
+
+// Button to update testbed state
+    $("#update_testbed").on("click", function(event){
+        console.log("Send request to update testbed state");
+        socket.emit("testbed update");
     });
 
 });

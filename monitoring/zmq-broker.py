@@ -81,6 +81,7 @@ except KeyboardInterrupt:
 # Devices are synchronized - start the main loop
 # ------------------------------------------------------------------------------- #
 mdb.printTestbedState()
+# TODO: Inform frontend
 
 print("Starting main loop...") #TODO make it multitherad?
 tx_msg_nbr = 0
@@ -93,17 +94,27 @@ try:
         # If there is a message in polling queue from the flask server, forward it to LGTC devices
         if sockets.get(frontend) == zmq.POLLIN:
 
+            logging.info("Received from frontend...")
+
             dummy_flask_script_id, device, count, data = frontend.recv_multipart()
 
             # [device, count, data] From bytes to string for loging output 
             msg = [device.decode(), count.decode(), data.decode()]
 
-            logging.info("Received CMD [%s] from server: %s for: %s" % (msg[1],msg[2], msg[0]))
-
             tx_msg_nbr += 1
 
+            # UPDATE TESTBED STATE
+            if msg[0] == "Update":
+                
+                # Send testbed state to the frontend
+                testbed, count = mdb.getTestbedStateJson() #list of dicts  and  int 
+                testbed = str(testbed)
+                count = str(count)
+                frontend.send_multipart([flask_script_id, b"Update", count.encode(), testbed.encode()])
+
+
             # PUBLISH COMMAND - if message is for all devices
-            if msg[0] == "All":
+            elif msg[0] == "All":
 
                 cmd ="%s %s" % (msg[1], msg[2])
                 backend_pub.send(cmd.encode())
@@ -112,16 +123,19 @@ try:
             # UNICAST COMMAND - if message is only for one device
             else:
                 # Addres must be in database, otherwise it is not active
-                if mdb.isDeviceActive(device):
+                if mdb.isDeviceActive(msg[0]):
                     cmd = [device, count, data]
                     backend.send_multipart(cmd)
                     logging.debug("Router sent message [%s]: %s to device %s" % (msg[1], msg[2], msg[0]))
                 else:
+                    # Inform frontend that address is not in database
                     logging.warning("Device address is not in DB")
 
 
         # If there is any message in pollin queue from LGTC devices, forward it to flask_server
         elif sockets.get(backend) == zmq.POLLIN:
+
+            print("Received from backend...")
             
             address, data_nbr, data = backend.recv_multipart()
 
@@ -146,11 +160,13 @@ try:
                     if not mdb.isDeviceActive(msg[0]):
                         mdb.insertDevice(msg[0], "ONLINE")
                     print("Device %s send SYNC message" % msg[0])
+                    #TODO inform frontend
                 
                 if msg[2] == "SOFT_EXIT":
                     # Remove device from the database
                     md.removeDevice(msg[0])
                     print("Device %s send SOFT_EXIT message" % msg[0])
+                    # TODO inform frontend
 
             else:
                 # Send response back to the server [device, count, data]
