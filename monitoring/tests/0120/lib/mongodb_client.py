@@ -54,14 +54,16 @@ class mongodb_client():
         x = self.col.update_one(query, newstate)
         if(x.matched_count == 0):
             print("WARNING: No device with address " + addr + " in DB.")
-            print("TODO: Should I create new?")
+            print("TODO: Should I create new?..for now skip it")
 
 
     # Return the state of device (input a string!)
     def getDeviceState(self, addr):
         dev = self.col.find_one({"address":addr})
-        return dev.get("state")
-
+        if dev:
+            return dev.get("state")
+        else:
+            return ("ERR: Device is not in database " + addr)
 
     # Return the state of all devices (list of dicts)
     # [{'address': '66', 'state': 'COMPILING'}, {'address': '77', 'state': 'ONLINE'}]

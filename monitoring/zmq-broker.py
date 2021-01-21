@@ -1,6 +1,5 @@
-#   TODO
-#   Do I still need that type_of_message param?   
-#   Use different names to prevent shadowing and overwritting 
+#   TODO different var names
+
 
 import zmq 
 import time
@@ -52,22 +51,27 @@ subscribers = 0
 try:
     while subscribers < NUMBER_OF_DEVICES:
         # Wait for synchronization request (
-        address, nbr, msg = backend.recv_multipart()
+        addr, nbr, msg = backend.recv_multipart()
 
         if nbr == b"-1":
 
             # Send synchronization reply
-            backend.send_multipart([address, b"-1", b"ACK"])
+            backend.send_multipart([addr, b"-1", b"ACK"])
             
             # Add device to the database
-            if not mdb.isDeviceActive(address.decode()):
-                mdb.insertDevice(address.decode(), "ONLINE")
+            if not mdb.isDeviceActive(addr.decode()):
+                mdb.insertDevice(addr.decode(), "ONLINE")
+            else:
+                logging.warning("Device %s allready active" % addr)
+                continue
 
             # Inform user about new device in terminal
             subscribers += 1
-            logging.info("Device %s online (%i/%i)" % (address, subscribers, NUMBER_OF_DEVICES))
+            logging.info("Device %s online (%i/%i)" % (addr, subscribers, NUMBER_OF_DEVICES))
         else:
-            logging.warning("Got a message but not sync request (%s) ...discarting." % packet_type)
+            logging.warning("Got a message but not sync request (%s) ...discarting." % msg)
+            # Send ACK back nontheless
+            backend.send_multipart([addr, nbr, b"ACK"])
 
 except KeyboardInterrupt:
     print("Keybopard interrupt...continuing application.")
@@ -91,7 +95,7 @@ try:
 
             dummy_flask_script_id, device, count, data = frontend.recv_multipart()
 
-            # From bytes to string for loging output [device, count, data]
+            # [device, count, data] From bytes to string for loging output 
             msg = [device.decode(), count.decode(), data.decode()]
 
             logging.info("Received CMD [%s] from server: %s for: %s" % (msg[1],msg[2], msg[0]))
@@ -127,22 +131,33 @@ try:
             # From bytes to string for loging output [address, count, data]
             msg = [address.decode(), data_nbr.decode(), data.decode()]
 
-            # If we received state packet, update the database only
+            # STATE
             if msg[1] == "0":
                 mdb.updateDeviceState(msg[0], msg[2])
-                # TODO inform frontend
+                print("New state of device %s: %s" % (msg[0], mdb.getDeviceState(msg[0])))
+                #TODO inform frontend
+                frontend.send_multipart([flask_script_id, address, data_nbr, data])
 
-            # If device come to experiment later than sync process, add it do database
-            else if msg[1] == "-1":
-                # Add device to the database
-                if not mdb.isDeviceActive(msg[0]):
-                    mdb.insertDevice(msg[0], "ONLINE")
+            # SYS
+            elif msg[1] == "-1":
+                
+                # If device come to experiment later than sync process, add it do database
+                if msg[2] == "SYNC":
+                    if not mdb.isDeviceActive(msg[0]):
+                        mdb.insertDevice(msg[0], "ONLINE")
+                    print("Device %s send SYNC message" % msg[0])
+                
+                if msg[2] == "SOFT_EXIT":
+                    # Remove device from the database
+                    md.removeDevice(msg[0])
+                    print("Device %s send SOFT_EXIT message" % msg[0])
 
             else:
                 # Send response back to the server [device, count, data]
                 frontend.send_multipart([flask_script_id, address, data_nbr, data])
+                logging.info("Received [%s] from device %s: %s" % (msg[1], msg[0], msg[2]))
 
-            logging.info("Received [%s] from device %s: %s" % (msg[1], msg[0], msg[2]))
+            
             print(" ")
 
         # TODO Heatbeat: Check status of devices and update it in DB

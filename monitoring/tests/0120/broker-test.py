@@ -163,7 +163,7 @@ try:
             # STATE
             if msg[1] == "0":
                 mdb.updateDeviceState(msg[0], msg[2])
-                print("New state of device %s: %s" % (msg[0] ,mdb.getDeviceState(msg[0])))
+                print("New state of device %s: %s" % (msg[0], mdb.getDeviceState(msg[0])))
             
             #SYS
             elif msg[1] == "-1":
