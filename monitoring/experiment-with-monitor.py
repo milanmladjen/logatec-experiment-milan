@@ -43,6 +43,11 @@ def main():
     # 2) Compile the application
     logging.info("Compile the application ... ")
 
+    client.transmit(["0", "COMPILING"])
+    if client.wait_ack("0", 2) is False:
+        logging.error("No ack from broker...exiting now.")
+        force_exit()
+
     procCompile = Popen(["make", APP_NAME, "-j2"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
     stdout, stderr = procCompile.communicate()
 
@@ -61,18 +66,6 @@ def main():
         logging.debug(stderr)
 
 
-    # TESTING PURPOSE - COMPILING TIME DELAY
-    #try:
-    #    print("Device is compiling the code for VESNA...")
-    #    time.sleep(10)
-    #except KeyboardInterrupt:
-    #    print(" ")
-    #finally:
-    #    print("Compiled application!")
-
-
-
-
     # 4) Connect to VESNA serial port
     logging.info("Connect to VESNA serial port ....")
     if not monitor.connect_to("ttyS2"):
@@ -88,17 +81,66 @@ def main():
     # Inform VESNA about application time duration
     monitor.send_command("&" + str(APP_DURATION * 60))
 
-
     # 6) Inform broker that LGTC is ready to start the app, timeout of 2 seconds
-    client.transmit(["0", "COMPILED"])
+    client.transmit(["0", "ONLINE"])
 
     if client.wait_ack("0", 2) is False:
         logging.error("No ack from broker...exiting now.")
         force_exit()
 
+    
 
     # ----------------------------------------------------------------------------------------
-    # 
+    # Wait for START command from frontend
+    # ----------------------------------------------------------------------------------------
+    try:
+        while True:
+            # Check input queue
+            inp = client.check_input(10000)
+
+            # If we received any message from the broker
+            if inp:
+                msg_nbr, msg = client.receive(inp)
+
+                if msg == "ACK":
+                    # Ignore acks with in loop..we don't use async methods
+                    pass
+
+                # If the message is STATE 
+                elif msg_nbr == "0":
+                    # Send the sate to broker
+                    client.transmit(["0", "ONLINE"])
+                
+                # If the message is SYNC
+                elif msg_nbr == "-1":
+                    if msg == "END":
+                        force_exit()
+
+                #If the message is CMD
+                else:
+                    if msg == "START_APP":
+                        print("Got start command --> starting the app")
+                        break
+                    else:
+                        # If we got some different cmd than start, inform user that we are waiting
+                        client.transmit(["0","WAITING_FOR_START"])
+
+            else:
+                print("Waiting...")
+    
+    except KeyboardInterrupt:
+        print("\n Keyboard interrupt!.. Stop the app")
+
+    # 7) Inform broker that LGTC has started the app
+    client.transmit_async(["0", "RUNNING"])
+    # Here we are not waiting for ACK bc we will receive that ACK later in while loop below
+
+    # 8) Send start command to vesna
+    monitor.send_command("&" + str(APP_DURATION * 60))
+
+
+    # ----------------------------------------------------------------------------------------
+    # Start the application
     # ----------------------------------------------------------------------------------------
     print(" ")
     logging.info("Start loging serial input and wait for incoming commands ..")

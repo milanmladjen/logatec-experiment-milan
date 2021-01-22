@@ -31,19 +31,28 @@ function dropdownDeleteDevice(dev){
 
 // Check if input command is in list of supported commands
 function commandSupported(c){
-    possible_commands = [
+    lgtc_commands = [
+        "STATE",
+        "RE_FLASH", //TODO
+        "LINES"     //TODO
+    ];
+
+    app_commands = [
         "START_APP",
         "RESET_APP",
         "STOP_APP",
-        "STATE",
-        "LINES"
-    ];
+        "SET_ROOT"
+        //CONTIKI
+    ]
 
-    if(possible_commands.includes(c)){
-        return true;
+    if(lgtc_commands.includes(c)){
+        return 0;
+    }
+    else if(app_commands.includes(c)){
+        return 1;
     }
     else{
-        return false;
+        return -1;
     }
 }
 
@@ -85,13 +94,32 @@ $(document).ready(function(){
     //var socket = io.connect('http://localhost:5000');
     var socket = io();
 
+
+// Prepare html
+    // Delete old output logs
+    $("#output_field").val("");
+
 // Handlers for events on client browser (using jQuery)
 
     $("#send_cmd").on("click", function(event){
-
-        // Get message number
-        tx_msg_nbr += 1;
-        var nbr = tx_msg_nbr.toString();
+        
+        // Get command and check if it is supported
+        var nbr;
+        var cmd = $("#input_cmd").val();
+        var sup = commandSupported(cmd);       
+        if(sup < 0){
+            alert("Command not supported!")
+            return false;
+        }
+        // If it is command for LGTC only, set msg number to 0
+        else if (sup == 0){
+            nbr = "0";
+        }
+        // If it is command for the app, get global message number
+        else{
+            tx_msg_nbr += 1;
+            nbr = tx_msg_nbr.toString();
+        }
 
         // Check which device is selected from dropdown list
         var dev = "";
@@ -104,18 +132,6 @@ $(document).ready(function(){
             dev = dev_list.options[dev_list.selectedIndex].text;
         }
 
-        // Check if command is supported
-        cmd = $("#input_cmd").val();
-        if(!commandSupported(cmd)){
-            alert("Command not supported!")
-            return false;
-        }
-
-        // If command is STATE command, give it number 0, so broker will know
-        if(cmd == "STATE"){
-            nbr = "0";
-        }
-
         console.log("Send command [" + nbr + "] to device: " + dev );
         
         // Send it to server
@@ -125,7 +141,6 @@ $(document).ready(function(){
             data: cmd
         });
         return false;
-
     });
 
 
@@ -133,6 +148,9 @@ $(document).ready(function(){
 
     socket.on("after connect", function(msg){
         console.log("Successfully connected to server!", msg.data);
+        // Update testbed state on connect/reconnect
+        socket.emit("testbed update");
+        // TODO: add some sync between broker-flask
     });
 
     socket.on("command response", function(msg){
@@ -182,6 +200,8 @@ $(document).ready(function(){
             else{
                 statelistUpdateDevice(dev, elmnt.state);
             }
+
+            // TODO: Delete devices from the list if they are not in database
         }
 
         // TODO: make it a function and do:
