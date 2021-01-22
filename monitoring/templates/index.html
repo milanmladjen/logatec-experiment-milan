@@ -12,6 +12,7 @@
 	</head> 
 
 	<body> 
+		<!-- HEADER -->
 		<header>
 			<div style="display: block; text-align: center; margin:auto;">
 				<h1 style = "color:blue;">LOG-a-TEC testbed experiment monitor</h1> 
@@ -21,11 +22,12 @@
 					Index |  Home | How to use?
 				</nav> 
 			</div>
-
-			<!-- Straight line -->
-			<hr />
 		</header> 
 
+		<!-- Straight line -->
+		<hr />
+
+		<!-- BODY LEFT SQUARE-->
 		<div style = "background-color: rgb(165, 245, 237); height:500px; width:40%; float:left;">
 			<h2 style = "text-align: center;">Monitor</h2>
 
@@ -49,19 +51,28 @@
 			<!-- OUTPUT DIV -->
 			<div style = "width:fit-content; margin-left: 10px;">
 				Output: <br />
-				<!--output -->
 					<textarea rows = "15" cols = "70" name = "output_field" id="output_field"></textarea>
-				<!-- output -->
 			</div>
 
 			<input style="margin-left: 10px;" type="button" name="clear_output" id="clear_output" value="Clear output">
-			<input style="margin-left: 10px;" type="button" name="update_testbed" id="update_testbed" value="Update testbed">
+			
 		</div>
 
+		<!-- BODY RIGHT SQUARE -->
 		<div style = "background-color: rgb(5, 252, 252); height: 500px; width: 60%; float:right;">
-			<h2 style = "text-align: center;">Tloris</h2>
+			<h2 style = "text-align: center;">Testbed</h2>
 
-			<div style="margin-left: 20px; text-align:center;">
+			<!-- ACTIVE DEVICES -->
+			<div style = "background-color: rgb(255, 255, 252); width:35%; margin-left:10px; float:left;">
+				<h3>Device state:</h3>
+				<div style="width:fit-content;" id="device_state_list">
+
+				</div>
+				<input style="margin-left: 10px;" type="button" name="update_testbed" id="update_testbed" value="Update">
+			</div>
+
+			<!-- TESTBED PICTURE -->
+			<div style="margin-right: 10px; text-align:right; width:60%; float:right;">
 				<img src="/static/img/tloris.png" alt="Testbed tloris" style="max-width:100%; max-height:100%; object-fit: contain;" height="400px">
 			</div>
 		</div>

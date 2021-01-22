@@ -4,11 +4,14 @@ var rx_msg_nbr = 0;
 var available_devices = [];
 
 function dropdownAddDevice(dev){
-    var dropdown = document.getElementById("select_device");
+    
+    // Create new option (value = dd_LGTC66) because id LGTC66 is used elsewhere
     var newOption = document.createElement("option");
-
     newOption.text= dev;
-    newOption.value = dev;
+    newOption.value = "dd_" + dev;
+    
+    // Add it to dropdown list
+    var dropdown = document.getElementById("select_device");
     dropdown.options.add(newOption);
 }
 
@@ -17,7 +20,7 @@ function dropdownDeleteDevice(dev){
 
     // Test to see if it works :)
     for (var i=0; i<dropdown.length; i++){
-        if(dropdown[i].childNodes[0].nodeValue === dev){
+        if(dropdown[i].childNodes[0].nodeValue === ("dd_" +dev)){
             dropdown.options[i] = null;
         }
     }
@@ -32,7 +35,8 @@ function commandSupported(c){
         "START_APP",
         "RESET_APP",
         "STOP_APP",
-        "STATE"
+        "STATE",
+        "LINES"
     ];
 
     if(possible_commands.includes(c)){
@@ -42,6 +46,35 @@ function commandSupported(c){
         return false;
     }
 }
+
+
+// Add device to the list of active devices
+function statelistAddDevice(dev, state){
+    
+    // Create new <p> element
+    var newP = document.createElement("p");
+    newP.appendChild(document.createTextNode(dev + ":" + state));
+    newP.setAttribute("id", dev);
+
+    // Append it to the div
+    var listdiv = document.getElementById("device_state_list");
+    listdiv.appendChild(newP);
+}
+
+// Update device state in the list
+function statelistUpdateDevice(dev, state){
+
+    // Find the <p> element with the ID of device
+    document.getElementById(dev).innerHTML = dev + ":" + state;
+}
+
+// Remove device from the list
+function statelistDeleteDevice(dev){
+    var element = document.getElementById(dev);
+    element.remove();
+}
+
+
 
 // Websocket config (using jQuery on document ready)
 $(document).ready(function(){
@@ -114,23 +147,47 @@ $(document).ready(function(){
     });
 
     socket.on("device state update", function(msg){
-        console.log("Update only one device state.");
-        console.log(msg);
-
         
-        // If this address appears for the first time, add it to dropdown
+        // If this address appears for the first time, add it to dropdown and state list
         var dev = msg.device;
         if (available_devices.indexOf(dev) < 0){
             console.log("Nev available device in testbed");
             available_devices.push(dev);
             dropdownAddDevice(dev);
+            statelistAddDevice(dev, msg.data);
+        }
+        // Else update device state in the device state list
+        else{
+            console.log("Update only one device state.");
+            statelistUpdateDevice(dev, msg.data);
         }
 
     });
 
     socket.on("testbed state update", function(msg){
         console.log("Update whole testbed state.");
-        console.log(msg);
+
+        // cycle through received list 
+        for(let elmnt of msg.data){
+
+            // If this address appears for the first time, add it to dropdown and state list
+            var dev = elmnt.address;
+            if (available_devices.indexOf(dev) < 0){
+                console.log("Nev available device in testbed");
+                available_devices.push(dev);
+                dropdownAddDevice(dev);
+                statelistAddDevice(dev, elmnt.state);
+            }
+            // Else update device state in the device state list
+            else{
+                statelistUpdateDevice(dev, elmnt.state);
+            }
+        }
+
+        // TODO: make it a function and do:
+        // msg.data.forEach(function);
+        // This will call a "function" for each element in list
+        
     });
 
 
@@ -152,3 +209,5 @@ $(document).ready(function(){
     });
 
 });
+
+

@@ -1,4 +1,5 @@
 #   TODO different var names
+#   TODO make it multitherad?
 
 
 import zmq 
@@ -17,6 +18,8 @@ NUMBER_OF_DEVICES = 3
 logging.basicConfig(format='%(levelname)s:%(message)s', level=LOG_LEVEL)
 
 #if __name__ == '__main__':
+
+print("If you stuck here, turn on MongoDB service... ")
 
 mdb = mongodb_client.mongodb_client("active-devices", DATABASE="experiment-monitor")
 
@@ -80,10 +83,16 @@ except KeyboardInterrupt:
 # ------------------------------------------------------------------------------- #
 # Devices are synchronized - start the main loop
 # ------------------------------------------------------------------------------- #
-mdb.printTestbedState()
-# TODO: Inform frontend
+# Print state in terminal
+mdb.printTestbedState() 
 
-print("Starting main loop...") #TODO make it multitherad?
+# Also send testbed state to the frontend
+testbed, count = mdb.getTestbedStateJson() #list of dicts  and  int 
+testbed = str(testbed)
+count = str(count)
+frontend.send_multipart([flask_script_id, b"Update", count.encode(), testbed.encode()])
+
+print("Starting main loop...")
 tx_msg_nbr = 0
 
 try:

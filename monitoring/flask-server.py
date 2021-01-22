@@ -59,6 +59,8 @@ def received_command(cmd):
     # Forward the received command from client browser to the 0MQ broker script
     # Can't send it from here, because 0MQ is in other thread - using 0MQ context
     # in multiple threads may cause problems (it is not thread safe)
+
+    # If messages from client come to quickly, overwrite them TODO maybe inform user?
     lock.acquire()
     global message_to_send
     message_to_send = [cmd["device"].encode(), cmd["count"].encode(), cmd["data"].encode()] # From dict to byte array
