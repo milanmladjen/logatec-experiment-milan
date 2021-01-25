@@ -45,61 +45,28 @@ poller.register(backend, zmq.POLLIN)
 poller.register(frontend, zmq.POLLIN)
 
 
-# ------------------------------------------------------------------------------- #
-# First wait for synchronization from all subscribers
-# ------------------------------------------------------------------------------- #
-logging.info("Waiting for %i LGTC devices ... interrupt it with Ctrl+C" % NUMBER_OF_DEVICES)
+# Small delay for zmq init 
+time.sleep(1)
 
-subscribers = 0
-try:
-    while subscribers < NUMBER_OF_DEVICES:
-        # Wait for synchronization request (
-        addr, nbr, msg = backend.recv_multipart()
-
-        if nbr == b"-1":
-
-            # Send synchronization reply
-            backend.send_multipart([addr, b"-1", b"ACK"])
-            
-            # Add device to the database
-            if not mdb.isDeviceActive(addr.decode()):
-                mdb.insertDevice(addr.decode(), "ONLINE")
-            else:
-                logging.warning("Device %s allready active" % addr)
-                continue
-
-            # Inform user about new device in terminal
-            subscribers += 1
-            logging.info("Device %s online (%i/%i)" % (addr, subscribers, NUMBER_OF_DEVICES))
-        else:
-            logging.warning("Got a message but not sync request (%s) ...discarting." % msg)
-            # Send ACK back nontheless
-            backend.send_multipart([addr, nbr, b"ACK"])
-
-except KeyboardInterrupt:
-    print("Keybopard interrupt...continuing application.")
-
-
-# ------------------------------------------------------------------------------- #
-# Devices are synchronized - start the main loop
-# ------------------------------------------------------------------------------- #
-# Print state in terminal
-mdb.printTestbedState() 
-
-# Also send testbed state to the frontend
-testbed, count = mdb.getTestbedStateJson() #list of dicts  and  int 
-testbed = str(testbed)
-count = str(count)
-frontend.send_multipart([flask_script_id, b"Update", count.encode(), testbed.encode()])
+# Inform the frontend that experiment has started
+frontend.send_multipart([flask_script_id, b"Online", b"0", b"0"])
 
 print("Starting main loop...")
 tx_msg_nbr = 0
+subscribers = 0
+
+# ------------------------------------------------------------------------------- 
+# Start the main loop
+# ------------------------------------------------------------------------------- 
 
 try:
     while True:
 
         sockets = dict(poller.poll(100))
 
+        # ------------------------------------------------------------------------------- 
+        # FRONTEND ---> BACKEND
+        # ------------------------------------------------------------------------------- 
         # If there is a message in polling queue from the flask server, forward it to LGTC devices
         if sockets.get(frontend) == zmq.POLLIN:
 
@@ -140,7 +107,9 @@ try:
                     # Inform frontend that address is not in database
                     logging.warning("Device address is not in DB")
 
-
+        # ------------------------------------------------------------------------------- 
+        # BACKEND ---> FRONTEND
+        # ------------------------------------------------------------------------------- 
         # If there is any message in pollin queue from LGTC devices, forward it to flask_server
         elif sockets.get(backend) == zmq.POLLIN:
 
@@ -158,24 +127,32 @@ try:
             if msg[1] == "0":
                 mdb.updateDeviceState(msg[0], msg[2])
                 print("New state of device %s: %s" % (msg[0], mdb.getDeviceState(msg[0])))
-                #TODO inform frontend
                 frontend.send_multipart([flask_script_id, address, data_nbr, data])
 
             # SYS
             elif msg[1] == "-1":
                 
-                # If device come to experiment later than sync process, add it do database
+                # If device come to experiment add it do database
                 if msg[2] == "SYNC":
                     if not mdb.isDeviceActive(msg[0]):
                         mdb.insertDevice(msg[0], "ONLINE")
-                    print("Device %s send SYNC message" % msg[0])
-                    #TODO inform frontend
-                
-                if msg[2] == "SOFT_EXIT":
-                    # Remove device from the database
+                        frontend.send_multipart([flask_script_id, address, b"0", b"ONLINE"])
+                        print("Device %s joined the experiment" % msg[0])
+
+                        subscribers += 1
+                        if subscribers == NUMBER_OF_DEVICES:
+                            print("All devices (" + str(NUMBER_OF_DEVICES) + ") active")
+
+                    else:
+                        print("Device with the name %s allready in the experiment" % msg[0])
+                        # TODO send END command to LGTC with stated reason
+
+                # If device exited the experiment, remove it from the database
+                if msg[2] == "SOFT_EXIT":  
                     md.removeDevice(msg[0])
+                    frontend.send_multipart([flask_script_id, address, b"0", b"OFFLINE"])
                     print("Device %s send SOFT_EXIT message" % msg[0])
-                    # TODO inform frontend
+
 
             else:
                 # Send response back to the server [device, count, data]
@@ -184,7 +161,9 @@ try:
 
             
             print(" ")
-
+        # ------------------------------------------------------------------------------- 
+        # HEARTBEAT
+        # ------------------------------------------------------------------------------- 
         # TODO Heatbeat: Check status of devices and update it in DB
         #else ...
 

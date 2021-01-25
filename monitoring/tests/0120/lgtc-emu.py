@@ -28,8 +28,8 @@ def main():
     # ----------------------------------------------------------------------------------------
 
     # 0) Prepare log file   #TODO put in in __init__?
-    log.prepare_file(DEFAULT_FILENAME, LGTC_ID)
-    log.open_file()
+    #log.prepare_file(DEFAULT_FILENAME, LGTC_ID)
+    #log.open_file()
 
     # 1) Sync with broker (tell him we are online) with timeout of 10 seconds
     logging.info("Sync with broker ... ")
@@ -117,7 +117,7 @@ def main():
                 msg_nbr, msg = client.receive(inp)
 
                 if msg == "ACK":
-                    # Ignore acks with in loop..we don't use async methods
+                    # Ignore acks within this loop..we don't use async methods
                     pass
 
                 # If the message is STATE 
@@ -137,13 +137,14 @@ def main():
                         break
                     else:
                         # If we got some different cmd than start, inform user that we are waiting
-                        client.transmit(["0","WAITING_FOR_START"])
+                        client.transmit([msg_nbr,"Waiting for START_APP command"])
 
             else:
                 print("Waiting...")
     
     except KeyboardInterrupt:
         print("\n Keyboard interrupt!.. Stop the app")
+        force_exit()
 
     # 7) Inform broker that LGTC has started the app
     client.transmit_async(["0", "RUNNING"])
@@ -151,6 +152,9 @@ def main():
 
     # 8) Send start command to vesna
     #monitor.send_command("&" + str(APP_DURATION * 60))
+
+    # 9) Send response from vesna back to frontend client
+    client.transmit_async([msg_nbr, "Experiment has started"])
 
     # ----------------------------------------------------------------------------------------
     # Start the application
@@ -187,7 +191,7 @@ def main():
                 client.transmit_async(response)
 
                 # Log it to file as well
-                log.store_lgtc_line("Got command: " + commandForVesna[1])
+                #log.store_lgtc_line("Got command: " + commandForVesna[1])
                 #log.store_lgtc_line(" Got response: " + data)
 
                 # Empty VESNA command queue
@@ -224,9 +228,17 @@ def main():
 
                         #If the message is CMD
                         else:
-                            # Store the cmd and forward it to VESNA later
-                            reply = [msg_nbr, msg]
-                            commandForVesna = reply
+                            if msg == "START_APP":
+                                client.transmit_async([msg_nbr, "Experiment is already running"])
+
+                            elif msg == "STOP_APP":
+                                client.transmit_async([msg_nbr, "Experiment stopped"])
+                                client.transmit_async(["0", "ONLINE"])
+
+                            else:
+                                # Store the cmd and forward it to VESNA later
+                                reply = [msg_nbr, msg]
+                                commandForVesna = reply
 
                             
                 # ----------------------------------------------------------------------------

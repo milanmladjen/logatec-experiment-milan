@@ -15,6 +15,7 @@ import ast  # From str to json conversion
 # Because it is thread shared variable, use lock before using it 
 message_to_send = []
 update_testbed = False
+experiment_started = False
 lock = Lock()
 
 # Flask and SocketIO config
@@ -45,7 +46,13 @@ def index():
 @socketio.on("connect")
 def connect():
     print("Client connected")
-    emit("after connect",  {"data":"Hello there!"})
+
+    lock.acquire()
+    global experiment_started
+    reply = {"data":str(experiment_started)}
+    lock.release()
+
+    emit("after connect", reply)
 
 @socketio.on("disconnect")
 def disconnect():
@@ -151,6 +158,17 @@ def zmqThread():
                         "data" : json_data
                     }
                     socketio.emit("testbed state update", state, broadcast=True)
+
+                # Sync between broker and flask server
+                elif msg[0] == "Online":
+                    print("Experiment has started")
+
+                    lock.acquire()
+                    global experiment_started
+                    experiment_started = True
+                    lock.release()
+
+                    socketio.emit("experiment started", {}, broadcast=True)
 
                 else:
                     print("Received message from broker!")

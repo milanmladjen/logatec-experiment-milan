@@ -1,6 +1,8 @@
 var tx_msg_nbr = 0;
 var rx_msg_nbr = 0;
 
+var experiment_started = 0;
+
 var available_devices = [];
 
 function dropdownAddDevice(dev){
@@ -102,6 +104,11 @@ $(document).ready(function(){
 // Handlers for events on client browser (using jQuery)
 
     $("#send_cmd").on("click", function(event){
+
+        if (experiment_started == 0){
+            alert("No active experiment in the testbed");
+            return false;
+        }
         
         // Get command and check if it is supported
         var nbr;
@@ -147,10 +154,19 @@ $(document).ready(function(){
 // Handlers for received messages from server
 
     socket.on("after connect", function(msg){
-        console.log("Successfully connected to server!", msg.data);
+        console.log("Successfully connected to server! Is experiment running?: ", msg.data);
         // Update testbed state on connect/reconnect
+        if(msg.data == "True"){
+            experiment_started = 1;
+            socket.emit("testbed update");
+        }
+    });
+
+    socket.on("experiment started", function(msg){
+        console.log("Experiment has started");
+
+        experiment_started = 1;
         socket.emit("testbed update");
-        // TODO: add some sync between broker-flask
     });
 
     socket.on("command response", function(msg){
@@ -224,6 +240,12 @@ $(document).ready(function(){
 
 // Button to update testbed state
     $("#update_testbed").on("click", function(event){
+
+        if (experiment_started == 0){
+            alert("No active experiment in the testbed");
+            return false;
+        }
+
         console.log("Send request to update testbed state");
         socket.emit("testbed update");
     });
