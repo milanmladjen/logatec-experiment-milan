@@ -4,7 +4,7 @@ run_experiment_node:
 run_experiment_root:
 	./run-experiment-root
 
-run_server:
-	./server-socket
+run_monitor:
+	./zmq-broker.py
 
-.PHONY: run_experiment_node run_experiment_root run_server
+.PHONY: run_experiment_node run_experiment_root run_monitor

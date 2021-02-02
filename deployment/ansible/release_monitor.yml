@@ -1,0 +1,47 @@
+# Make a new container on Videk, called "experiment-monitor". 
+# On startup run script run_monitor --> zmq_broker.py
+
+---
+- hosts: 172.17.0.1
+  remote_user: videk
+
+tasks:
+  - name: Display abstract
+    debug:
+      msg: "Testing {{application}}, duration {{duration}} minutes, root node is {{root_node}}"
+  
+  - name: Create directory
+    file:
+      path: ~/deploy/logatec-experiment
+      state: directory
+
+# recursive will also download the submodules
+# on the version param you can change which branch to pull TODO
+  - name: Pull all changes from github
+    git:
+      repo: git@github.com:logatec3/logatec-experiment.git
+      dest: ~/deploy/logatec-experiment
+      recursive: no
+      update: yes
+      force: yes
+      depth: 1
+      version: develop/grega
+
+# -f flag so we can later copy whole LOG-a-TEC directory into container
+# else we get error "Forbidden path outside the build context"
+  - name: Build docker file
+    command: docker build -t vesna-drivers -f deployment/docker/Dockerfile .
+    args:
+      chdir: ~/deploy/logatec-experiment
+
+  - name: Cleanup old docker container (controller)
+      ignore_errors: yes
+      command: "{{ item }}"
+      with_items:
+        - docker kill experiment-monitor
+        - docker rm experiment-monitor
+
+  - name: Run docker image
+    command: docker run --privileged --name experiment-monitor  -e TARGET=run_monitor #-p 50000:50000 vesna-drivers 
+
+    #TODO: ports for 0MQ, 

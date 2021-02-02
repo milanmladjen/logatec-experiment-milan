@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+ansible-playbook deployment/ansible/release_monitor.yml
