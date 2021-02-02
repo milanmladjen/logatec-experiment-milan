@@ -43,8 +43,8 @@ def main():
     # 2) Compile the application
     logging.info("Compile the application ... ")
 
-    client.transmit(["0", "COMPILING"])
-    if client.wait_ack("0", 2) is False:
+    client.transmit(["-1", "COMPILING"])
+    if client.wait_ack("-1", 2) is False:
         logging.error("No ack from broker...exiting now.")
         force_exit()
 
@@ -82,9 +82,9 @@ def main():
     monitor.send_command("&" + str(APP_DURATION * 60))
 
     # 6) Inform broker that LGTC is ready to start the app, timeout of 2 seconds
-    client.transmit(["0", "ONLINE"])
+    client.transmit(["-1", "ONLINE"])
 
-    if client.wait_ack("0", 2) is False:
+    if client.wait_ack("-1", 2) is False:
         logging.error("No ack from broker...exiting now.")
         force_exit()
 
@@ -106,15 +106,15 @@ def main():
                     # Ignore acks with in loop..we don't use async methods
                     pass
 
-                # If the message is STATE 
-                elif msg_nbr == "0":
-                    # Send the sate to broker
-                    client.transmit(["0", "ONLINE"])
-                
-                # If the message is SYNC
+                # If the message is SYSTEM 
                 elif msg_nbr == "-1":
                     if msg == "END":
                         force_exit()
+                    
+                    elif msg == "STATE":
+                        # Send the sate to broker
+                        client.transmit(["-1", "ONLINE"])
+
 
                 #If the message is CMD
                 else:
@@ -123,7 +123,7 @@ def main():
                         break
                     else:
                         # If we got some different cmd than start, inform user that we are waiting
-                        client.transmit(["0","WAITING_FOR_START"])
+                        client.transmit([msg_nbr,"WAITING_FOR_START"])
 
             else:
                 print("Waiting...")
@@ -132,7 +132,7 @@ def main():
         print("\n Keyboard interrupt!.. Stop the app")
 
     # 7) Inform broker that LGTC has started the app
-    client.transmit_async(["0", "RUNNING"])
+    client.transmit_async(["-1", "RUNNING"])
     # Here we are not waiting for ACK bc we will receive that ACK later in while loop below
 
     # 8) Send start command to vesna
@@ -194,18 +194,16 @@ def main():
                     # If the message is command (else (if we received ack) we got back None)
                     if msg_nbr:
                         
-                        # If the message is STATE 
-                        if msg_nbr == "0":
-                            # Get LGTC state
-                            reply = ["0", "RUNNING"]
-
-                            # Send the sate to broker (use transmit if you don't need ACK back)
-                            client.transmit_async(reply)
-                        
-                        # If the message is SYNC
-                        elif msg_nbr == "-1":
+                        # If the message is SYSTEM
+                        if msg_nbr == "-1":
                             if msg == "END":
                                 force_exit()
+
+                            elif msg == "STATE":
+                                # Get LGTC state
+                                reply = ["-1", "RUNNING"]
+
+                                client.transmit_async(reply)
 
                         #If the message is CMD
                         else:
