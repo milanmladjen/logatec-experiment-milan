@@ -124,7 +124,7 @@ try:
             msg = [address.decode(), data_nbr.decode(), data.decode()]
 
             # SYSTEM message (only to update the database)
-            elif msg[1] == "-1":
+            if msg[1] == "-1":
                 
                 # If device come to experiment add it do database
                 if msg[2] == "SYNC":
@@ -187,4 +187,7 @@ msg =b"-1 END"
 # Send stop command
 backend_pub.send(msg)
 
+
+# Inform the frontend that experiment has started
+frontend.send_multipart([flask_script_id, b"Online", b"0", b"0"])
 

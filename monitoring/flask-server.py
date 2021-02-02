@@ -185,6 +185,17 @@ def zmqThread():
 
                     socketio.emit("experiment started", {}, broadcast=True)
 
+                # When broker exits, inform the user
+                elif msg[0] == "End":
+                    print("Experiment has stopped")
+
+                    lock.acquire()
+                    global experiment_started
+                    experiment_started = False
+                    lock.release()
+
+                    socketio.emit("experiment stopped", {}, broadcast=True)
+
                 # Received command response
                 else:
                     print("Received message from broker!")

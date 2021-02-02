@@ -166,7 +166,18 @@ $(document).ready(function(){
         console.log("Experiment has started");
 
         experiment_started = 1;
+        // Clear output filed in case something is here from before
+        $("#output_field").val("");
+        
         socket.emit("testbed update");
+    });
+
+    socket.on("experiment stopped", function(msg){
+        console.log("Experiment has stopped");
+
+        experiment_started = 0;
+        alert("Experiment stopped!")
+
     });
 
     socket.on("command response", function(msg){
