@@ -221,5 +221,5 @@ if __name__ == '__main__':
 
 
     print("Start the server!")
-    socketio.run(app, host='0.0.0.0', debug=False)
+    socketio.run(app, host="localhost", port=8001, debug=False)
 
