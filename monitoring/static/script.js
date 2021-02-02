@@ -85,6 +85,14 @@ function statelistDeleteDevice(dev){
     element.remove();
 }
 
+// Delete whole list
+function statelistRemove(){
+    var listdiv = document.getElementById("device_state_list");
+
+    while(listdiv.hasChildNodes()){
+        listdiv.removeChild(listdiv.firstChild);
+    }
+}
 
 
 // Websocket config (using jQuery on document ready)
@@ -166,9 +174,11 @@ $(document).ready(function(){
         console.log("Experiment has started");
 
         experiment_started = 1;
+
         // Clear output filed in case something is here from before
         $("#output_field").val("");
-        
+        statelistRemove();
+
         socket.emit("testbed update");
     });
 
@@ -176,6 +186,7 @@ $(document).ready(function(){
         console.log("Experiment has stopped");
 
         experiment_started = 0;
+        available_devices = [];
         alert("Experiment stopped!")
 
     });
@@ -204,7 +215,7 @@ $(document).ready(function(){
         // Else update device state in the device state list
         else{
             console.log("Update only one device state.");
-            statelistUpdateDevice(dev, lgtc.state);
+            statelistUpdateDevice(lgtc.address, lgtc.state);
         }
 
     });

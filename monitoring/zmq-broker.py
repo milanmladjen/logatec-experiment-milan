@@ -187,7 +187,9 @@ msg =b"-1 END"
 # Send stop command
 backend_pub.send(msg)
 
+# TODO Delete database??
+mdb.deleteCollection()
 
 # Inform the frontend that experiment has started
-frontend.send_multipart([flask_script_id, b"Online", b"0", b"0"])
+frontend.send_multipart([flask_script_id, b"End", b"0", b"0"])
 

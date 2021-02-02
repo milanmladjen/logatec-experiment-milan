@@ -113,10 +113,10 @@ def zmqThread():
  
     while active:
         
-
-        lock.acquire()
+        global experiment_started
         global message_to_send
         global update_testbed
+        lock.acquire()
 
         # If there is any message to be sent to backend
         if message_to_send:
@@ -179,7 +179,6 @@ def zmqThread():
                     print("Experiment has started")
 
                     lock.acquire()
-                    global experiment_started
                     experiment_started = True
                     lock.release()
 
@@ -190,7 +189,6 @@ def zmqThread():
                     print("Experiment has stopped")
 
                     lock.acquire()
-                    global experiment_started
                     experiment_started = False
                     lock.release()
 
