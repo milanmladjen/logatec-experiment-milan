@@ -118,7 +118,7 @@ def zmqThread():
         global message_to_send
         global update_testbed
 
-        # If there is any message to be sent
+        # If there is any message to be sent to backend
         if message_to_send:
             print("Send message to broker!")
             print(message_to_send)
@@ -126,10 +126,10 @@ def zmqThread():
             message_to_send = []
             lock.release()
         
-        # Or if user wants to update the testbed state
+        # Or if user wants to update the testbed state manually
         elif update_testbed:
             print("Get testbed state from brokers database.")
-            zmq_soc.send_multipart([b"Update", b"", b""])
+            zmq_soc.send_multipart([b"TestbedUpdate", b"", b""])
             update_testbed = False
             lock.release()
 
@@ -146,7 +146,22 @@ def zmqThread():
                 # From bytes to string [device, count, data]
                 msg = [device.decode(), count.decode(), data.decode()]
 
-                if msg[0] == "Update":
+                # Received new device state
+                if msg[0] == "DeviceUpdate":
+                    print("Received new device state from brokers database!")
+
+                    # From string to dict
+                    json = ast.literal_eval(msg[2])
+
+                    update = {
+                            "device" : "Update",
+                            "count" : msg[1],
+                            "data" : json
+                        }
+                    socketio.emit("device state update", update, broadcast=True)
+
+                # Received whole testbed device state
+                elif msg[0] == "TestbedUpdate":
                     print("Received testbed state from brokers database!")
 
                     # From string to list of dicts
@@ -159,7 +174,7 @@ def zmqThread():
                     }
                     socketio.emit("testbed state update", state, broadcast=True)
 
-                # Sync between broker and flask server
+                # Sync between broker and flask server in the beginning
                 elif msg[0] == "Online":
                     print("Experiment has started")
 
@@ -170,27 +185,18 @@ def zmqThread():
 
                     socketio.emit("experiment started", {}, broadcast=True)
 
+                # Received command response
                 else:
                     print("Received message from broker!")
-                    # STATE update from one device
-                    if msg[1] == "0":
-                        update = {
-                            "device" : msg[0],
-                            "count" : msg[1],
-                            "data" : msg[2]
-                        }
-                        socketio.emit("device state update", update, broadcast=True)
-                    
-                    # DATA - response to a command
-                    else:
-                        response = {
-                            "device" : msg[0],
-                            "count" : msg[1],
-                            "data" : msg[2]
-                        }
-                        print("Forwarding it to client...")
-                        # Forward message to the client over websockets
-                        socketio.emit("command response", response, broadcast=True)
+     
+                    response = {
+                        "device" : msg[0],
+                        "count" : msg[1],
+                        "data" : msg[2]
+                    }
+
+                    # Forward message to the client over websockets
+                    socketio.emit("command response", response, broadcast=True)
             else:
                 socketio.sleep(0.5)
 

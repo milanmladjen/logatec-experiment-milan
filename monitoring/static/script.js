@@ -33,7 +33,7 @@ function dropdownDeleteDevice(dev){
 
 // Check if input command is in list of supported commands
 function commandSupported(c){
-    lgtc_commands = [
+    system_commands = [
         "STATE",
         "RE_FLASH", //TODO
         "LINES"     //TODO
@@ -47,7 +47,7 @@ function commandSupported(c){
         //CONTIKI
     ]
 
-    if(lgtc_commands.includes(c)){
+    if(system_commands.includes(c)){
         return 0;
     }
     else if(app_commands.includes(c)){
@@ -118,9 +118,9 @@ $(document).ready(function(){
             alert("Command not supported!")
             return false;
         }
-        // If it is command for LGTC only, set msg number to 0
+        // If this is a SYSTEM command
         else if (sup == 0){
-            nbr = "0";
+            nbr = "-1";
         }
         // If it is command for the app, get global message number
         else{
@@ -183,17 +183,17 @@ $(document).ready(function(){
     socket.on("device state update", function(msg){
         
         // If this address appears for the first time, add it to dropdown and state list
-        var dev = msg.device;
-        if (available_devices.indexOf(dev) < 0){
+        var lgtc = msg.data;
+        if (available_devices.indexOf(lgtc.address) < 0){
             console.log("Nev available device in testbed");
-            available_devices.push(dev);
-            dropdownAddDevice(dev);
-            statelistAddDevice(dev, msg.data);
+            available_devices.push(lgtc.address);
+            dropdownAddDevice(lgtc.address);
+            statelistAddDevice(lgtc.address, lgtc.state);
         }
         // Else update device state in the device state list
         else{
             console.log("Update only one device state.");
-            statelistUpdateDevice(dev, msg.data);
+            statelistUpdateDevice(dev, lgtc.state);
         }
 
     });

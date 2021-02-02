@@ -80,13 +80,13 @@ try:
             tx_msg_nbr += 1
 
             # UPDATE TESTBED STATE
-            if msg[0] == "Update":
+            if msg[0] == "TestbedUpdate":
                 
                 # Send testbed state to the frontend
                 testbed, count = mdb.getTestbedStateJson() #list of dicts  and  int 
                 testbed = str(testbed)
                 count = str(count)
-                frontend.send_multipart([flask_script_id, b"Update", count.encode(), testbed.encode()])
+                frontend.send_multipart([flask_script_id, b"TestbedUpdate", count.encode(), testbed.encode()])
 
 
             # PUBLISH COMMAND - if message is for all devices
@@ -123,20 +123,17 @@ try:
             # From bytes to string for loging output [address, count, data]
             msg = [address.decode(), data_nbr.decode(), data.decode()]
 
-            # STATE
-            if msg[1] == "0":
-                mdb.updateDeviceState(msg[0], msg[2])
-                print("New state of device %s: %s" % (msg[0], mdb.getDeviceState(msg[0])))
-                frontend.send_multipart([flask_script_id, address, data_nbr, data])
-
-            # SYS
+            # SYSTEM message (only to update the database)
             elif msg[1] == "-1":
                 
                 # If device come to experiment add it do database
                 if msg[2] == "SYNC":
                     if not mdb.isDeviceActive(msg[0]):
                         mdb.insertDevice(msg[0], "ONLINE")
-                        frontend.send_multipart([flask_script_id, address, b"0", b"ONLINE"])
+
+                        devstate = {"address":msg[0], "state":"ONLINE"}
+                        devstate = str(devstate)
+                        frontend.send_multipart([flask_script_id, b"DeviceUpdate", b"-1", devstate.encode()])
                         print("Device %s joined the experiment" % msg[0])
 
                         subscribers += 1
@@ -148,12 +145,24 @@ try:
                         # TODO send END command to LGTC with stated reason
 
                 # If device exited the experiment, remove it from the database
-                if msg[2] == "SOFT_EXIT":  
+                elif msg[2] == "SOFT_EXIT":  
                     md.removeDevice(msg[0])
-                    frontend.send_multipart([flask_script_id, address, b"0", b"OFFLINE"])
+
+                    devstate = {"address":msg[0], "state":"OFFLINE"}
+                    devstate = str(devstate)
+                    frontend.send_multipart([flask_script_id, b"DeviceUpdate", b"-1", devstate.encode()])
                     print("Device %s send SOFT_EXIT message" % msg[0])
 
+                # Else update device state in the database
+                else:
+                    mdb.updateDeviceState(msg[0], msg[2])
+                    print("New state of device %s: %s" % (msg[0], mdb.getDeviceState(msg[0])))
 
+                    devstate = {"address":msg[0], "state":msg[2]}
+                    devstate = str(devstate)
+                    frontend.send_multipart([flask_script_id, b"DeviceUpdate", b"-1", devstate.encode()])
+
+            # COMMAND response
             else:
                 # Send response back to the server [device, count, data]
                 frontend.send_multipart([flask_script_id, address, data_nbr, data])
