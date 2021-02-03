@@ -33,7 +33,7 @@ templateData ={
     "example_string" : "monitor" 
 }
 
-@app.route("/")
+@app.route("/monitor")
 def index():
     # Use jinja2 template to render html with app values
     return render_template("index.html", **templateData)
