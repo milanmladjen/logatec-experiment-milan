@@ -19,7 +19,7 @@ experiment_started = False
 lock = Lock()
 
 # Flask and SocketIO config
-app = Flask(__name__)
+app = Flask(__name__, static_url_path="", static_folder="monitoring/static", template_folder="monitoring/templates")
 socketio = SocketIO(app, async_mode=None)
 
 thread = Thread()
