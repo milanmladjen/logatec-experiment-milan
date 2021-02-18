@@ -210,15 +210,9 @@ def zmqThread():
                 socketio.sleep(0.5)
 
 
-
+thread = socketio.start_background_task(zmqThread)
 
 if __name__ == '__main__':
-
-    #worker = zmqWorker()
-    #worker.start()
-
-    thread = socketio.start_background_task(zmqThread)
-
 
     print("Start the server!")
     socketio.run(app, host="localhost", port=8001, debug=False)
