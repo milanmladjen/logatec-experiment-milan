@@ -6,7 +6,8 @@ import zmq
 import time
 import logging
 
-from lib import mongodb_client
+#from lib import mongodb_client
+from lib import testbed_database
 
 LOG_LEVEL = logging.DEBUG
 NUMBER_OF_DEVICES = 3
@@ -21,7 +22,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=LOG_LEVEL)
 
 print("If you stuck here, turn on MongoDB service... ")
 
-mdb = mongodb_client.mongodb_client("active-devices", DATABASE="experiment-monitor")
+db = testbed_database("test_database.db")
 
 context = zmq.Context.instance()
 
@@ -83,10 +84,9 @@ try:
             if msg[0] == "TestbedUpdate":
                 
                 # Send testbed state to the frontend
-                testbed, count = mdb.getTestbedStateJson() #list of dicts  and  int 
+                testbed = db.get_tb_state_json()
                 testbed = str(testbed)
-                count = str(count)
-                frontend.send_multipart([flask_script_id, b"TestbedUpdate", count.encode(), testbed.encode()])
+                frontend.send_multipart([flask_script_id, b"TestbedUpdate", b"", testbed.encode()])
 
 
             # PUBLISH COMMAND - if message is for all devices
@@ -99,7 +99,7 @@ try:
             # UNICAST COMMAND - if message is only for one device
             else:
                 # Addres must be in database, otherwise it is not active
-                if mdb.isDeviceActive(msg[0]):
+                if db.is_dev(msg[0]):
                     cmd = [device, count, data]
                     backend.send_multipart(cmd)
                     logging.debug("Router sent message [%s]: %s to device %s" % (msg[1], msg[2], msg[0]))
@@ -128,8 +128,8 @@ try:
                 
                 # If device come to experiment add it do database
                 if msg[2] == "SYNC":
-                    if not mdb.isDeviceActive(msg[0]):
-                        mdb.insertDevice(msg[0], "ONLINE")
+                    if not db.is_dev(msg[0]):
+                        db.insert_dev(msg[0], "ONLINE")
 
                         devstate = {"address":msg[0], "state":"ONLINE"}
                         devstate = str(devstate)
@@ -155,8 +155,8 @@ try:
 
                 # Else update device state in the database
                 else:
-                    mdb.updateDeviceState(msg[0], msg[2])
-                    print("New state of device %s: %s" % (msg[0], mdb.getDeviceState(msg[0])))
+                    db.update_dev_state(msg[0], msg[2])
+                    print("New state of device %s: %s" % (msg[0], db.get_dev_state(msg[0])))
 
                     devstate = {"address":msg[0], "state":msg[2]}
                     devstate = str(devstate)
@@ -186,9 +186,6 @@ print("Sent messages %i" % tx_msg_nbr)
 msg =b"-1 END"
 # Send stop command
 backend_pub.send(msg)
-
-# TODO Delete database??
-mdb.deleteCollection()
 
 # Inform the frontend that experiment has started
 frontend.send_multipart([flask_script_id, b"End", b"0", b"0"])
