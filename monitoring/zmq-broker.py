@@ -20,8 +20,6 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=LOG_LEVEL)
 
 #if __name__ == '__main__':
 
-print("If you stuck here, turn on MongoDB service... ")
-
 db = testbed_database("test_database.db")
 
 context = zmq.Context.instance()

@@ -51,6 +51,10 @@ class testbed_database():
             print("[ERR] updating database")
             return False
 
+    def delete(self):
+        self._cleardb()
+        os.remove(self.location)
+
 
 
     # True if device is the DB, False if not    
@@ -147,3 +151,6 @@ if __name__ == "__main__":
     # Incorrect usage - adding device which is allready in DB
     db.insert_dev("LGTC66","COMPILING")
 
+
+    # Optionally delete database file on the end
+    db.delete()
