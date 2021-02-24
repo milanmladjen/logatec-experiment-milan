@@ -98,11 +98,12 @@ function statelistRemove(){
 // Websocket config (using jQuery on document ready)
 $(document).ready(function(){
 
-    // sending a connect request to the server.
-    // var socket = io(); // If you use different url than http server, put it in the brackets
-    // io.connect();
-    //var socket = io.connect('http://localhost:5000');
-    var socket = io();
+    // If websocket are on the same domain
+    // var socket = io();
+
+    // For different domain, WebSocket server (flask_server.py) must have CORS enabled 
+    // https://socket.io/docs/v3/client-initialization/
+    var socket = io("http://localhost:8001/");
 
 
 // Prepare html
@@ -263,10 +264,11 @@ $(document).ready(function(){
 // Button to update testbed state
     $("#update_testbed").on("click", function(event){
 
-        if (experiment_started == 0){
+        /*if (experiment_started == 0){
             alert("No active experiment in the testbed");
             return false;
-        }
+        }*/
+        // TODO: for testing...uncomment later
 
         console.log("Send request to update testbed state");
         socket.emit("testbed update");

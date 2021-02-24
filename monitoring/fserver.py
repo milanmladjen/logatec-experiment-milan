@@ -1,42 +1,63 @@
-#   TODO
-#   Maybe use socketio threads instead of threading library? (example: https://github.com/shanealynn/async_flask/blob/master/application.py)
-#
+# -------------------------------------------------------------------------------
+# TODO:
+# * Display essential values from DB when clients connects to the server
+# -------------------------------------------------------------------------------
 
-from threading import Thread, Lock
-from flask import Flask, render_template
+
+# import eventlet
+# eventlet.monkey_patch()
+
+from threading import Thread, Lock, Event
+from flask import Flask, render_template, send_from_directory
 from flask_socketio import SocketIO, emit
 import zmq
-
 import ast  # From str to json conversion
 
 
-# Global variable - command in queue, which needs to be sent to LGTC device
-# If array is empty that means that no message needs to be sent. 
-# Because it is thread shared variable, use lock before using it 
+# Global variables:
 message_to_send = []
 update_testbed = False
 experiment_started = False
+
+# Thread init
 lock = Lock()
+thread = Thread()
+thread_stop_event = Event()
 
 # Flask and SocketIO config
 app = Flask(__name__, static_url_path="", static_folder="static", template_folder="templates")
-socketio = SocketIO(app, async_mode=None)
 
-thread = Thread()
+socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="http://localhost")
+
 
 # ------------------------------------------------------------------------------- #
 # Flask
 # ------------------------------------------------------------------------------- #
 
-# Store essential values and use it in case of page reload-TODO MongoDB
+# Store essential values and use it in case of page reload-TODO from DB
 templateData ={
     "example_string" : "monitor" 
 }
 
-@app.route("/")
+# Serve templates
+@app.route("/controller/")
 def index():
     # Use jinja2 template to render html with app values
     return render_template("index.html", **templateData)
+
+
+# Serve static files - should use Nginx for that
+@app.route("/controller/static/js/<path:path>")
+def send_js(path):
+    return send_from_directory("static/js/", path)
+
+@app.route("/controller/static/css/<path:path>")
+def send_css(path):
+    return send_from_directory("static/css/", path)
+
+@app.route("/controller/static/img/<path:path>")
+def send_img(path):
+    return send_from_directory("static/img/", path)
 
 
 
@@ -46,6 +67,12 @@ def index():
 @socketio.on("connect")
 def connect():
     print("Client connected")
+
+    # Start ZMQ background thread if it is not active
+    global thread
+    if not thread.is_alive():
+        print("Start ZMQ thread")
+        thread = socketio.start_background_task(zmqThread)
 
     lock.acquire()
     global experiment_started
@@ -58,14 +85,13 @@ def connect():
 def disconnect():
     print("Client disconnected.")
 
+    # Stop the ZMQ thread
+    #thread_stop_event.set()
+
 @socketio.on("new command")
 def received_command(cmd):
     print("Client sent: ")
     print(cmd)
-
-    # Forward the received command from client browser to the 0MQ broker script
-    # Can't send it from here, because 0MQ is in other thread - using 0MQ context
-    # in multiple threads may cause problems (it is not thread safe)
 
     # If messages from client come to quickly, overwrite them TODO maybe inform user?
     lock.acquire()
@@ -93,8 +119,7 @@ def socketio_send_status_update():
 
 
 # ------------------------------------------------------------------------------- #
-# Another thread only for receiving messages from 0MQ broker script
-# 0MQ communication between 2 processes (IPC transport)
+# ZeroMQ
 # ------------------------------------------------------------------------------- #
 def zmqThread():
 
@@ -113,7 +138,7 @@ def zmqThread():
 
     socketio.sleep(1)
  
-    while active:
+    while not thread_stop_event.is_set():
         
         global experiment_started
         global message_to_send
@@ -211,7 +236,7 @@ def zmqThread():
             else:
                 socketio.sleep(0.5)
 
-
+# Run the ZMQ thread in the beginning
 thread = socketio.start_background_task(zmqThread)
 
 if __name__ == '__main__':
@@ -219,3 +244,66 @@ if __name__ == '__main__':
     print("Start the server!")
     socketio.run(app, host="localhost", port=8001, debug=False)
 
+
+
+
+
+
+
+
+
+# -------------------------------------------------------------------------------
+# DEPLOYMENT WITH GUNICORN & EVENTLET
+#
+# A WSGI server is recommended for Flask app deployment - Gunicorn with eventlet  
+# https://flask-socketio.readthedocs.io/en/latest/#deployment
+# Run with: gunicorn --bind localhost:8001 --worker-class eventlet -w 1 fserver:app
+# 
+# Optional: you can deploy Flask app only with eventlet (without Gunicorn)
+# Than use monkey patching on the begining of the script
+# https://flask-socketio.readthedocs.io/en/latest/#using-multiple-workers
+# Run with: python3 fserver.py
+# -------------------------------------------------------------------------------
+# STATIC FILES
+# 
+# Recommended way of serving static files is to use Nginx. 
+#
+# location /controller/static {
+#                alias /.../monitoring/static;
+# }
+#
+# But if we don't want it, Flask can also serve static files...
+# (https://stackoverflow.com/questions/20646822/how-to-serve-static-files-in-flask)
+# -------------------------------------------------------------------------------
+# SOCKET MULTIPLEXING
+#
+# If multiple connections on single websockets are needed, add "namespaces" to 
+# the application...
+# usecase: if SMS portal will need another WebSocket communication on default URL
+# https://socket.io/docs/v3/namespaces/index.html
+# https://flask-socketio.readthedocs.io/en/latest/
+#-------------------------------------------------------------------------------
+# CORS
+# 
+# For security reasons, CORS is not enabled by default, thus disabling WebSockets
+# on different domains names than default server name - problem because of Nginx 
+# proxying. WS client (script.js) can now connect to the WS server (fserver.py)
+#
+# Enableing all domains:
+#       cors_allowed_origins="*"
+# exposes potential risks (https://flask-socketio.readthedocs.io/en/latest/)
+# so solution for now is:
+#       cors_allowed_origins="http://localhost"
+# 
+# Read more on:
+# https://socket.io/docs/v3/client-initialization/
+# https://flask-socketio.readthedocs.io/en/latest/#cross-origin-controls
+#-------------------------------------------------------------------------------
+# ZMQ
+# 
+# Is used to communicate with Controller Docker container (zmq-broker.py) over
+# 0MQ TCP sockets. ZMQ is not threadsafe (using zmq context in multiple threads
+# is not safe), while SocketIO is. That's why they exchange messages via global 
+# variables. Use Lock() before accessing them.
+# IPC (inter process communication) sockets can be used if this script is 
+# running on the same machine as broker script. Otherwise use TCP sockets.
