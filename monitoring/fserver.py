@@ -305,5 +305,8 @@ if __name__ == '__main__':
 # 0MQ TCP sockets. ZMQ is not threadsafe (using zmq context in multiple threads
 # is not safe), while SocketIO is. That's why they exchange messages via global 
 # variables. Use Lock() before accessing them.
+#
 # IPC (inter process communication) sockets can be used if this script is 
 # running on the same machine as broker script. Otherwise use TCP sockets.
+# zmq.connect() must have parametrized address!
+# While in Docker container, 127.0.0.1 won't work - use machine IP address  

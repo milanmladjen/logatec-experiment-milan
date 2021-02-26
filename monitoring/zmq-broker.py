@@ -20,7 +20,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=LOG_LEVEL)
 
 #if __name__ == '__main__':
 
-db = testbed_database("test_database.db")
+db = testbed_database.testbed_database("test_database.db")
 
 context = zmq.Context.instance()
 
@@ -35,8 +35,9 @@ backend.bind('tcp://*:5562')
 
 # Socket for intra-process communication with flask server
 frontend = context.socket(zmq.ROUTER)
-frontend.bind("ipc:///tmp/zmq_ipc")
-flask_script_id = b"flask_process"    # defined in flask
+#frontend.bind("ipc:///tmp/zmq_ipc")
+frontend.bind("tcp://*:5563")
+flask_script_id = b"flask_process"    # As defined in flask
 
 # Configure poller
 poller = zmq.Poller()
@@ -44,9 +45,10 @@ poller.register(backend, zmq.POLLIN)
 poller.register(frontend, zmq.POLLIN)
 
 
-# Small delay for zmq init 
+# Small delay for zmq init
 time.sleep(1)
 
+print("Sync with frontend")
 # Inform the frontend that experiment has started
 frontend.send_multipart([flask_script_id, b"Online", b"0", b"0"])
 
@@ -54,18 +56,18 @@ print("Starting main loop...")
 tx_msg_nbr = 0
 subscribers = 0
 
-# ------------------------------------------------------------------------------- 
+# -------------------------------------------------------------------------------
 # Start the main loop
-# ------------------------------------------------------------------------------- 
+# -------------------------------------------------------------------------------
 
 try:
     while True:
 
         sockets = dict(poller.poll(100))
 
-        # ------------------------------------------------------------------------------- 
+        # -------------------------------------------------------------------------------
         # FRONTEND ---> BACKEND
-        # ------------------------------------------------------------------------------- 
+        # -------------------------------------------------------------------------------
         # If there is a message in polling queue from the flask server, forward it to LGTC devices
         if sockets.get(frontend) == zmq.POLLIN:
 
@@ -73,14 +75,14 @@ try:
 
             dummy_flask_script_id, device, count, data = frontend.recv_multipart()
 
-            # [device, count, data] From bytes to string for loging output 
+            # [device, count, data] From bytes to string for loging output
             msg = [device.decode(), count.decode(), data.decode()]
 
             tx_msg_nbr += 1
 
             # UPDATE TESTBED STATE
             if msg[0] == "TestbedUpdate":
-                
+
                 # Send testbed state to the frontend
                 testbed = db.get_tb_state_json()
                 testbed = str(testbed)
@@ -93,7 +95,7 @@ try:
                 cmd ="%s %s" % (msg[1], msg[2])
                 backend_pub.send(cmd.encode())
                 logging.debug("Published message [%s]: %s" % (msg[1], msg[2]))
-            
+ 
             # UNICAST COMMAND - if message is only for one device
             else:
                 # Addres must be in database, otherwise it is not active
@@ -105,14 +107,14 @@ try:
                     # Inform frontend that address is not in database
                     logging.warning("Device address is not in DB")
 
-        # ------------------------------------------------------------------------------- 
+        # -------------------------------------------------------------------------------
         # BACKEND ---> FRONTEND
-        # ------------------------------------------------------------------------------- 
+        # -------------------------------------------------------------------------------
         # If there is any message in pollin queue from LGTC devices, forward it to flask_server
         elif sockets.get(backend) == zmq.POLLIN:
 
             print("Received from backend...")
-            
+
             address, data_nbr, data = backend.recv_multipart()
 
             # Send ACK back
@@ -123,7 +125,7 @@ try:
 
             # SYSTEM message (only to update the database)
             if msg[1] == "-1":
-                
+
                 # If device come to experiment add it do database
                 if msg[2] == "SYNC":
                     if not db.is_dev(msg[0]):
@@ -166,11 +168,11 @@ try:
                 frontend.send_multipart([flask_script_id, address, data_nbr, data])
                 logging.info("Received [%s] from device %s: %s" % (msg[1], msg[0], msg[2]))
 
-            
+
             print(" ")
-        # ------------------------------------------------------------------------------- 
+        # -------------------------------------------------------------------------------
         # HEARTBEAT
-        # ------------------------------------------------------------------------------- 
+        # -------------------------------------------------------------------------------
         # TODO Heatbeat: Check status of devices and update it in DB
         #else ...
 
@@ -181,10 +183,10 @@ except KeyboardInterrupt:
 tx_msg_nbr += 1
 print("Sent messages %i" % tx_msg_nbr)
 
+# Inform devices in backend that monitoring is over
 msg =b"-1 END"
-# Send stop command
 backend_pub.send(msg)
 
-# Inform the frontend that experiment has started
+# Inform the frontend that experiment has stopped
 frontend.send_multipart([flask_script_id, b"End", b"0", b"0"])
 
