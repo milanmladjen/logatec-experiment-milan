@@ -7,7 +7,7 @@ from datetime import datetime
 DEFAULT_FILE_NAME = "node_results.txt"
 
 # ----------------------------------------------------------------------
-class file_loger():
+class file_logger():
 
     def prepare_file(self, filename, deviceName):
         # Prepare a file and add description to it (date, time)
