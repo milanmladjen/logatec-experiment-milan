@@ -78,7 +78,9 @@ class zmq_client():
     #   @params:    message made with list of strings: [number, data]
     # ----------------------------------------------------------------------------------------
     def transmit_async(self, msg):
-        self.transmit(msg)
+  
+        if not self.transmit(msg):
+            return
 
         # Broker sent another command before sending ACK to our previous message
         if len(self.waitingForAck) > 1:
