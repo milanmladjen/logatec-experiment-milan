@@ -19,6 +19,7 @@ class serial_monitor():
     def __init__(self, timeout=10):
         self.timeout = timeout
         self.ser = None
+        self.serial_avaliable = False
         
 
     # Basic serial commands    
@@ -53,6 +54,7 @@ class serial_monitor():
         #data = self.ser.readline()
         data = self.ser.read_until(b'\n', None)
         data = data.decode()
+        self.serial_avaliable = True
         return data
 
 
@@ -85,12 +87,28 @@ class serial_monitor():
     # Serial commands made for communication with VESNA
     # ------------------------------------------------------------------
 
+    def wait_response(self, max_time, char):
+        startTime = timer()
+        while((timer() - startTime) < max_time):
+            try:
+                value = self.read_line()
+                if not value:
+                    break     
+                if(value[0] == char):
+                    return True
+
+            except KeyboardInterrupt:
+                print("\n Keyboard interrupt!..Exiting now")
+                sys.exit(1)
+        return False
+
+
     def sync_with_vesna(self):
         logging.debug("Send sync command to VESNA")
         self.write_line("@")
 
         # Wait for response ('@' character) from Vesna for 3 seconds
-        gotResponse = self.wait_start_response(3)
+        gotResponse = self.wait_response(3, "@")
 
         # If device is not responding, try again
         if(not gotResponse):
@@ -98,7 +116,7 @@ class serial_monitor():
             self.flush()
             self.write_line("=")    # Send stop command in case the app is running
             self.write_line("@")
-            gotResponse = self.wait_start_response(3)
+            gotResponse = self.wait_response(3, "@")
 
         if(not gotResponse):
             logging.error("No response...please reset the device and try again")
@@ -107,38 +125,36 @@ class serial_monitor():
 
         logging.debug("Got response...synced with VESNA")
         return True
-    
-    def wait_start_response(self, max_time):
-        startTime = timer()
-        while((timer() - startTime) < max_time):
-            try:
-                value = self.read_line()
-                if not value:
-                    break     
-                if(value[0] == '@'):
-                    return True
 
-            except KeyboardInterrupt:
-                print("\n Keyboard interrupt!..Exiting now")
-                sys.exit(1)
-        return False
+
+    def start_app(self, app_duration):
+        logging.debug("Starting application")
+        self.write_line(">")
+
+        if not self.wait_response(3, ">"):
+            return False
+
+        self.write_line("&"+app_duration)
+
+        return True
+
+    def stop_app(self, app_duration):
+        logging.debug("Stoppin application")
+        self.write_line("=")
+
+        if not self.wait_response(3, "="):
+            return False
+    
+        return True
+
 
     def send_command(self, command):
         logging.debug("Serial send %s command to VESNA" % command)
-        self.write_line(command)
 
-        # Read the response
-        value = self.read_line()
-
+        self.write_line("*" + command)
         # TODO: Vesna can return something else than our data...what to do then?
-        # Ad some checking mechanism... if not our data, store it to file and wait for right response.
         # TODO: response may also be formed in multiple lines...
-        if not value:
-            logging.warning("No response from VESNA")
-            return "No response from VESNA"
-        else:
-            logging.debug("VESNA responded")
-            return value
+
 
 
 

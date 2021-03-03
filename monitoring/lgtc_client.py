@@ -8,8 +8,9 @@ import os
 import logging
 import time
 from subprocess import Popen, PIPE
+from timeit import default_timer as timer
 
-from lib import serial_monitor
+from lib import serial_monitor_thread
 from lib import file_logger
 from lib import zmq_client
 
@@ -66,13 +67,13 @@ print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minute
 # ----------------------------------------------------------------------------------------
 def main():
 
-    # 1) Sync with broker (tell him we are online) with timeout of 10 seconds
+    # Sync with broker (tell him we are online) with timeout of 10 seconds
     logging.info("Sync with broker ... ")
     client.transmit(["-1", "SYNC"])
     if client.wait_ack("-1", 10) is False:
-        logging.error("Couldn't synchronize with broker..exiting now.")
-        force_exit()
-        return
+        logging.error("Couldn't synchronize with broker...")
+    
+    LGTC_set_state("ONLINE")
 
     try:
         while True:
@@ -82,16 +83,16 @@ def main():
             if not vl_queue.empty():
                 print("Got response from VESNA")
                 response = vl_queue.get()
-
-                # TODO
+                
+                # If the message is SYSTEM
                 if response[0] == "-1":
-                    if response[1] == "START_APP":
-                        app_is_running = True
-
-                client.transmit_async(response)
+                    LGTC_update_state(response[1])
+                    client.transmit_async(["-1", LGTC_get_state()])
+                else:
+                    client.transmit_async(response)
 
             # ----------------------------------------------------------------------------
-            # Check if there is some incoming commad from the broker
+            # If there is some incoming commad from the broker
             inp = client.check_input(0)
             if inp:
                 msg_nbr, msg = client.receive_async(inp)
@@ -112,9 +113,9 @@ def main():
                             
                         elif msg == "FLASH":
                             client.transmit_async(["-1", "COMPILING"])
-                            state = LGTC_flash_vesna()
-                            reply = ["-1", state]
-                            client.transmit_async(reply)
+                            LGTC_flash_vesna()
+                            client.transmit_async(["-1", "COMPILED"])
+                            lv_queue.put(["-1", "SYNC_WITH_VESNA"])
 
                         elif msg == "START_APP":
                             command = [msg_nbr, msg]
@@ -123,6 +124,14 @@ def main():
                         elif msg == "STOP_APP":
                             command = [msg_nbr, msg]
                             lv_queue.put(command)
+
+                        elif msg == "RESTART_APP":
+                            lv_queue.put(["-1", "STOP_APP"])
+                            client.transmit_async(["-1", "COMPILING"])
+                            LGTC_flash_vesna()
+                            client.transmit_async(["-1", "COMPILED"])
+                            lv_queue.put(["-1", "START_APP"])
+
 
                     #If the message is CMD
                     else:
@@ -139,20 +148,18 @@ def main():
         print("\n Keyboard interrupt!.. Stop the app")
         return
 
+    finally:
+        return
 
-# FUNCTIONS
 
 def force_exit():
     #client.close() #TODO
     print("TODO")
 
-# Soft exit also informs the broker about this
 def soft_exit(reason):
-
+    # Soft exit also informs the broker about this
     info = ["-1", "SOFT_EXIT"]  
-
     client.transmit(info)
-
     # Force wait ACK for 3 seconds
     if client.wait_ack("-1", 3):
         # Server acknowledged
@@ -162,66 +169,45 @@ def soft_exit(reason):
         force_exit()
 
 def LGTC_get_state():
-    if app_is_running:
-        return "RUNNING"
+    global LGTC_STATE
+    return LGTC_STATE
+
+def LGTC_set_state(state):
+    global LGTC_STATE
+    LGTC_STATE = state
+
+def LGTC_update_state(state):
+    global LGTC_STATE
+    if state = "START_APP":
+        LGTC_STATE = "RUNNING"
+    elif state = "STOP_APP":
+        LGTC_STATE = "ONLINE"
     else:
-        return "ONLINE"
+        print("Unknown state")
+
+def LGTC_flash_vesna():
+    # Compile the application
+    logging.info("Compile the application ... ")
+    LGTC_set_state("COMPILING")
+    procCompile = Popen(["make", APP_NAME, "-j2"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
+    stdout, stderr = procCompile.communicate()
+    logging.debug(stdout)
+    if(stderr):
+        logging.debug(stderr)
+
+    # Flash the VESNA with app binary
+    logging.info("Flash the app to VESNA .. ")
+    procFlash = Popen(["make", APP_NAME + ".logatec3"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
+    stdout, stderr = procFlash.communicate()
+    logging.debug(stdout)
+    if(stderr):
+        logging.debug(stderr)
+
+    LGTC_set_state("COMPILED")
 
 # ----------------------------------------------------------------------------------------
 # THREAD - SERIAL MONITOR 
 # ----------------------------------------------------------------------------------------
-
-class serial_monitor_thread(threading.Thread):
-
-    def __init__(self, input_q, output_q):
-        threading.Thread.__init__(self)
-        self.in_q = input_q
-        self.out_q = output_q
-
-        #self.serialLinesStored = 0
-        #self.monitor = serial_monitor.serial_monitor(SERIAL_TIMEOUT)
-
-        #self.log = file_logger.file_logger()
-        #self.log.prepare_file(DEFAULT_FILENAME, LGTC_ID)
-        #self.log.open_file()
-
-    def run(self):
-        print("Starting serial monitor thread")      
-
-        while not exitFlag:
-            
-            # Read line from UART
-            #if self.monitor.input_waiting():
-                #data = self.monitor.read_line()  
-                
-                # Store the line into file
-                #self.log.store_line(data)
-                #self.serialLinesStored += 1
-            time.sleep(0.7)
-
-            # If there is any command in queue, forward it to VESNA
-            if not self.in_q.empty():
-                cmd = self.in_q.get()
-
-                print(cmd)
-                data = ["1", "solata"]
-
-                #data = self.monitor.send_command(cmd)
-
-                self.out_q.put(data)
-
-                # Log it to file as well
-                #self.log.store_lgtc_line("Got command: " + commandForVesna[2])
-                #self.log.store_lgtc_line(" Got response: " + data)
-
-            else:
-                print(".")
-                # TODO: Update status line in terminal.
-                #print("Line: " + str(line) + " (~ " + str(elapsedMin) + "|" + 
-                #str(int(APP_DURATION)) + " min)", end="\r")
-        
-        #self.monitor.close()
-        #self.log.close()
 
 
 
@@ -231,7 +217,7 @@ class serial_monitor_thread(threading.Thread):
 # THREAD - SERIAL MONITOR 
 # ----------------------------------------------------------------------------------------
 
-app_is_running = False
+LGTC_STATE = "OFFLINE"
 
 #logging.basicConfig(format="[%(module)15s: %(funcName)16s()] %(message)s", level=LOG_LEVEL) # To long module names
 logging.basicConfig(format="[%(levelname)5s:%(funcName)16s()] %(message)s", level=LOG_LEVEL)
@@ -240,8 +226,6 @@ client = zmq_client.zmq_client(SUBSCR_HOSTNAME, ROUTER_HOSTNAME, LGTC_ID)
 
 lv_queue = Queue()
 vl_queue = Queue()
-
-exitFlag = 0
 
 if __name__ == "__main__":
 
@@ -253,5 +237,5 @@ if __name__ == "__main__":
     print("Stoping main thread")
 
     # Notify serial monitor thread to exit its operation and join until quit
-    exitFlag = 1
+    sm_thread.stop()
     sm_thread.join()
