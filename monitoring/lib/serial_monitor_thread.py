@@ -31,6 +31,7 @@ class serial_monitor_thread(threading.Thread):
         
         elapsed_sec = 0
         timeout_cnt = 0
+        command_waiting = None
         
         print("Starting serial monitor thread")   
 
@@ -85,17 +86,22 @@ class serial_monitor_thread(threading.Thread):
 
                 # If we got response on the command
                 if data[0] == "*":
-                    self.out_q.put(data[1:])
+                    response = [command_waiting, data[1:]]
+                    self.out_q.put(response)
+                    command_waiting = None
+                    logging.debug("Got response " + data[1:])
                 
                 # If we got stop command
                 elif data[0] == "=":
+                    command_waiting = None
                     # TODO
                 
                 
 
             # ------------------------------------------------------------------
-            # If there is any command in queue, send it to VESNA
-            elif not self.in_q.empty():
+            # If we are not witing for any response
+            # and there is any command in queue, send it to VESNA
+            elif (not self.in_q.empty() and command_waiting == None):
                 cmd = self.in_q.get()
                 logging.debug("Received command for VESNA")
 
@@ -147,6 +153,7 @@ class serial_monitor_thread(threading.Thread):
 
                 else:
                     self.monitor.send_command(cmd[1])
+                    command_waiting = cmd[0]
 
                     # Log it to file as well
                     self.log.store_lgtc_line("Got command [" + cmd[0] + "]: " + cmd[1])
