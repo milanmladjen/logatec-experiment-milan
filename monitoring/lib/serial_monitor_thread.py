@@ -2,10 +2,13 @@
 # SERIAL MONITOR: Communication between VESNA and LGTC via UART
 # Class for multithread application
 # ----------------------------------------------------------------------
+import threading
+from queue import Queue
 import logging
 from timeit import default_timer as timer
 
 from lib import serial_monitor
+from lib import file_logger
 
 
 class serial_monitor_thread(threading.Thread):
@@ -86,15 +89,15 @@ class serial_monitor_thread(threading.Thread):
 
                 # If we got response on the command
                 if data[0] == "*":
-                    response = [command_waiting, data[1:]]
-                    self.out_q.put(response)
+                    self.out_q.put([command_waiting, data[1:]])
                     command_waiting = None
                     logging.debug("Got response " + data[1:])
                 
                 # If we got stop command
                 elif data[0] == "=":
+                    self.out_q.put(["-1","END_OF_APP"])
                     command_waiting = None
-                    # TODO
+                    logging.debug("Got end-of-app response")
                 
                 
 
@@ -103,11 +106,10 @@ class serial_monitor_thread(threading.Thread):
             # and there is any command in queue, send it to VESNA
             elif (not self.in_q.empty() and command_waiting == None):
                 cmd = self.in_q.get()
-                logging.debug("Received command for VESNA")
 
                 if cmd[0] == "-1":
 
-                    # Sync with VESNA - start the serial_monitor but not the app #TODO add while(1) to VESNA main loop
+                    # @ Sync with VESNA - start the serial_monitor but not the app #TODO add while(1) to VESNA main loop
                     if cmd[1] == "SYNC_WITH_VESNA":
                         if not self.monitor.sync_with_vesna():
                             self.out_q.put(["-1", "VESNA_ERR"])
@@ -119,7 +121,7 @@ class serial_monitor_thread(threading.Thread):
                         self.log.store_lgtc_line("Synced with VESNA ...")
                         logging.info("Synced with VESNA ...")
                     
-                    # Start the app (with app running time as an argument)
+                    # > Start the app (with app running time as an argument)
                     elif cmd[1] == "START_APP":
                         if not self.monitor.start_app(str(APP_DURATION * 60)):
                             self.out_q.put(["-1", "VESNA_ERR"])
@@ -131,7 +133,7 @@ class serial_monitor_thread(threading.Thread):
                         self.log.store_lgtc_line("Application started!")
                         logging.info("Application started!")
 
-                    # Stop the app
+                    # = Stop the app
                     elif cmd[1] == "STOP_APP":
                         if not self.monitor.stop_app():
                             self.out_q.put(["-1", "VESNA_ERR"])
@@ -156,8 +158,8 @@ class serial_monitor_thread(threading.Thread):
                     command_waiting = cmd[0]
 
                     # Log it to file as well
-                    self.log.store_lgtc_line("Got command [" + cmd[0] + "]: " + cmd[1])
-                    logging.debug("Got command [" + cmd[0] + "]: " + cmd[1])
+                    self.log.store_lgtc_line("Received command [" + cmd[0] + "]: " + cmd[1])
+                    logging.debug("Received command [" + cmd[0] + "]: " + cmd[1])
 
             # ------------------------------------------------------------------
             else:

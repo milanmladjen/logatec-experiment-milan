@@ -78,13 +78,35 @@ def main():
             # ----------------------------------------------------------------------------
             # If there is a message from VESNA
             if not vl_queue.empty():
-                print("Got response from VESNA")
+                logging.debug("Got message from VESNA")
                 response = vl_queue.get()
                 
-                # If the message is SYSTEM
+                # If the message is SYSTEM - application controll
                 if response[0] == "-1":
-                    LGTC_update_state(response[1])
+                    if response[1] == "START_APP":
+                        LGTC_set_state("RUNNING")
+
+                    elif response[1] == "STOP_APP":
+                        LGTC_set_state("STOPPED")
+                    
+                    elif response[1] == "SYNCED_WITH_VESNA":
+                        LGTC_set_state("ONLINE")
+
+                    elif response[1] == "END_OF_APP":
+                        LGTC_set_state("FINISHED")
+
+                    elif response[1] == "VESNA_ERR":
+                        LGTC_exit("VESNA_ERROR")
+                        break
+                    
+                    else:
+                        LGTC_set_state("LGTC_WARNING")
+                        logging.debug("Unsupported state")
+
+                    # Send new state to the server
                     client.transmit_async(["-1", LGTC_get_state()])
+                
+                # If the message is CMD - experiment response
                 else:
                     client.transmit_async(response)
 
@@ -97,46 +119,53 @@ def main():
                 # If the message is not ACK
                 if msg_nbr:
 
-                    # If the message is SYSTEM (for LGTC)
+                    # If the message is SYSTEM - application controll
                     if msg_nbr == "-1":
-                        if msg == "END":
-                            force_exit()
+                        if msg == "EXIT":
+                            logging.info("Received EXIT command from server - closing the app.")
                             break
 
                         elif msg == "STATE":
-                            state = LGTC_get_state()
-                            reply = ["-1", state]
-                            client.transmit_async(reply)
+                            client.transmit_async(["-1", LGTC_get_state()])
                             
                         elif msg == "FLASH":
                             client.transmit_async(["-1", "COMPILING"])
-                            LGTC_flash_vesna()
-                            client.transmit_async(["-1", "COMPILED"])
+                            if not LGTC_flash_vesna():
+                                LGTC_exit("COMPILE_ERROR")
+                                break
+                            client.transmit_async(["-1", "ONLINE"])
+                            LGTC_set_state("ONLINE")
+                            # Sync with VESNA right after compiling
+                            # TODO: maybe you can do it before, so you can start logging before flashing to capture first few lines?
                             lv_queue.put(["-1", "SYNC_WITH_VESNA"])
-
-                        elif msg == "START_APP":
-                            command = [msg_nbr, msg]
-                            lv_queue.put(command)
-
-                        elif msg == "STOP_APP":
-                            command = [msg_nbr, msg]
-                            lv_queue.put(command)
 
                         elif msg == "RESTART_APP":
                             lv_queue.put(["-1", "STOP_APP"])
                             client.transmit_async(["-1", "COMPILING"])
                             LGTC_flash_vesna()
-                            client.transmit_async(["-1", "COMPILED"])
+                            client.transmit_async(["-1", "ONLINE"])
                             lv_queue.put(["-1", "START_APP"])
+                            logging.info("Restarting the application!")
+
+                        elif msg == "START_APP":
+                            lv_queue.put([msg_nbr, msg])
+                            logging.info("Starting application!")
+
+                        elif msg == "STOP_APP":
+                            lv_queue.put([msg_nbr, msg])
+                            logging.info("Application stopped!")
+                        
+                        else:
+                            client.transmit_async(["-1", "LGTC_WARNING"])
+                            logging.warning("Unsupported command!")
 
 
-                    #If the message is CMD
+                    #If the message is CMD - experiment command
                     else:
-                        # Store the command in LGTC->VESNA queue
-                        command = [msg_nbr, msg]
-                        lv_queue.put(command)
+                        lv_queue.put([msg_nbr, msg])
 
-            # If there is still some message that didn't receive ACK back, re send it
+            # ----------------------------------------------------------------------------
+            # If there is still some message that didn't receive ACK back from server, re send it
             elif (len(client.waitingForAck) != 0):
                 client.send_retry()
 
@@ -149,39 +178,30 @@ def main():
         return
 
 
-def force_exit():
-    #client.close() #TODO
-    print("TODO")
+# ----------------------------------------------------------------------------------------
+# FUNCTIONS
+# ----------------------------------------------------------------------------------------
 
-def soft_exit(reason):
-    # Soft exit also informs the broker about this
-    info = ["-1", "SOFT_EXIT"]  
-    client.transmit(info)
-    # Force wait ACK for 3 seconds
+# Use in case of fatal errors in experiment app
+def LGTC_exit(reason):
+    client.transmit(["-1", reason])
     if client.wait_ack("-1", 3):
-        # Server acknowledged
-        force_exit()
+        return True
     else:
-        print("No ack from broker...exiting now.")
-        force_exit()
+        logging.warning("No ACK from server while exiting...force exit.")
+        return False
 
+# Get global variable
 def LGTC_get_state():
     global LGTC_STATE
     return LGTC_STATE
 
+# Set global variable
 def LGTC_set_state(state):
     global LGTC_STATE
     LGTC_STATE = state
 
-def LGTC_update_state(state):
-    global LGTC_STATE
-    if state == "START_APP":
-        LGTC_STATE = "RUNNING"
-    elif state == "STOP_APP":
-        LGTC_STATE = "ONLINE"
-    else:
-        print("Unknown state")
-
+# Compile the C app and VESNA with its binary
 def LGTC_flash_vesna():
     # Compile the application
     logging.info("Compile the application ... ")
@@ -191,6 +211,7 @@ def LGTC_flash_vesna():
     logging.debug(stdout)
     if(stderr):
         logging.debug(stderr)
+        #return False
 
     # Flash the VESNA with app binary
     logging.info("Flash the app to VESNA .. ")
@@ -199,8 +220,20 @@ def LGTC_flash_vesna():
     logging.debug(stdout)
     if(stderr):
         logging.debug(stderr)
+        #return False
 
-    LGTC_set_state("COMPILED")
+    return True
+
+# Make a hardware reset on VESNA
+def LGTC_reset_vesna():
+    try:
+        os.system('echo 66 > /sys/class/gpio/export')
+    except Exception:
+        pass
+    os.system('echo out > /sys/class/gpio/gpio66/direction')
+
+    os.system('echo 0 > /sys/class/gpio/gpio66/value')
+    os.system('echo 1 > /sys/class/gpio/gpio66/value')
 
 
 
@@ -228,9 +261,12 @@ if __name__ == "__main__":
     sm_thread.start()
  
     main()
+    #TODO client.close()
 
-    print("Stoping main thread")
+    logging.info("Main thread stopped, trying to stop monitor thread.")
 
     # Notify serial monitor thread to exit its operation and join until quit
     sm_thread.stop()
     sm_thread.join()
+
+    logging.info("Exit!")
