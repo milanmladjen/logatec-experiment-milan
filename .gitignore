@@ -12,6 +12,7 @@
 *.ihex
 *.pyc
 *.db
+*.txt
 
 
 # editors
