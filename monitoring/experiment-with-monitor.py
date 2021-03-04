@@ -64,13 +64,25 @@ print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minute
 # ----------------------------------------------------------------------------------------
 def main():
 
-    # Sync with broker (tell him we are online) with timeout of 10 seconds
+    # Sync with broker with timeout of 10 seconds
     logging.info("Sync with broker ... ")
     client.transmit(["-1", "SYNC"])
     if client.wait_ack("-1", 10) is False:
         logging.error("Couldn't synchronize with broker...")
+        # TODO: Continue application without broker?
+
+    # Flash the VESNA right on begining
+    logging.info("Compile the application ... ")
+    client.transmit(["-1", "COMPILING"])
+
+    if not LGTC_flash_vesna():
+        LGTC_exit("COMPILE_ERROR")
+        return
+
+    # Sync with VESNA right after compiling | or set the state to ONLINE 
     
-    LGTC_set_state("ONLINE")
+    #LGTC_set_state("ONLINE")
+    lv_queue.put(["-1", "SYNC_WITH_VESNA"])
 
     try:
         while True:
@@ -95,16 +107,22 @@ def main():
                     elif response[1] == "END_OF_APP":
                         LGTC_set_state("FINISHED")
 
+                    elif response[1] == "VESNA_TIMEOUT":
+                        LGTC_set_state("TIMEOUT")
+
                     elif response[1] == "VESNA_ERR":
                         LGTC_exit("VESNA_ERROR")
                         break
+                
+                    elif response[0:3] == "SEC":
+                        client.transmit_async(["0",response[4:])
+
+                    elif response[0:5] == "LINES":
+                        client.transmit_async(["0",response[6:])
                     
                     else:
                         LGTC_set_state("LGTC_WARNING")
-                        logging.debug("Unsupported state")
-
-                    # Send new state to the server
-                    client.transmit_async(["-1", LGTC_get_state()])
+                        logging.debug("Unsupported state")                    
                 
                 # If the message is CMD - experiment response
                 else:
@@ -119,44 +137,45 @@ def main():
                 # If the message is not ACK
                 if msg_nbr:
 
+                    logging.info("Received " + msg + " command!")
                     # If the message is SYSTEM - application controll
                     if msg_nbr == "-1":
+
                         if msg == "EXIT":
-                            logging.info("Received EXIT command from server - closing the app.")
+                            logging.info("Closing the app.")
                             break
 
                         elif msg == "STATE":
                             client.transmit_async(["-1", LGTC_get_state()])
                             
                         elif msg == "FLASH":
-                            client.transmit_async(["-1", "COMPILING"])
+                            logging.info("Compile the application ... ")
+                            LGTC_set_state("COMPILING")
                             if not LGTC_flash_vesna():
                                 LGTC_exit("COMPILE_ERROR")
                                 break
-                            client.transmit_async(["-1", "ONLINE"])
-                            LGTC_set_state("ONLINE")
-                            # Sync with VESNA right after compiling
-                            # TODO: maybe you can do it before, so you can start logging before flashing to capture first few lines?
-                            lv_queue.put(["-1", "SYNC_WITH_VESNA"])
 
                         elif msg == "RESTART_APP":
+                            # TODO: Store measurements under a different filename?
                             lv_queue.put(["-1", "STOP_APP"])
-                            client.transmit_async(["-1", "COMPILING"])
-                            LGTC_flash_vesna()
-                            client.transmit_async(["-1", "ONLINE"])
+                            time.sleep(1)   # Wait a little?
+                            LGTC_reset_vesna()
                             lv_queue.put(["-1", "START_APP"])
-                            logging.info("Restarting the application!")
 
                         elif msg == "START_APP":
                             lv_queue.put([msg_nbr, msg])
-                            logging.info("Starting application!")
 
                         elif msg == "STOP_APP":
                             lv_queue.put([msg_nbr, msg])
-                            logging.info("Application stopped!")
+
+                        elif msg == "LINES":
+                            lv_queue.put([msg_nbr, msg])
+                            
+                        elif msg == "SEC":
+                            lv_queue.put([msg_nbr, msg])
                         
                         else:
-                            client.transmit_async(["-1", "LGTC_WARNING"])
+                            LGTC_set_state("LGTC_WARNING")
                             logging.warning("Unsupported command!")
 
 
@@ -200,12 +219,12 @@ def LGTC_get_state():
 def LGTC_set_state(state):
     global LGTC_STATE
     LGTC_STATE = state
+    # Send new state to the server (WARNING: async method used...)
+    client.transmit_async(["-1", state])
 
 # Compile the C app and VESNA with its binary
 def LGTC_flash_vesna():
     # Compile the application
-    logging.info("Compile the application ... ")
-    LGTC_set_state("COMPILING")
     procCompile = Popen(["make", APP_NAME, "-j2"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
     stdout, stderr = procCompile.communicate()
     logging.debug(stdout)
@@ -270,3 +289,45 @@ if __name__ == "__main__":
     sm_thread.join()
 
     logging.info("Exit!")
+
+
+# ----------------------------------------------------------------------------------------
+# POSSIBLE LGTC STATES
+# ----------------------------------------------------------------------------------------
+# --> ONLINE        - LGTC is online and ready
+# --> COMPILING     - LGTC is compiling the experiment application
+# --> RUNNING       - Experiment application is running
+# --> STOPPED       - User successfully stopped the experiment app
+# --> FINISHED      - Experiment application came to the end
+#
+# --> TIMEOUT       - VESNA is not responding for more than a minute
+# --> LGTC_WARNING  - Warning sign that something was not as expected
+# --> COMPILE_ERROR - Experiment application could not be compiled
+# --> VESNA_ERROR   - Problems with UART communication
+#
+#
+# ----------------------------------------------------------------------------------------
+# SUPPORTED COMMANDS
+# ----------------------------------------------------------------------------------------
+# Incomeing commands must be formated as a list with 2 string arguments: message number 
+# and command itself (example: ["66", "STATE"]). Message number is used as a sequence
+# number, but if it is set to "-1", command represents SYSTEM COMMAND:
+#
+# --> SYSTEM COMMANDS - used for controll over the LGTC monitoring application
+#
+#       * START_APP       - start the experiment application
+#       * STOP_APP        -
+#       * RESTART_APP     - 
+#       * FLASH           - flash VESNA with experiment application
+#       * SYNC_WITH_VESNA - start the serial monitor
+#       * EXIT            - exit monitoring application
+#       * STATE           - return the current state of monitoring application
+#       * LINES           - return the number of lines stored in measurement file
+#       * SEC             - return the number of elapsed seconds since the beginning of exp.
+#       
+# --> EXPERIMENT COMMANDS - used for controll over the VESNA experiment application
+#        
+#       TODO:
+#       They should start with the char "*" so VESNA will know?
+#       Depend on Contiki-NG application
+#

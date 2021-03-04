@@ -69,11 +69,11 @@ class serial_monitor_thread(threading.Thread):
 
                     if timeout_cnt > 5:
                         self.log.warning("VESNA did not respond for more than a minute")
-                        self.out_q.put(["-1", "VESNA_ERR"])
+                        self.out_q.put(["-1", "VESNA_TIMEOUT"])
                         timeout_cnt = 0
                         logging.error("VESNA did not respond for more than a minute")
                         self._is_app_running = False
-                        # TODO
+                        # We don't do anything here - let the user interfeer
 
                     # Force variable to False, so when monitor reads something, it goes back to True
                     self.monitor.serial_avaliable = False
@@ -97,6 +97,7 @@ class serial_monitor_thread(threading.Thread):
                 elif data[0] == "=":
                     self.out_q.put(["-1","END_OF_APP"])
                     command_waiting = None
+                    self._is_app_running = False
                     logging.debug("Got end-of-app response")
                 
                 
@@ -125,6 +126,7 @@ class serial_monitor_thread(threading.Thread):
                     elif cmd[1] == "START_APP":
                         if not self.monitor.start_app(str(APP_DURATION * 60)):
                             self.out_q.put(["-1", "VESNA_ERR"])
+                            self._is_thread_running = False
                             self.log.warning("Couldn't start the APP.")
                             logging.error("Couldn't start the APP.")
                         
@@ -136,7 +138,7 @@ class serial_monitor_thread(threading.Thread):
                     # = Stop the app
                     elif cmd[1] == "STOP_APP":
                         if not self.monitor.stop_app():
-                            self.out_q.put(["-1", "VESNA_ERR"])
+                            self.out_q.put(["-1", "VESNA_TIMEOUT"])
                             self.log.warning("Couldn't stop the APP.")
                             logging.error("Couldn't stop the APP.")
                         
@@ -168,10 +170,11 @@ class serial_monitor_thread(threading.Thread):
                 #print("Line: " + str(line) + " (~ " + str(elapsedMin) + "|" + 
                 #str(int(APP_DURATION)) + " min)", end="\r")
         
-        #self.monitor.close()
-        #self.log.close()
+        # ------------------------------------------------------------------
+        # Close everything on the end
+        self.monitor.close()
+        self.log.close()
+        
 
     def stop(self):
         self._is_thread_running = False
-        self.monitor.close()
-        self.log.close()

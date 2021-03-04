@@ -184,7 +184,7 @@ tx_msg_nbr += 1
 print("Sent messages %i" % tx_msg_nbr)
 
 # Inform devices in backend that monitoring is over
-msg =b"-1 END"
+msg =b"-1 EXIT"
 backend_pub.send(msg)
 
 # Inform the frontend that experiment has stopped
