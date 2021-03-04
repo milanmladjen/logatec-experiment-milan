@@ -35,6 +35,8 @@ class serial_monitor_thread(threading.Thread):
         elapsed_sec = 0
         timeout_cnt = 0
         command_waiting = None
+        command_timeout = False
+        loop_time = timer()
         
         print("Starting serial monitor thread")   
 
@@ -54,29 +56,47 @@ class serial_monitor_thread(threading.Thread):
 
             # ------------------------------------------------------------------
             # Failsafe - Check if serial was available in last 10 seconds
+            # Failsafe - Check if we got respond on a command in last 3 sec
             if self._is_app_running:
 
-                loop_time = timer()
-                if ((timer() - loop_time) > 9):
+                # Every second
+                if ((timer() - loop_time) > 1):
                     elapsed_sec += (timer() - loop_time)
                     loop_time = timer()
                     logging.debug("Elapsed seconds: " + str(elapsed_sec))
 
-                    if not self.monitor.serial_avaliable:
-                        self.log.store_lgtc_line("Timeout detected.")
-                        timeout_cnt += 1
-                        logging.debug("No lines read for more than a 10 seconds")
+                    # Every 10 seconds
+                    if elapsed_sec % 10 == 0:
 
-                    if timeout_cnt > 5:
-                        self.log.warning("VESNA did not respond for more than a minute")
-                        self.out_q.put(["-1", "VESNA_TIMEOUT"])
-                        timeout_cnt = 0
-                        logging.error("VESNA did not respond for more than a minute")
-                        self._is_app_running = False
-                        # We don't do anything here - let the user interfeer
+                        if not self.monitor.serial_avaliable:
+                            self.log.store_lgtc_line("Timeout detected.")
+                            timeout_cnt += 1
+                            logging.debug("No lines read for more than a 10 seconds")
 
-                    # Force variable to False, so when monitor reads something, it goes back to True
-                    self.monitor.serial_avaliable = False
+                        if timeout_cnt > 5:
+                            self.log.warning("VESNA did not respond for more than a minute")
+                            self.out_q.put(["-1", "VESNA_TIMEOUT"])
+                            timeout_cnt = 0
+                            logging.error("VESNA did not respond for more than a minute")
+                            self._is_app_running = False
+                            # We don't do anything here - let the user interfeer
+
+                        # Force variable to False, so when monitor reads something, it goes back to True
+                        self.monitor.serial_avaliable = False
+
+                    # Every 3 seconds
+                    if elapsed_sec % 3 == 0:
+                        if command_waiting not None:
+                            # If command_timeout allready occurred - response on command was not captured 
+                            # for more than 3 seconds. Something went wrong, so stop waiting for it
+                            if command_timeout:
+                                self.log.warning("Command timeout occurred!")
+                                self.out_q.put([command_waiting, "Failed to get response from VESNA"])
+                                logging.warning("Command timeout occurred!")
+                                command_timeout = False
+                                command_waiting = None
+                            
+                            command_timeout = True
 
             # ------------------------------------------------------------------
             # Read line from VESNA
@@ -91,12 +111,14 @@ class serial_monitor_thread(threading.Thread):
                 if data[0] == "*":
                     self.out_q.put([command_waiting, data[1:]])
                     command_waiting = None
+                    command_timeout = False
                     logging.debug("Got response " + data[1:])
                 
                 # If we got stop command
                 elif data[0] == "=":
                     self.out_q.put(["-1","END_OF_APP"])
                     command_waiting = None
+                    command_timeout = False
                     self._is_app_running = False
                     logging.debug("Got end-of-app response")
                 
