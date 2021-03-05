@@ -36,5 +36,4 @@ class file_logger():
         self.file.write(s)
 
     def close(self):
-        self.ser.close()
         self.file.close()

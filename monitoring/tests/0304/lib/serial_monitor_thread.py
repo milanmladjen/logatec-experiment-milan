@@ -6,6 +6,7 @@ import threading
 from queue import Queue
 import logging
 from timeit import default_timer as timer
+import time
 
 from lib import serial_monitor
 from lib import file_logger
@@ -38,7 +39,7 @@ class serial_monitor_thread(threading.Thread):
         command_timeout = False
         loop_time = timer()
         
-        print("Starting serial monitor thread")   
+        logging.info("Starting serial monitor thread")   
 
         # Connect to VESNA serial port
         logging.info("Connect to VESNA serial port ....")
@@ -64,7 +65,7 @@ class serial_monitor_thread(threading.Thread):
                 if ((timer() - loop_time) > 1):
                     elapsed_sec += (timer() - loop_time)
                     loop_time = timer()
-                    logging.debug("Elapsed seconds: " + str(elapsed_sec))
+                    #logging.debug("Elapsed seconds: " + str(elapsed_sec))
 
                     # Every 10 seconds
                     if elapsed_sec % 10 == 0:
@@ -160,13 +161,15 @@ class serial_monitor_thread(threading.Thread):
                             self.log.warning("Couldn't sync with VESNA.")
                             logging.error("Couldn't sync with VESNA.")
                         """
-                        
                         self.out_q.put(["-1", "SYNCED_WITH_VESNA"])
                         self.log.store_lgtc_line("Synced with VESNA ...")
                         logging.info("Synced with VESNA ...")
                     
                     # > Start the app (with app running time as an argument)
                     elif cmd[1] == "START_APP":
+                        if self._is_app_running == True:
+                            print("Application allready running")
+
                         """
                         if not self.monitor.start_app(str(APP_DURATION * 60)):
                             self.out_q.put(["-1", "VESNA_ERR"])
@@ -174,7 +177,9 @@ class serial_monitor_thread(threading.Thread):
                             self.log.warning("Couldn't start the APP.")
                             logging.error("Couldn't start the APP.")
                         """
-
+                        # In case we restart experiment, start from 0
+                        elapsed_sec = 0
+                        self._lines_stored = 0
                         self._is_app_running = True
                         self.out_q.put(["-1", "START_APP"])
                         self.log.store_lgtc_line("Application started!")
@@ -218,8 +223,8 @@ class serial_monitor_thread(threading.Thread):
 
 
             # ------------------------------------------------------------------
-            else:
-                print(".")
+            #else:
+                #print(".")
                 # TODO: Update status line in terminal.
                 #print("Line: " + str(line) + " (~ " + str(elapsedMin) + "|" + 
                 #str(int(APP_DURATION)) + " min)", end="\r")

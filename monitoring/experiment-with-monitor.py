@@ -179,6 +179,7 @@ def main():
 
     except KeyboardInterrupt:
         print("\n Keyboard interrupt!.. Stop the app")
+        LGTC_exit("OFFLINE")
         return
 
     finally:
