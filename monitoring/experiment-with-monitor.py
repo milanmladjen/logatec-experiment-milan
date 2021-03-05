@@ -113,12 +113,6 @@ def main():
                     elif response[1] == "VESNA_ERR":
                         LGTC_exit("VESNA_ERROR")
                         break
-                
-                    elif response[0:3] == "SEC":
-                        client.transmit_async(["0",response[4:])
-
-                    elif response[0:5] == "LINES":
-                        client.transmit_async(["0",response[6:])
                     
                     else:
                         LGTC_set_state("LGTC_WARNING")
@@ -138,7 +132,7 @@ def main():
                 if msg_nbr:
 
                     logging.info("Received " + msg + " command!")
-                    # If the message is SYSTEM - application controll
+                    # SYSTEM COMMANDS - application controll
                     if msg_nbr == "-1":
 
                         if msg == "EXIT":
@@ -167,19 +161,13 @@ def main():
 
                         elif msg == "STOP_APP":
                             lv_queue.put([msg_nbr, msg])
-
-                        elif msg == "LINES":
-                            lv_queue.put([msg_nbr, msg])
-                            
-                        elif msg == "SEC":
-                            lv_queue.put([msg_nbr, msg])
                         
                         else:
                             LGTC_set_state("LGTC_WARNING")
                             logging.warning("Unsupported command!")
 
 
-                    #If the message is CMD - experiment command
+                    # EXPERIMENT COMMANDS - experiment command
                     else:
                         lv_queue.put([msg_nbr, msg])
 
@@ -322,11 +310,13 @@ if __name__ == "__main__":
 #       * SYNC_WITH_VESNA - start the serial monitor
 #       * EXIT            - exit monitoring application
 #       * STATE           - return the current state of monitoring application
-#       * LINES           - return the number of lines stored in measurement file
-#       * SEC             - return the number of elapsed seconds since the beginning of exp.
+#       * SYNC            - used to synchronize LGTC with broker/server
+#       * ACK             - acknowledge packet sent as a response on every message
 #       
 # --> EXPERIMENT COMMANDS - used for controll over the VESNA experiment application
-#        
+#
+#       * LINES           - return the number of lines stored in measurement file
+#       * SEC             - return the number of elapsed seconds since the beginning of exp.
 #       TODO:
 #       They should start with the char "*" so VESNA will know?
 #       Depend on Contiki-NG application

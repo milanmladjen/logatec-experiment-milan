@@ -34,16 +34,18 @@ function dropdownDeleteDevice(dev){
 // Check if input command is in list of supported commands
 function commandSupported(c){
     system_commands = [
+        "SYNC_WITH_VESNA",
+        "FLASH",
         "STATE",
-        "RE_FLASH", //TODO
-        "LINES"     //TODO
+        "EXIT",
+        "START_APP",
+        "STOP_APP",
+        "RESTART_APP"
     ];
 
     app_commands = [
-        "START_APP",
-        "RESET_APP",
-        "STOP_APP",
-        "SET_ROOT"
+        "LINES",
+        "SEC"
         //CONTIKI
     ]
 

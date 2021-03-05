@@ -86,7 +86,7 @@ class serial_monitor_thread(threading.Thread):
 
                     # Every 3 seconds
                     if elapsed_sec % 3 == 0:
-                        if command_waiting not None:
+                        if command_waiting != None:
                             # If command_timeout allready occurred - response on command was not captured 
                             # for more than 3 seconds. Something went wrong, so stop waiting for it
                             if command_timeout:
@@ -130,6 +130,7 @@ class serial_monitor_thread(threading.Thread):
             elif (not self.in_q.empty() and command_waiting == None):
                 cmd = self.in_q.get()
 
+                # SYSTEM COMMANDS
                 if cmd[0] == "-1":
 
                     # @ Sync with VESNA - start the serial_monitor but not the app #TODO add while(1) to VESNA main loop
@@ -169,17 +170,20 @@ class serial_monitor_thread(threading.Thread):
                         self.log.store_lgtc_line("Application stopped!")
                         logging.info("Application stopped!")
 
+                # EXPERIMENT COMMANDS
+                else:
                     # Return number of lines read
-                    elif cmd[1] == "LINES":
-                        self.out_q.put(["-1", ("LINES " + str(self._lines_stored))])
+                    if cmd[1] == "LINES":
+                        self.out_q.put([cmd[0], ("LINES " + str(self._lines_stored))])
 
                     # Return number of seconds since the beginning of app
                     elif cmd[1] == "SEC":
-                        self.out_q.put(["-1", ("SEC " + str(elapsed_sec))])
+                        self.out_q.put([cmd[0], ("SEC " + str(elapsed_sec))])
 
-                else:
-                    self.monitor.send_command(cmd[1])
-                    command_waiting = cmd[0]
+                    # Forward command to VESNA
+                    else:
+                        self.monitor.send_command(cmd[1])
+                        command_waiting = cmd[0]
 
                     # Log it to file as well
                     self.log.store_lgtc_line("Received command [" + cmd[0] + "]: " + cmd[1])

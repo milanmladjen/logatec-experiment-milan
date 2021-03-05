@@ -145,13 +145,13 @@ try:
                         # TODO send END command to LGTC with stated reason
 
                 # If device exited the experiment, remove it from the database
-                elif msg[2] == "SOFT_EXIT":  
+                elif msg[2] == "VESNA_ERROR":  
                     md.removeDevice(msg[0])
 
                     devstate = {"address":msg[0], "state":"OFFLINE"}
                     devstate = str(devstate)
                     frontend.send_multipart([flask_script_id, b"DeviceUpdate", b"-1", devstate.encode()])
-                    print("Device %s send SOFT_EXIT message" % msg[0])
+                    print("Device %s send VESNA_ERROR message" % msg[0])
 
                 # Else update device state in the database
                 else:
@@ -162,7 +162,7 @@ try:
                     devstate = str(devstate)
                     frontend.send_multipart([flask_script_id, b"DeviceUpdate", b"-1", devstate.encode()])
 
-            # COMMAND response
+            # EXPERIMENT COMMAND response
             else:
                 # Send response back to the server [device, count, data]
                 frontend.send_multipart([flask_script_id, address, data_nbr, data])
