@@ -27,7 +27,7 @@ thread_stop_event = Event()
 # Flask and SocketIO config
 app = Flask(__name__, static_url_path="", static_folder="static", template_folder="templates")
 
-socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="http://localhost")
+socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="http://localhost", path="/socket.io")
 
 
 # ------------------------------------------------------------------------------- #
@@ -40,22 +40,22 @@ templateData ={
 }
 
 # Serve templates
-@app.route("/controller/")
+@app.route("/")
 def index():
     # Use jinja2 template to render html with app values
     return render_template("index.html", **templateData)
 
 
 # Serve static files - should use Nginx for that
-@app.route("/controller/static/js/<path:path>")
+@app.route("/static/js/<path:path>")
 def send_js(path):
     return send_from_directory("static/js/", path)
 
-@app.route("/controller/static/css/<path:path>")
+@app.route("/static/css/<path:path>")
 def send_css(path):
     return send_from_directory("static/css/", path)
 
-@app.route("/controller/static/img/<path:path>")
+@app.route("/static/img/<path:path>")
 def send_img(path):
     return send_from_directory("static/img/", path)
 
