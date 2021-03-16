@@ -9,7 +9,7 @@ ci:
 	#$(DEPLOY_LOCATION)/deploy_controller
 
 cd: 
-	$(DEPLOY_LOCATION)/release_monitor
+	$(DEPLOY_LOCATION)/release_controller
 	$(DEPLOY_LOCATION)/release_targets
 	$(DEPLOY_LOCATION)/collect_results
 
