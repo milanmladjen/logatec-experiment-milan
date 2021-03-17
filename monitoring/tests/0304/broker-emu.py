@@ -89,7 +89,7 @@ try:
 
                 # Manually check if message number should be 0
                 if msg[1:] == "STATE":
-                    cmd ="0 STATE"
+                    cmd ="-1 STATE"
                 else:
                     cmd ="%i %s" % (tx_msg_nbr, msg[1:])
             
