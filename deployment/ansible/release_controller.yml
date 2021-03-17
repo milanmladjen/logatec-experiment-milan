@@ -5,11 +5,7 @@
 - hosts: 172.17.0.1
   remote_user: videk
 
-tasks:
-  - name: Display abstract
-    debug:
-      msg: "Testing {{application}}, duration {{duration}} minutes, root node is {{root_node}}"
-  
+tasks: 
   - name: Create directory
     file:
       path: ~/deploy/logatec-experiment
@@ -30,7 +26,7 @@ tasks:
 # -f flag so we can later copy whole LOG-a-TEC directory into container
 # else we get error "Forbidden path outside the build context"
   - name: Build docker file
-    command: docker build -t vesna-drivers -f deployment/docker/Dockerfile .
+    command: docker build -t controller -f monitoring/Dockerfile .
     args:
       chdir: ~/deploy/logatec-experiment
 
@@ -38,10 +34,10 @@ tasks:
       ignore_errors: yes
       command: "{{ item }}"
       with_items:
-        - docker kill experiment-monitor
-        - docker rm experiment-monitor
+        - docker kill experiment-controller
+        - docker rm experiment-controller
 
+# Run container in daemon mode so Ansible doesn't wait for it to finish
   - name: Run docker image
-    command: docker run --privileged --name experiment-monitor  -e TARGET=run_monitor #-p 50000:50000 vesna-drivers 
+    command: docker run --name experiment-controller -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 controller 
 
-    #TODO: ports for 0MQ, 
