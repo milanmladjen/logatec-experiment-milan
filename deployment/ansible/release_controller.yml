@@ -1,5 +1,5 @@
-# Make a new container on Videk, called "experiment-monitor". 
-# On startup run script run_monitor --> zmq_broker.py
+# From SMS platform container connect back to Videk server. 
+# Run experiment-controller container (in daemon mode, so Ansible continues to release_targets.yml)
 
 ---
 - hosts: 172.17.0.1
@@ -11,8 +11,6 @@ tasks:
       path: ~/deploy/logatec-experiment
       state: directory
 
-# recursive will also download the submodules
-# on the version param you can change which branch to pull TODO
   - name: Pull all changes from github
     git:
       repo: git@github.com:logatec3/logatec-experiment.git
@@ -23,8 +21,6 @@ tasks:
       depth: 1
       version: develop/grega
 
-# -f flag so we can later copy whole LOG-a-TEC directory into container
-# else we get error "Forbidden path outside the build context"
   - name: Build docker file
     command: docker build -t controller -f monitoring/Dockerfile .
     args:
@@ -37,7 +33,5 @@ tasks:
         - docker kill experiment-controller
         - docker rm experiment-controller
 
-# Run container in daemon mode so Ansible doesn't wait for it to finish
   - name: Run docker image
     command: docker run --name experiment-controller -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 controller 
-

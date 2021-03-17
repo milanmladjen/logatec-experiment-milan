@@ -1,24 +1,24 @@
 # TODO
-# Option 1: run the root node in daemon mode (-d) and all other nodes in normal mode - that way they will finish execution aprox. together
-# Option 2: run the script with strategy: free, so all the nodes will run simultaneously but they will not wait or each other 
+# Option: run the script with strategy: free, so all the nodes will run simultaneously but they will not wait for each other 
 
 ---
 - hosts: 192.168.12.81, 192.168.12.83
-  #strategy: free
+  strategy: free
   remote_user: videk
 
-# Select which application to test, duration in minutes and which device should be the root of the network
+# Select which application to test, duration in minutes
   vars:
     application: 00_test
     duration: 3
-    root_node: 192.168.12.83
 
 # Display experiment abstract in build.log 
-  tasks:
-  - name: Display abstract
-    debug:
-      msg: "Testing {{application}}, duration {{duration}} minutes, root node is {{root_node}}"
-    when: inventory_hostname == root_node
+# TODO: How to display abstract only once, not at every node?
+#  tasks:
+#  - name: Display abstract
+#    debug:
+#      msg: "Testing {{application}}, duration {{duration}} minutes"
+#    when: inventory_hostname == 192.168.12.81
+
 
   - name: Create directory
     file:
@@ -37,7 +37,7 @@
       update: yes
       force: yes
       depth: 1
-      version: develop/upgrade
+      version: develop/grega
 
 # It is better to download sub-modules separately, otherwise you get 95MB of data instead 28MB
 # Recursive option will download all sub-modules (also the ones from Contiki) which we don't need
@@ -54,7 +54,7 @@
       - cd ~/deploy/logatec-experiment/contiki-ng && git clean -f -d
       - cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
 
-# -f flag so we can later copy whole LOG-a-TEC directory into container
+# Build...with -f flag so we can later copy logatec-experiment directory into container
 # with Dockerfile command COPY...else we get error "Forbidden path outside the build context"
   - name: Build docker file
     command: docker build -t vesna-drivers -f deployment/docker/Dockerfile .
@@ -69,12 +69,5 @@
       - docker kill target
       - docker rm target
 
-    # Root node
-  - name: Run docker image for root
-    command: docker run -d --name target --privileged --net=host -e TARGET=run_experiment_root -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
-    when: inventory_hostname == root_node
-
-    # Other nodes
   - name: Run docker image
-    command: docker run --name target --privileged --net=host -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
-    when: inventory_hostname != root_node
+    command: docker run --name target --privileged --net=host -e TARGET=experiment_with_monitor -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers

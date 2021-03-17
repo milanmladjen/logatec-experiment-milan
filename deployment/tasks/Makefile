@@ -1,10 +1,10 @@
-run_experiment_node:
+experiment_node:
 	./run-experiment-node
 
-run_experiment_root:
+experiment_root:
 	./run-experiment-root
 
-run_monitor:
-	./zmq-broker.py
+experiment_with_monitor:
+	./run-experiment-with-monitor
 
-.PHONY: run_experiment_node run_experiment_root run_monitor
+.PHONY: experiment_node experiment_root experiment_with_monitor

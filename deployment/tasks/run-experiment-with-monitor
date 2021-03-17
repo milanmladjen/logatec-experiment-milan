@@ -19,7 +19,7 @@ echo "Testing application $APP on node $IPADDR"
 
 
 # 
-python experiment-with-monitor.py IPADDR APP_DIR
+python ../../monitoring/experiment-with-monitor.py IPADDR APP_DIR
 
 
 
