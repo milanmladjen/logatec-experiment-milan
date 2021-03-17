@@ -14,10 +14,7 @@ RUN set -ex \
 
 # Install pip3 packages
 RUN set -ex \
-    && pip3 install pyzmq \
-                    pymongo
-
-# TODO: Configure MongoDB
+    && pip3 install pyzmq
 
 RUN mkdir logatec-experiment
 
@@ -36,5 +33,4 @@ CMD ["python3", "zmq-broker.py"]
 #ENTRYPOINT ["python3"]
 
 
-# Run with:
-# $ docker run -p 5561:5561 -p5562:5562 -p 5563:5563 --name=controller zmq_broker
+# docker run -p 5561:5561 -p 5562:5562 -p 5563:5563 controller
