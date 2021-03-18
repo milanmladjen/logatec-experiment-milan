@@ -23,8 +23,8 @@ from lib import zmq_client
 # DEFINITIONS
 LOG_LEVEL = logging.DEBUG
 
-ROUTER_HOSTNAME = "tcp://localhost:5562"
-SUBSCR_HOSTNAME = "tcp://localhost:5561"
+ROUTER_HOSTNAME = "tcp://193.2.205.19:5562"
+SUBSCR_HOSTNAME = "tcp://193.2.205.19:5561"
 
 SERIAL_TIMEOUT = 2  # In seconds
 
@@ -141,6 +141,7 @@ def main():
                     if msg_nbr == "-1":
 
                         if msg == "EXIT":
+                            LGTC_exit("OFFLINE")
                             logging.info("Closing the app.")
                             break
 
@@ -184,6 +185,7 @@ def main():
 
     except KeyboardInterrupt:
         print("\n Keyboard interrupt!.. Stop the app")
+        LGTC_exit("OFFLINE")
         return
 
     finally:
