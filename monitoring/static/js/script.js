@@ -105,7 +105,7 @@ $(document).ready(function(){
 
     // For different domain, WebSocket server (flask_server.py) must have CORS enabled 
     // https://socket.io/docs/v3/client-initialization/
-    var socket = io("http://localhost:80", {path: "/controller/socket.io"});
+    var socket = io("https://videk.ijs.si:80", {path: "/controller/socket.io"});
 
     // You can also use different namespace, but then you must update the WS server as well
     // var socket = io("http://localhost:80/namespace_controller");
