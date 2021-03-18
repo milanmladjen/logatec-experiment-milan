@@ -27,7 +27,7 @@ thread_stop_event = Event()
 # Flask and SocketIO config
 app = Flask(__name__, static_url_path="", static_folder="static", template_folder="templates")
 
-socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="https://videk.ijs.si:80", path="/socket.io")
+socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="https://videk.ijs.si:8001", path="/socket.io")
 
 
 # ------------------------------------------------------------------------------- #
