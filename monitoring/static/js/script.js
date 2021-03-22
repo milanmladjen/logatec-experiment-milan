@@ -282,3 +282,24 @@ $(document).ready(function(){
 });
 
 
+
+
+
+
+
+
+
+
+
+
+
+// ------------------------------------------------------------------------------------------------------------
+// Testbed tloris animation
+// ------------------------------------------------------------------------------------------------------------
+
+window.onload = function() {
+    var canvas = document.getElementById("tloris_canvas");
+    var ctx = canvas.getContext("2d");
+    var img = document.getElementById("source_img");
+    ctx.drawImage(img, 0, 0, 720, 550)
+};

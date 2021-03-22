@@ -1,85 +1,95 @@
 <!DOCTYPE html>
-<meta charset = "UTF-8">
-
 <html>  
 	<head> 
 		<meta charset = "utf-8"> 
-		<title>LOG-a-TEC testbed {{ example_string }}</title> 
-		<!-- Include some libraries -->
+		<title>Experiment {{ example_string }}</title> 
+
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
 		<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
-		<script type="text/javascript" src="/controller/static/js/script.js"></script>
+		<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+		<script type="text/javascript" src="/static/js/script.js"></script>
 		<link rel="icon" href="data:,">
 	</head> 
 
 	<body> 
-		<!-- HEADER -->
-		<header>
-			<div style="display: block; text-align: center; margin:auto;">
-				<h1 style = "color:blue;">Experiment Controller Tool</h1> 
-				<p>A tool for real time monitoring and control over the running experiment in LOG-a-TEC testbed.</p> 
+		
 
-				<nav style="color:blue;"> 
-					Index |  Home | How to use?
-				</nav> 
-			</div>
-		</header> 
+		<div class="container-fluid">
 
-		<!-- Straight line -->
-		<hr />
-
-		<!-- BODY LEFT SQUARE-->
-		<div style = "background-color: rgb(165, 245, 237); height:500px; width:40%; float:left;">
-			<h2 style = "text-align: center;">Controller</h2>
-
-			<!-- INPUT DIV -->
-			<div style = "width:fit-content; margin-left: 10px;">
-				<form >
-					Command: 
-					<input type = "text" name = "input_cmd" id = "input_cmd" value="START_APP"/>
-
-					<select name = "select_device" id="select_device" style = "width: 120px;"> <!-- is width necessary? -->
-						<option value = "None" selected>--- Device ---</option>
-						<option value = "All">All</option>
-					</select>
-
-					<input type = "button" name = "send_cmd" id = "send_cmd" value = "Send" />
-				</form>
+            <div class="well">
+                <div class="row">
+                    <h2><i class="glyphicon glyphicon-eye-open"></i> Experiment Controller </h2>
+                    <p>A tool for real time monitoring and control over the running experiment in the LOG-a-TEC testbed.</p> 
+                    <p style="color:blue;">TODO: How to use?</p> 
+                </div>
 			</div>
 
-			<hr style = "border: dashed thin;" />
+			<!-- div class="panel panel-default" -->
+			<div class="row row-no-gutters" style="display: flex; flex-wrap: wrap;">
+				
+				<div class="col-md-6 well">
+					<div style="margin-left: 10px; margin-right: 10px;">
 
-			<!-- OUTPUT DIV -->
-			<div style = "width:fit-content; margin-left: 10px;">
-				Output: <br />
-					<textarea rows = "15" cols = "70" name = "output_field" id="output_field"></textarea>
-			</div>
-
-			<input style="margin-left: 10px;" type="button" name="clear_output" id="clear_output" value="Clear output">
+						<h3>Experiment Controller</h3>
+						<br>
+						<div style="width:fit-content;">
+							<form >
+								Command: 
+								<input type="text" name = "input_cmd" id="input_cmd" value="START_APP"/>
 			
-		</div>
+								<select name="select_device" id="select_device" style="width: 120px;"> <!-- is width necessary? -->
+									<option value = "None" selected>--- Device ---</option>
+									<option value = "All">All</option>
+								</select>
+			
+								<input type="button" class="btn btn-default disabled" name="send_cmd" id="send_cmd" value="Send" />
 
-		<!-- BODY RIGHT SQUARE -->
-		<div style = "background-color: rgb(5, 252, 252); height: 500px; width: 60%; float:right;">
-			<h2 style = "text-align: center;">Testbed Monitor</h2>
+								<input type="button" class="btn btn-default pull-right" name="clear_output" id="clear_output" value="Clear output"/>
+							</form>
+						</div>
 
-			<!-- ACTIVE DEVICES -->
-			<div style = "width:35%; margin-left:10px; float:left;">
-				<h3>Device state:</h3>
-				<div style="background-color: rgb(255, 255, 252); width:fit-content;" id="device_state_list">
+						<br>
 
+						<div class="form-group blue-border-focus">
+							Output:
+							<textarea class="form-control rounded-0" rows="26" name="output_field" id="output_field" ></textarea>
+						</div>
+
+					</div>
 				</div>
-				<input style="margin-left: 10px;" type="button" name="update_testbed" id="update_testbed" value="Update">
+
+                <div class="col-md-6 well">
+					<div style="margin-left: 10px; margin-right: 10px;">
+
+						<h3>Device Monitor</h3>
+						<br>
+
+						<input type="button" class="btn btn-default disabled" name="update_testbed" id="update_testbed" value="Update state">
+
+						<br>
+						<br>
+						<br>
+
+						<!-- div style="display: block; text-align: center; height: 500px; width: 720px; background-color: blue;"-->
+						<div style="display: block; text-align: center;">
+
+							<canvas id="tloris_canvas" width="720" height="550" style="border:1px solid"></canvas>
+	
+							<!-- img src="/static/img/tloris.png" alt="Testbed tloris" style="max-width:100%; max-height:100%;"-->
+							<div style="display: none;">
+								<img src="/static/img/tloris.png" id="source_img" width="auto" height="300">
+							</div>
+		
+						</div>
+					</div>
+				</div>
+
+
 			</div>
 
-			<!-- TESTBED PICTURE -->
-			<div style="margin-right: 10px; text-align:right; width:60%; float:right;">
-				<img src="/controller/static/img/tloris.png" alt="Testbed tloris" style="max-width:100%; max-height:100%; object-fit: contain;" height="400px">
-			</div>
-		</div>
-
-		<div style= "background-color: turquoise; clear:both">
-			<!-- p>Possible commands and explanation what they do.</p -->
 		</div>
 		
 		<footer> 
