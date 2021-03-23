@@ -12,6 +12,10 @@
 
 		<script type="text/javascript" src="/static/js/script.js"></script>
 		<!-- script type="text/javascript" src="controller/static/js/script.js"></script -->
+
+		<link href="{{ url_for('static',filename='css/main.css') }}" rel="stylesheet" type="text/css" >
+		<!-- link rel="stylesheet" href="/controller/static/css/style.css" /-->
+
 		<link rel="icon" href="data:,">
 	</head> 
 
@@ -33,7 +37,7 @@
 				<div class="col-md-6 well">
 					<div style="margin-left: 10px; margin-right: 10px;">
 
-						<h3>Experiment Controller</h3>
+						<h3 style="text-align: center;">Experiment Controller</h3>
 						<br>
 						<div style="width:fit-content;">
 							<form >
@@ -55,7 +59,7 @@
 
 						<div class="form-group blue-border-focus">
 							Output:
-							<textarea class="form-control rounded-0" rows="26" name="output_field" id="output_field" ></textarea>
+							<textarea class="form-control rounded-0" rows="24" name="output_field" id="output_field" ></textarea>
 						</div>
 
 					</div>
@@ -64,26 +68,60 @@
                 <div class="col-md-6 well">
 					<div style="margin-left: 10px; margin-right: 10px;">
 
-						<h3>Device Monitor</h3>
+						<h3 style="text-align: center;">Device Monitor</h3>
 						<br>
 
-						<input type="button" class="btn btn-default disabled" name="update_testbed" id="update_testbed" value="Update state">
+						<input type="button" class="btn btn-default disabled pull-right" name="update_testbed" id="update_testbed" value="Update state">
 
 						<br>
 						<br>
 						<br>
+						<br>
 
-						<!-- div style="display: block; text-align: center; height: 500px; width: 720px; background-color: blue;"-->
+						<div style="height: 500px; width: 720px; background-color: white; margin: 0 auto;">
+							<img src="/static/img/tloris.png" style="height: 100%; width: 100%; object-fit: contain;"">
+							<!-- img src="/controller/static/img/tloris.png" id="source_img" width="auto" height="500" -->
+
+								<span class="glyphicon glyphicon-map-marker node" id="node_1"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_2"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_3"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_4"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_5"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_6"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_7"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_8"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_9"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_10"></span>
+
+								<span class="glyphicon glyphicon-map-marker node" id="node_11"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_12"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_13"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_14"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_15"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_16"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_17"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_18"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_19"></span>
+
+								<span class="glyphicon glyphicon-map-marker node" id="node_20"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_21"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_22"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_23"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_24"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_25"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_26"></span>
+						
+						</div>
+
+						<!-- CANVAS
 						<div style="display: block; text-align: center;">
-
 							<canvas id="tloris_canvas" width="720" height="550" style="border:1px solid gray"></canvas>
 	
 							<div style="display: none;">
 								<img src="/static/img/tloris.png" id="source_img" width="auto" height="500">
-								<!-- img src="/controller/static/img/tloris.png" id="source_img" width="auto" height="300" -->
 							</div>
-
 						</div>
+						-->
 					</div>
 				</div>
 

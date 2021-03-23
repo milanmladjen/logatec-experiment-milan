@@ -297,9 +297,31 @@ $(document).ready(function(){
 // Testbed tloris animation
 // ------------------------------------------------------------------------------------------------------------
 
+/*
 window.onload = function() {
-    var canvas = document.getElementById("tloris_canvas");
-    var ctx = canvas.getContext("2d");
-    var img = document.getElementById("source_img");
-    ctx.drawImage(img, 0, 0, 720, 550)
+    let canvas = new Canvas()
+    canvas.add_dev(10,10)
 };
+
+
+class Canvas {
+
+    constructor(){
+        this.can = document.getElementById("tloris_canvas");
+        this.ctx = this.can.getContext("2d");
+
+        // Draw tloris image into canvas
+        var img = document.getElementById("source_img");
+        this.ctx.drawImage(img, 0, 0, 720, 550)
+    }
+
+    add_dev(x, y){
+        console.log("Add device to " + x + y)
+        this.ctx.beginPath();
+        this.ctx.arc(x,y,10,0,2*Math.PI);
+        this.ctx.stroke();
+        this.ctx.fillStyle = "#FF0000";
+        this.ctx.fill();
+    }
+} 
+*/
