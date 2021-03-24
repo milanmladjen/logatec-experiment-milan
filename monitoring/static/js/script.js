@@ -60,7 +60,7 @@ function commandSupported(c){
     }
 }
 
-
+/* // OBSOLETE
 // Add device to the list of active devices
 function statelistAddDevice(dev, state){
     
@@ -95,7 +95,7 @@ function statelistRemove(){
         listdiv.removeChild(listdiv.firstChild);
     }
 }
-
+*/
 
 // Websocket config (using jQuery on document ready)
 $(document).ready(function(){
