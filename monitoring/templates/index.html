@@ -20,18 +20,35 @@
 	</head> 
 
 	<body> 
+		<!-- Modal -->
+		<div id="help_modal" class="modal fade" role="dialog">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+						<h2>Help: How to use this tool?</h2>
+					</div>
+					<div class="modal-body">
+						<p>In development...</p>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Try it out!</button>
+					</div>
+				</div>
+			</div>
+		</div>
 		
+		<!-- Main page -->
 		<div class="container-fluid">
 
             <div class="well">
                 <div class="row">
                     <h2><i class="glyphicon glyphicon-eye-open"></i> Experiment Controller </h2>
                     <p>A tool for real time monitoring and control over the running experiment in the LOG-a-TEC testbed.</p> 
-                    <p style="color:blue;">TODO: How to use?</p> 
+                    <input type="button" class="btn btn-default" data-toggle="modal" data-target="#help_modal" value="How to use?" />
                 </div>
 			</div>
 
-			<!-- div class="panel panel-default" -->
 			<div class="row row-no-gutters" style="display: flex; flex-wrap: wrap;">
 				
 				<div class="col-md-6 well">
@@ -113,16 +130,6 @@
 								<span class="glyphicon glyphicon-map-marker node" id="node_27"></span>
 						
 						</div>
-
-						<!-- CANVAS
-						<div style="display: block; text-align: center;">
-							<canvas id="tloris_canvas" width="720" height="550" style="border:1px solid gray"></canvas>
-	
-							<div style="display: none;">
-								<img src="/static/img/tloris.png" id="source_img" width="auto" height="500">
-							</div>
-						</div>
-						-->
 					</div>
 				</div>
 
