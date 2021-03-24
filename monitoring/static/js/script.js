@@ -297,6 +297,20 @@ $(document).ready(function(){
 // Testbed tloris animation
 // ------------------------------------------------------------------------------------------------------------
 
+class Node {
+    //constructor(){
+    //}
+
+    show(n){
+        document.getElementById("node_" + n).style.display = "block";
+    }
+
+    update(n, color){
+        document.getElementById("node_" + n).style.color = color;
+    }
+}
+
+
 /*
 window.onload = function() {
     let canvas = new Canvas()
