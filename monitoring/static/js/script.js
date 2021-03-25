@@ -204,8 +204,24 @@ function commandSupported(c){
 }
 
 
-// Websocket config (using jQuery on document ready)
+// ------------------------------------------------------------------------------------------------------------
+// Document ready
+// ------------------------------------------------------------------------------------------------------------
 $(document).ready(function(){
+
+    var tloris = new Nodes();
+    var dropdown = new Dropdown_menu();
+
+    // Delete old output logs
+    $("#output_field").val("");
+
+    // Remove all nodes from tloris
+    tloris.remove_all();
+
+   
+    // --------------------------------------------------------------------------------------------------------
+    // Web Sockets and its handlers
+    // --------------------------------------------------------------------------------------------------------
 
     // If websocket are on the same domain
     // var socket = io();
@@ -214,74 +230,6 @@ $(document).ready(function(){
     // https://socket.io/docs/v3/client-initialization/
     var socket = io({path: "/controller/socket.io"});
 
-    // You can also use different namespace, but then you must update the WS server as well
-    // var socket = io("http://localhost:80/namespace_controller");
-
-
-// Prepare html
-    // Delete old output logs
-    $("#output_field").val("");
-
-    var tloris = new Nodes();
-    var dropdown = new Dropdown_menu();
-
-// Handlers for events on client browser (using jQuery)
-
-    $("#send_cmd").on("click", function(event){
-
-        if (experiment_started == 0){
-            alert("No active experiment in the testbed");
-            return false;
-        }
-        
-        // Get command and check if it is supported
-        var nbr;
-        var cmd = $("#input_cmd").val();
-        var sup = commandSupported(cmd);       
-        if(sup < 0){
-            alert("Command not supported!")
-            return false;
-        }
-        // If this is a SYSTEM command
-        else if (sup == 0){
-            nbr = "-1";
-        }
-        // If it is command for the app, get global message number
-        else{
-            tx_msg_nbr += 1;
-            nbr = tx_msg_nbr.toString();
-        }
-
-        // Check which device is selected from dropdown list
-        var dev = "";
-        dev_list = $("select_device");
-        if(dev_list.selectedIndex == 0){
-            alert("Please select device!");
-            return false;
-        }
-        else {
-            dev = dev_list.options[dev_list.selectedIndex].text;
-        }
-
-        console.log("Send command [" + nbr + "] to device: " + dev );
-        
-        // Send it to server
-        socket.emit("new command", {
-            device: dev,
-            count: nbr,
-            data: cmd
-        });
-        return false;
-    });
-
-    // TODO On Enter press, send CMD
-    $("#input_cmd").on("keyup", function(e){
-        if(e.key === "Enter"){
-            console.log("Enter pressed");
-        }
-    });
-
-// Handlers for received messages from server
 
     socket.on("after connect", function(msg){
         console.log("Successfully connected to server! Is experiment running?: ", msg.data);
@@ -362,8 +310,63 @@ $(document).ready(function(){
         
     });
 
+    // --------------------------------------------------------------------------------------------------------
+    // Buttons
+    // --------------------------------------------------------------------------------------------------------
 
+    $("#send_cmd").on("click", function(event){
 
+        if (experiment_started == 0){
+            alert("No active experiment in the testbed");
+            return false;
+        }
+        
+        // Get command and check if it is supported
+        var nbr;
+        var cmd = $("#input_cmd").val();
+        var sup = commandSupported(cmd);       
+        if(sup < 0){
+            alert("Command not supported!")
+            return false;
+        }
+        // If this is a SYSTEM command
+        else if (sup == 0){
+            nbr = "-1";
+        }
+        // If it is command for the app, get global message number
+        else{
+            tx_msg_nbr += 1;
+            nbr = tx_msg_nbr.toString();
+        }
+
+        // Check which device is selected from dropdown list
+        var dev = "";
+        dev_list = $("select_device");
+        if(dev_list.selectedIndex == 0){
+            alert("Please select device!");
+            return false;
+        }
+        else {
+            dev = dev_list.options[dev_list.selectedIndex].text;
+        }
+
+        console.log("Send command [" + nbr + "] to device: " + dev );
+        
+        // Send it to server
+        socket.emit("new command", {
+            device: dev,
+            count: nbr,
+            data: cmd
+        });
+        return false;
+    });
+
+    // TODO On Enter press, send CMD
+    $("#input_cmd").on("keyup", function(e){
+        if(e.key === "Enter"){
+            console.log("Enter pressed");
+        }
+    });
 
 
 
