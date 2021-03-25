@@ -29,9 +29,33 @@
 						<h2>Help: How to use this tool?</h2>
 					</div>
 					<div class="modal-body">
-						<p>In development...</p>
+						<p>Available system commands for control over infrastructure devices:</p>
+						<ul>
+							<li>START_APP</li>
+							<li>STOP_APP</li>
+							<li>RESTART_APP</li>
+							<li>EXIT</li>
+							<li>STATE</li>
+							<li>FLASH</li>
+						</ul>
+						<br>
+						<p>Possible device states and its colors:</p>
+						<ul class="device_states">
+							<li><span class="glyphicon glyphicon-map-marker" style="color:black;"></span> ONLINE - Device is online and ready for experiment.</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:yellow;"></span> COMPILING - LGTC is compiling application for VESNA.</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:green;"></span> RUNNING - Experiment is running successfully.</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:turquoise;"></span> FINISHED - Experiment has come to the end.</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:blue;"></span> STOPPED - User successfully stopped the experiment.</li>
+
+							<li><span class="glyphicon glyphicon-map-marker" style="color:red;"></span> TIMEOUT - VESNA is not responding for more than a minute.</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:orange;"></span> WARNING - Something went wrong, but experiment continues...</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:pink;"></span> COMPILE_ERROR - Experiment application could not be compiled.</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:purple;"></span> VESNA_ERROR - Problems with UART connection. Check the logs...</li>
+						</ul>
+						
 					</div>
 					<div class="modal-footer">
+						<p>In development...</p>
 						<button type="button" class="btn btn-default" data-dismiss="modal">Try it out!</button>
 					</div>
 				</div>

@@ -9,6 +9,14 @@ var experiment_started = 0;
 
 var available_devices = [];
 
+var SYSTEM_COMMANDS = [
+    "START_APP",
+    "STOP_APP",
+    "RESTART_APP",
+    "FLASH",
+    "EXIT",
+    "STATE"
+];
 
 
 // ------------------------------------------------------------------------------------------------------------
@@ -18,6 +26,21 @@ var available_devices = [];
 class Nodes {
 
     constructor(){
+
+        // Colors of each state
+        this.state_colors = [
+            {state:"ONLINE", color:"black"},
+            {state:"COMPILING", color:"yellow"},
+            {state:"RUNNING", color:"green"},
+            {state:"STOPPED", color:"blue"},
+            {state:"FINISHED", color:"turquoise"},
+
+            {state:"TIMEOUT", color:"red"},
+            {state:"LGTC_WARNING", color:"orange"},
+            {state:"COMPILE_ERROR", color:"pink"},
+            {state:"VESNA_ERROR", color:"purple"}
+        ]
+
         this.testbed_devices = [
             // SRDA
             {name:"LGTC51", address:"192.168.12.51", location:1, version:"SRDA"},
@@ -80,21 +103,11 @@ class Nodes {
             {name:"LGTC146", address:"192.168.12.146", location:6, version:"UWB"}
         ];
         
-        // Locations
+        // Locations and its radios
         this.SRDA_loc = [1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26];
         this.SRDB_loc = [1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26];
         this.UWB_loc  = [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 17];
         this.LPWA_loc = [1, 6, 20, 27];
-
-        // Colors of each state
-        this.state_colors = [
-            {state:"ONLINE", color:"black"},
-            {state:"COMPILING", color:"yellow"},
-            {state:"RUNNING", color:"green"},
-            {state:"END", color:"orange"},
-            {state:"STOPPED", color:"red"},
-            {state:"OFFLINE", color:"white"}
-        ]
     }
 
 
@@ -105,6 +118,7 @@ class Nodes {
             }
         }
         console.warn("No location for device " + n);
+        return 0;
     }
 
     _get_dev_ip(n){
@@ -114,6 +128,7 @@ class Nodes {
             }
         }
         console.warn("No IP for device " + n);
+        return 0;
     }
 
     _get_state_color(s){
@@ -123,32 +138,36 @@ class Nodes {
             }
         }
         console.warn("No color for state " + s);
+        return "white";
     }
 
 
 
     remove_dev(name){
-        //document.getElementById("node_" + this._get_dev_loc(name)).style.display = "none";
-        $("node_" + this._get_dev_loc(name)).css("display", "none");
+        let loc = this._get_dev_loc(name);
+        if (loc > 0){
+            $("node_" + loc).css("display", "none");
+        }
     }
 
     remove_all(){
         for(let i=1; i<28; i++){
-            //document.getElementById("node_" + i).style.display = "none";
             $("node_" + i).css("display", "none");
         }
     }
 
     update_dev(name, state){
-        //document.getElementById("node_" + this._get_dev_loc(name)).style.color = this._get_state_color(state);
-        $("node_" + this._get_dev_loc(name)).css("display", "block");
-        $("node_" + this._get_dev_loc(name)).css("color", this._get_state_color(state));
+        let loc = this._get_dev_loc(name);
+        if (loc > 0){
+            $("node_" + loc).css("display", "block");
+            $("node_" + loc).css("color", this._get_state_color(state));
+        }
     }
 }
 
 
 // ------------------------------------------------------------------------------------------------------------
-// Dropdown menu manipulation
+// Dropdown menu
 // ------------------------------------------------------------------------------------------------------------
 
 class Dropdown_menu {
@@ -158,7 +177,7 @@ class Dropdown_menu {
     }
 
     add_dev(dev){
-        // Create new option (value = dd_LGTC66) because id LGTC66 is used elsewhere
+        // Create new option (value = dd_LGTC66) because id LGTC66 is used elsewhere (TODO: where??)
         this.dd.append($("<option>").val("dd_" + dev).text(dev));
     }
 
@@ -167,40 +186,10 @@ class Dropdown_menu {
     }
 
     remove_all(){
-        $("#select_device option[value != 'All']").remove();
+        console.log("TODO: remove if this works");
+        $("#select_device option[value != ('All' || 'None') ]").remove();
     }
 
-}
-
-
-
-// Check if input command is in list of supported commands
-function commandSupported(c){
-    var system_commands = [
-        "SYNC_WITH_VESNA",
-        "FLASH",
-        "STATE",
-        "EXIT",
-        "START_APP",
-        "STOP_APP",
-        "RESTART_APP"
-    ];
-
-    var app_commands = [
-        "LINES",
-        "SEC"
-        //CONTIKI
-    ]
-
-    if(system_commands.includes(c)){
-        return 0;
-    }
-    else if(app_commands.includes(c)){
-        return 1;
-    }
-    else{
-        return -1;
-    }
 }
 
 
@@ -247,7 +236,7 @@ $(document).ready(function(){
 
         // Clear output filed in case something is here from before
         $("#output_field").val("");
-        tloris.hide_all();
+        tloris.remove_all();
 
         socket.emit("testbed update");
     });
@@ -257,8 +246,9 @@ $(document).ready(function(){
 
         experiment_started = 0;
         available_devices = [];
+        dropdown.remove_all();
         alert("Experiment stopped!")
-
+        //TODO??? tx_msg_nbr = 0;
     });
 
     socket.on("command response", function(msg){
@@ -281,6 +271,8 @@ $(document).ready(function(){
             available_devices.push(lgtc.address);
             dropdown.add_dev(lgtc.address);
         }
+
+        // Update state of the device in the tloris
         tloris.update_dev(lgtc.address, lgtc.state)
 
     });
@@ -288,58 +280,56 @@ $(document).ready(function(){
     socket.on("testbed state update", function(msg){
         console.log("Update whole testbed state.");
 
-        // cycle through received list 
-        for(let elmnt of msg.data){
+        // Reset all states
+        tloris.remove_all();
+        dropdown.remove_all();
+        available_devices = [];
 
-            // If this address appears for the first time, add it to dropdown and state list
-            var dev = elmnt.address;
-            if (available_devices.indexOf(dev) < 0){
-                console.log("Nev available device in testbed");
-                available_devices.push(dev);
-                dropdown.add_dev(dev);
-            }
-            tloris.update_dev(lgtc.address, lgtc.state)
-
-            // TODO: Delete devices from the list if they are not in database
-            // Remove all on beginning and add new later??
-        }
-
-        // TODO: make it a function and do:
-        // msg.data.forEach(function);
-        // This will call a "function" for each element in list
-        
+        // Cycle through received list and update
+        for(let element of msg.data){
+            var dev = element.address;
+            tloris.update_dev(lgtc.address, lgtc.state);
+            dropdown.add_dev(dev);
+            available_devices.push(dev);
+        }                   
     });
 
     // --------------------------------------------------------------------------------------------------------
     // Buttons
     // --------------------------------------------------------------------------------------------------------
 
+    // Send command (via submitting Enter or pressing button)
     $("#send_cmd").on("click", function(event){
+        console.log("Send command via button");
+        send_command();
+    });
 
+    $("#input_cmd").on("keyup", function(e){
+        if(e.key === "Enter"){
+            console.log("Send command via Enter");
+            send_command();
+        }
+    });
+
+    //
+    function send_command(){
         if (experiment_started == 0){
             alert("No active experiment in the testbed");
             return false;
         }
         
-        // Get command and check if it is supported
+        // Get the cmd and obtain its number
         var nbr;
         var cmd = $("#input_cmd").val();
-        var sup = commandSupported(cmd);       
-        if(sup < 0){
-            alert("Command not supported!")
-            return false;
-        }
-        // If this is a SYSTEM command
-        else if (sup == 0){
+        if (SYSTEM_COMMANDS.includes(cmd)){
             nbr = "-1";
         }
-        // If it is command for the app, get global message number
-        else{
+        else {
             tx_msg_nbr += 1;
             nbr = tx_msg_nbr.toString();
         }
 
-        // Check which device is selected from dropdown list
+        // Check which device is selected from dropdown menu
         var dev = "";
         dev_list = $("select_device");
         if(dev_list.selectedIndex == 0){
@@ -358,38 +348,27 @@ $(document).ready(function(){
             count: nbr,
             data: cmd
         });
-        return false;
-    });
-
-    // TODO On Enter press, send CMD
-    $("#input_cmd").on("keyup", function(e){
-        if(e.key === "Enter"){
-            console.log("Enter pressed");
-        }
-    });
+        return true;
+    }
 
 
-
-
-// Button to clear output text
+    // Button to clear output text
     $("#clear_output").on("click", function(event){
         console.log("Clear output");
         $("#output_field").val("");
     });
 
-// Button to update testbed state
+    // Button to update testbed state
     $("#update_testbed").on("click", function(event){
+        console.log("Send request to update testbed state");
 
-        /*if (experiment_started == 0){
+        if (experiment_started == 0){
             alert("No active experiment in the testbed");
             return false;
-        }*/
-        // TODO: for testing...uncomment later
+        }
 
-        console.log("Send request to update testbed state");
         socket.emit("testbed update");
     });
-
 });
 
 

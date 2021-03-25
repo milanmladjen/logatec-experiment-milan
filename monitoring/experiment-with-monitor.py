@@ -298,7 +298,7 @@ if __name__ == "__main__":
 # ----------------------------------------------------------------------------------------
 # SUPPORTED COMMANDS
 # ----------------------------------------------------------------------------------------
-# Incomeing commands must be formated as a list with 2 string arguments: message number 
+# Incoming commands must be formated as a list with 2 string arguments: message number 
 # and command itself (example: ["66", "STATE"]). Message number is used as a sequence
 # number, but if it is set to "-1", command represents SYSTEM COMMAND:
 #

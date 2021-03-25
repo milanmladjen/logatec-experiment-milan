@@ -1,4 +1,12 @@
 
+ul.device_states {
+    list-style-type: none;
+    margin-left: 2px;
+    padding-left: 0;
+}
+
+
+
 /* ================================================================= */
 /* Locations of nodes in the testbed                                     */
 /* ================================================================= */
