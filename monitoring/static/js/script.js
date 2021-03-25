@@ -1,3 +1,7 @@
+// ------------------------------------------------------------------------------------------------------------
+// Global variables
+// ------------------------------------------------------------------------------------------------------------
+
 var tx_msg_nbr = 0;
 var rx_msg_nbr = 0;
 
@@ -122,52 +126,53 @@ class Nodes {
     }
 
 
-    hide_dev(name){
-        document.getElementById("node_" + this._get_dev_loc(name)).style.display = "none";
+
+    remove_dev(name){
+        //document.getElementById("node_" + this._get_dev_loc(name)).style.display = "none";
+        $("node_" + this._get_dev_loc(name)).css("display", "none");
     }
 
-    hide_all(){
+    remove_all(){
         for(let i=1; i<28; i++){
-            document.getElementById("node_" + i).style.display = "none";
+            //document.getElementById("node_" + i).style.display = "none";
+            $("node_" + i).css("display", "none");
         }
-    }
-
-    show_dev(name, state){
-        document.getElementById("node_" + this._get_dev_loc(name)).style.display = "block";
-        document.getElementById("node_" + this._get_dev_loc(name)).style.color = this._get_state_color(state);
     }
 
     update_dev(name, state){
-        document.getElementById("node_" + this._get_dev_loc(name)).style.color = this._get_state_color(state);
+        //document.getElementById("node_" + this._get_dev_loc(name)).style.color = this._get_state_color(state);
+        $("node_" + this._get_dev_loc(name)).css("display", "block");
+        $("node_" + this._get_dev_loc(name)).css("color", this._get_state_color(state));
     }
 }
 
 
-function dropdownAddDevice(dev){
-    
-    // Create new option (value = dd_LGTC66) because id LGTC66 is used elsewhere
-    var newOption = document.createElement("option");
-    newOption.text= dev;
-    newOption.value = "dd_" + dev;
-    
-    // Add it to dropdown list
-    var dropdown = document.getElementById("select_device");
-    dropdown.options.add(newOption);
-}
+// ------------------------------------------------------------------------------------------------------------
+// Dropdown menu manipulation
+// ------------------------------------------------------------------------------------------------------------
 
-function dropdownDeleteDevice(dev){
-    var dropdown = document.getElementById("select_device");
+class Dropdown_menu {
 
-    // Test to see if it works :)
-    for (var i=0; i<dropdown.length; i++){
-        if(dropdown[i].childNodes[0].nodeValue === ("dd_" +dev)){
-            dropdown.options[i] = null;
-        }
+    constructor(){
+        this.dd = $("#select_device");
     }
 
-    // To delete all except first one (which is option "all") do:
-    // dropdown.options.length = 1;
+    add_dev(dev){
+        // Create new option (value = dd_LGTC66) because id LGTC66 is used elsewhere
+        this.dd.append($("<option>").val("dd_" + dev).text(dev));
+    }
+
+    remove_dev(dev){
+        $("#select_device option[value = 'dd_" + dev + "']").remove();
+    }
+
+    remove_all(){
+        $("#select_device option[value != 'All']").remove();
+    }
+
 }
+
+
 
 // Check if input command is in list of supported commands
 function commandSupported(c){
@@ -218,7 +223,7 @@ $(document).ready(function(){
     $("#output_field").val("");
 
     var tloris = new Nodes();
-    tloris.show_dev("LGTC55");
+    var dropdown = new Dropdown_menu();
 
 // Handlers for events on client browser (using jQuery)
 
@@ -249,7 +254,7 @@ $(document).ready(function(){
 
         // Check which device is selected from dropdown list
         var dev = "";
-        dev_list = document.getElementById("select_device");
+        dev_list = $("select_device");
         if(dev_list.selectedIndex == 0){
             alert("Please select device!");
             return false;
@@ -326,14 +331,9 @@ $(document).ready(function(){
         if (available_devices.indexOf(lgtc.address) < 0){
             console.log("Nev available device in testbed");
             available_devices.push(lgtc.address);
-            dropdownAddDevice(lgtc.address);
-            tloris.show_dev(lgtc.address, lgtc.state);
+            dropdown.add_dev(lgtc.address);
         }
-        // Else update device state in the device state list
-        else{
-            console.log("Update only one device state.");
-            statelistUpdateDevice(lgtc.address, lgtc.state);
-        }
+        tloris.update_dev(lgtc.address, lgtc.state)
 
     });
 
@@ -348,15 +348,12 @@ $(document).ready(function(){
             if (available_devices.indexOf(dev) < 0){
                 console.log("Nev available device in testbed");
                 available_devices.push(dev);
-                dropdownAddDevice(dev);
-                statelistAddDevice(dev, elmnt.state);
+                dropdown.add_dev(dev);
             }
-            // Else update device state in the device state list
-            else{
-                statelistUpdateDevice(dev, elmnt.state);
-            }
+            tloris.update_dev(lgtc.address, lgtc.state)
 
             // TODO: Delete devices from the list if they are not in database
+            // Remove all on beginning and add new later??
         }
 
         // TODO: make it a function and do:
