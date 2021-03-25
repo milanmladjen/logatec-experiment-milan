@@ -75,11 +75,22 @@ class Nodes {
             {name:"LGTC145", address:"192.168.12.145", location:5, version:"UWB"},
             {name:"LGTC146", address:"192.168.12.146", location:6, version:"UWB"}
         ];
-
+        
+        // Locations
         this.SRDA_loc = [1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26];
         this.SRDB_loc = [1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26];
         this.UWB_loc  = [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 17];
         this.LPWA_loc = [1, 6, 20, 27];
+
+        // Colors of each state
+        this.state_colors = [
+            {state:"ONLINE", color:"black"},
+            {state:"COMPILING", color:"yellow"},
+            {state:"RUNNING", color:"green"},
+            {state:"END", color:"orange"},
+            {state:"STOPPED", color:"red"},
+            {state:"OFFLINE", color:"white"}
+        ]
     }
 
 
@@ -89,6 +100,7 @@ class Nodes {
                 return this.testbed_devices[i].location;
             }
         }
+        console.warn("No location for device " + n);
     }
 
     _get_dev_ip(n){
@@ -97,13 +109,18 @@ class Nodes {
                 return this.testbed_devices[i].address;
             }
         }
+        console.warn("No IP for device " + n);
     }
 
-
-
-    show_dev(name){
-        document.getElementById("node_" + this._get_dev_loc(name)).style.display = "block";
+    _get_state_color(s){
+        for (var i=0; i<this.state_colors.length; i++){
+            if(this.state_colors[i].state == s){
+                return this.state_colors[i].color;
+            }
+        }
+        console.warn("No color for state " + s);
     }
+
 
     hide_dev(name){
         document.getElementById("node_" + this._get_dev_loc(name)).style.display = "none";
@@ -115,8 +132,13 @@ class Nodes {
         }
     }
 
-    update_dev(name, color){
-        document.getElementById("node_" + this.dev_loc(name)).style.color = color;
+    show_dev(name, state){
+        document.getElementById("node_" + this._get_dev_loc(name)).style.display = "block";
+        document.getElementById("node_" + this._get_dev_loc(name)).style.color = this._get_state_color(state);
+    }
+
+    update_dev(name, state){
+        document.getElementById("node_" + this._get_dev_loc(name)).style.color = this._get_state_color(state);
     }
 }
 
@@ -195,8 +217,8 @@ $(document).ready(function(){
     // Delete old output logs
     $("#output_field").val("");
 
-    var node = new Nodes();
-    node.show_dev("LGTC55");
+    var tloris = new Nodes();
+    tloris.show_dev("LGTC55");
 
 // Handlers for events on client browser (using jQuery)
 
@@ -272,7 +294,7 @@ $(document).ready(function(){
 
         // Clear output filed in case something is here from before
         $("#output_field").val("");
-        statelistRemove();
+        tloris.hide_all();
 
         socket.emit("testbed update");
     });
@@ -305,7 +327,7 @@ $(document).ready(function(){
             console.log("Nev available device in testbed");
             available_devices.push(lgtc.address);
             dropdownAddDevice(lgtc.address);
-            statelistAddDevice(lgtc.address, lgtc.state);
+            tloris.show_dev(lgtc.address, lgtc.state);
         }
         // Else update device state in the device state list
         else{
