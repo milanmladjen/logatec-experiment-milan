@@ -164,6 +164,12 @@ $(document).ready(function(){
         return false;
     });
 
+    // TODO On Enter press, send CMD
+    $("#input_cmd").on("keyup", function(e){
+        if(e.key === "Enter"){
+            console.log("Enter pressed");
+        }
+    });
 
 // Handlers for received messages from server
 
@@ -280,13 +286,6 @@ $(document).ready(function(){
     });
 
 });
-
-
-
-
-
-
-
 
 
 
