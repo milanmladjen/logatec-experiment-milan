@@ -5,8 +5,7 @@
 var tx_msg_nbr = 0;
 var rx_msg_nbr = 0;
 
-var experiment_started = 0;
-
+var experiment_running = false;
 var available_devices = [];
 
 var SYSTEM_COMMANDS = [
@@ -199,6 +198,37 @@ class Dropdown_menu {
 }
 
 
+function experiment_started(radio_version){
+    // Global var
+    experiment_running = true;
+
+    // Enable buttons
+    $("#send_cmd").removeAttr("disabled");
+    $("#send_cmd").removeClass("disabled");
+    $("#update_testbed").removeAttr("disabled");
+    $("#update_testbed").removeClass("disabled");
+    
+    // Clear output filed in case something is here from before
+    $("#output_field").val("");
+
+    // Display which radio are in use
+    // TODO
+
+}
+
+function experiment_stopped(){
+    // Clear global var
+    available_devices = [];
+    experiment_running = false;
+    //TODO??? tx_msg_nbr = 0;
+
+    // Disable buttons
+    $("#send_cmd").attr("disabled");
+    $("#send_cmd").addClass("disabled");
+    $("#update_testbed").attr("disabled");
+    $("#update_testbed").addClass("disabled");
+}
+
 // ------------------------------------------------------------------------------------------------------------
 // Document ready
 // ------------------------------------------------------------------------------------------------------------
@@ -213,7 +243,8 @@ $(document).ready(function(){
     // Remove all nodes from tloris
     tloris.remove_all();
 
-    tloris.show_srda_dev();
+
+    //tloris.show_srda_dev();
    
     // --------------------------------------------------------------------------------------------------------
     // Web Sockets and its handlers
@@ -228,50 +259,48 @@ $(document).ready(function(){
 
 
     socket.on("after connect", function(msg){
-        console.log("Successfully connected to server! Is experiment running?: ", msg.data);
-        // Update testbed state on connect/reconnect
-        if(msg.data == "True"){
-            experiment_started = 1;
+        console.log("Successfully connected to server!");
+
+        // If experiment is already running
+        if(msg.data !== "False"){
+            console.log("Experiment is already running ["+msg.data +"]");
+            experiment_started(msg.data);
+
+            // Update testbed tloris
             socket.emit("testbed update");
         }
     });
 
     socket.on("experiment started", function(msg){
-        console.log("Experiment has started");
+        console.log("Experiment has just started!");
 
-        experiment_started = 1;
-
-        // Clear output filed in case something is here from before
-        $("#output_field").val("");
-        tloris.remove_all();
-
+        experiment_started(msg.data);
         socket.emit("testbed update");
     });
 
     socket.on("experiment stopped", function(msg){
         console.log("Experiment has stopped");
 
-        experiment_started = 0;
-        available_devices = [];
+        experiment_stopped();
+
         dropdown.remove_all();
         alert("Experiment stopped!")
-        //TODO??? tx_msg_nbr = 0;
     });
 
     socket.on("command response", function(msg){
         console.log("Received response [" + msg.count +"] from device: " + msg.device +" :" + msg.data);
 
-        var formated_msg = "[" + msg.count + "] " + msg.device + ":" + msg.data + "\n";
+        var formatted_msg = "[" + msg.count + "] " + msg.device + ":" + msg.data + "\n";
 
         // Append text into textarea (don't delete old one)
-        $("#output_field").val( $("#output_field").val() + formated_msg);
+        $("#output_field").val( $("#output_field").val() + formatted_msg);
         // Scroll to bottom
         $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
     });
 
     socket.on("device state update", function(msg){
         
-        // If this address appears for the first time, add it to dropdown and state list
+        // If this address appears for the first time
         var lgtc = msg.data;
         if (available_devices.indexOf(lgtc.address) < 0){
             console.log("Nev available device in testbed");
@@ -293,11 +322,10 @@ $(document).ready(function(){
         available_devices = [];
 
         // Cycle through received list and update
-        for(let element of msg.data){
-            var dev = element.address;
+        for(let lgtc of msg.data){
             tloris.update_dev(lgtc.address, lgtc.state);
-            dropdown.add_dev(dev);
-            available_devices.push(dev);
+            dropdown.add_dev(lgtc.address);
+            available_devices.push(lgtc.address);
         }                   
     });
 
@@ -306,21 +334,18 @@ $(document).ready(function(){
     // --------------------------------------------------------------------------------------------------------
 
     // Send command (via submitting Enter or pressing button)
-    $("#send_cmd").on("click", function(event){
-        console.log("Send command via button");
+    $("#send_cmd").on("click", function(e){
         send_command();
     });
 
     $("#input_cmd").on("keyup", function(e){
         if(e.key === "Enter"){
-            console.log("Send command via Enter");
             send_command();
         }
     });
 
-    //
     function send_command(){
-        if (experiment_started == 0){
+        if (experiment_running == false){
             alert("No active experiment in the testbed");
             return false;
         }
@@ -337,15 +362,13 @@ $(document).ready(function(){
         }
 
         // Check which device is selected from dropdown menu
-        //var dev = $("#select_device option:selected").val()
         var dev = "";
-        dev_list = $("#select_device");
-        if(dev_list.selectedIndex == 0){
+        if($("#select_device option:selected").val() == "None"){
             alert("Please select device!");
             return false;
         }
         else {
-            dev = dev_list.options[dev_list.selectedIndex].text;
+            dev = $("#select_device option:selected").text();
         }
 
         console.log("Send command [" + nbr + "] to device: " + dev );
@@ -369,12 +392,10 @@ $(document).ready(function(){
     // Button to update testbed state
     $("#update_testbed").on("click", function(event){
         console.log("Send request to update testbed state");
-
-        if (experiment_started == 0){
+        if (experiment_running == false){
             alert("No active experiment in the testbed");
             return false;
         }
-
         socket.emit("testbed update");
     });
 });
