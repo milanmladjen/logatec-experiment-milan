@@ -14,12 +14,14 @@ ul.device_states {
     font-size: 20px;
     width: 20px;
     height: 20px;
-    display: block;
+    /*display: none;*/
+    visibility: hidden;
     color: black;
 }
 
 /* ================================================================= */
 /* Locations in case <span> elements are placed vertically           */
+/*
 #node_1{
     top: -250px;
     left: 260px;
@@ -154,12 +156,12 @@ ul.device_states {
     top: -655px; 
     left: 130px;
 }
-
+*/
 
 /* ================================================================= */
 /* Locations in case <span> elements are placed horizontally         */
 /* ================================================================= */
-/*
+
 #node_1{
     top: -250px; 
     left: 260px;
@@ -167,7 +169,7 @@ ul.device_states {
 
 #node_2{
     top: -180px; 
-    left: 236px;    /* -24 offset from 1 (whitespace + font-size)
+    left: 236px;
 }
 
 #node_3{
@@ -177,7 +179,7 @@ ul.device_states {
 
 #node_4{
     top: -180px; 
-    left: 276px;    /* -24 offset from 3 (whitespace + font-size) 
+    left: 276px;
 }
 
 #node_5{
@@ -187,7 +189,7 @@ ul.device_states {
 
 #node_6{
     top: -180px; 
-    left: 316px;    /* -24 offset from 5 (whitespace + font-size) 
+    left: 316px;
 }
 
 #node_7{
@@ -197,12 +199,12 @@ ul.device_states {
 
 #node_9{
     top: -210px; 
-    left: -23px;    /* -48 offset from 7 (2x whitespace + font-size) 
+    left: -23px;
 }
 
 #node_11{
     top: -270px; 
-    left: -72px;    /* -48 offset from 9 (2x whitespace + font-size) 
+    left: -72px;
 }
 
 #node_8{
@@ -212,7 +214,7 @@ ul.device_states {
 
 #node_10{
     top: -250px; 
-    left: -30px;     /* -48 offset from 7 (2x whitespace + font-size) 
+    left: -30px;
 }
 
 #node_12{
@@ -252,7 +254,7 @@ ul.device_states {
 
 #node_19{
     top: -450px; 
-    left: 36px;    /* -24 offset from 18 (whitespace + font-size) 
+    left: 36px;
 }
 
 #node_20{
@@ -294,4 +296,3 @@ ul.device_states {
     top: -140px; 
     left: -490px;
 }
-*/

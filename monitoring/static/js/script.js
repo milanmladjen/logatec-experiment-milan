@@ -146,27 +146,27 @@ class Nodes {
     remove_dev(name){
         let loc = this._get_dev_loc(name);
         if (loc > 0){
-            $("#node_" + loc).css("display", "none");
+            $("#node_" + loc).css("visibility", "hidden");
         }
     }
 
     remove_all(){
         for(let i=1; i<28; i++){
-            $("#node_" + i).css("display", "none");
+            $("#node_" + i).css("visibility", "hidden");
         }
     }
 
     update_dev(name, state){
         let loc = this._get_dev_loc(name);
         if (loc > 0){
-            $("#node_" + loc).css("display", "block");
+            $("#node_" + loc).css("visibility", "visible");
             $("#node_" + loc).css("color", this._get_state_color(state));
         }
     }
 
     show_srda_dev(){
         for (let i=0; i<this.SRDA_loc.length; i++){
-            $("#node_" + i).css("display", "block");
+            $("#node_" + this.SRDA_loc[i]).css("visibility", "visible");
         }
     }
 }
