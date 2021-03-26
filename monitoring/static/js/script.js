@@ -187,12 +187,12 @@ class Dropdown_menu {
     }
 
     remove_dev(dev){
-        $("#select_device option[value = 'dd_" + dev + "']").remove();
+        this.dd.find("option[value = 'dd_" + dev + "']").remove();
     }
 
     remove_all(){
-        console.log("TODO: remove if this works");
-        //$("#select_device option[value != ('All' || 'None') ]").remove(); //TODO: doesn't work
+        this.dd.find("option").not(":first").remove();
+        this.dd.append($("<option>").val("All").text("All"));
     }
 
 }
@@ -223,9 +223,9 @@ function experiment_stopped(){
     //TODO??? tx_msg_nbr = 0;
 
     // Disable buttons
-    $("#send_cmd").attr("disabled");
+    $("#send_cmd").prop("disabled", true);
     $("#send_cmd").addClass("disabled");
-    $("#update_testbed").attr("disabled");
+    $("#update_testbed").prop("disabled", true);
     $("#update_testbed").addClass("disabled");
 }
 
