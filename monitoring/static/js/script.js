@@ -187,7 +187,7 @@ class Dropdown_menu {
 
     remove_all(){
         console.log("TODO: remove if this works");
-        $("#select_device option[value != ('All' || 'None') ]").remove();
+        //$("#select_device option[value != ('All' || 'None') ]").remove(); //TODO: doesn't work
     }
 
 }
@@ -330,8 +330,9 @@ $(document).ready(function(){
         }
 
         // Check which device is selected from dropdown menu
+        //var dev = $("#select_device option:selected").val()
         var dev = "";
-        dev_list = $("select_device");
+        dev_list = $("#select_device");
         if(dev_list.selectedIndex == 0){
             alert("Please select device!");
             return false;
