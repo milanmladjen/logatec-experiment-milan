@@ -10,11 +10,11 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
-		<script type="text/javascript" src="/static/js/script.js"></script>
-		<!-- script type="text/javascript" src="controller/static/js/script.js"></script -->
+		<!-- script type="text/javascript" src="/static/js/script.js"></script-->
+		<script type="text/javascript" src="controller/static/js/script.js"></script>
 
-		<link href="{{ url_for('static',filename='css/main.css') }}" rel="stylesheet" type="text/css" >
-		<!-- link rel="stylesheet" href="/controller/static/css/style.css" /-->
+		<!-- link href="{{ url_for('static',filename='css/main.css') }}" rel="stylesheet" type="text/css" -->
+		<link href="{{ url_for('controller/static',filename='css/main.css') }}" rel="stylesheet" type="text/css" >
 
 		<link rel="icon" href="data:,">
 	</head> 
@@ -120,8 +120,8 @@
 						<br>
 
 						<div style="height: 500px; width: 720px; background-color: white; margin: 0 auto;">
-							<img src="/static/img/tloris.png" style="height: 100%; width: 100%; object-fit: contain;"">
-							<!-- img src="/controller/static/img/tloris.png" id="source_img" width="auto" height="500" -->
+							<!-- img src="/static/img/tloris.png" style="height: 100%; width: 100%; object-fit: contain;"-->
+							<img src="/controller/static/img/tloris.png" style="height: 100%; width: 100%; object-fit: contain;">
 
 								<span class="glyphicon glyphicon-map-marker node" id="node_1"></span>
 								<span class="glyphicon glyphicon-map-marker node" id="node_2"></span>
