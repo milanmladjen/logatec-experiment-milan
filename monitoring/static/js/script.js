@@ -158,6 +158,7 @@ class Nodes {
 
     update_dev(name, state){
         let loc = this._get_dev_loc(name);
+        console.log("update_dev " + name + state + loc);
         if (loc > 0){
             $("node_" + loc).css("display", "block");
             $("node_" + loc).css("color", this._get_state_color(state));
