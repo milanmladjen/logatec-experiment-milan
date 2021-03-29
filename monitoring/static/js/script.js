@@ -211,9 +211,10 @@ function experiment_started(radio_version){
     // Clear output filed in case something is here from before
     $("#output_field").val("");
 
-    // Display which radio are in use
-    // TODO
-
+    // Display which types of radios are in use
+    $(".radio_type").text("Radio type: " + radio_version);
+    $(".radio_type").css("visibility", "visible");
+    $(".radio_type").css("color", "black");
 }
 
 function experiment_stopped(){
@@ -227,6 +228,9 @@ function experiment_stopped(){
     $("#send_cmd").addClass("disabled");
     $("#update_testbed").prop("disabled", true);
     $("#update_testbed").addClass("disabled");
+
+    // User should still know what types of radio have been used
+    $(".radio_type").css("color", "gray");
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -261,7 +265,7 @@ $(document).ready(function(){
     socket.on("after connect", function(msg){
         console.log("Successfully connected to server!");
 
-        // If experiment is already running
+        // Check if experiment is already running
         if(msg.data !== "False"){
             console.log("Experiment is already running ["+msg.data +"]");
             experiment_started(msg.data);
@@ -397,6 +401,8 @@ $(document).ready(function(){
             return false;
         }
         socket.emit("testbed update");
+
+        // TODO: display tooltip: "Up to date"
     });
 });
 

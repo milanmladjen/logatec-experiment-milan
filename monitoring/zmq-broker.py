@@ -10,7 +10,10 @@ import logging
 from lib import testbed_database
 
 LOG_LEVEL = logging.DEBUG
+
+#TODO: obtain following values from environmental variables
 NUMBER_OF_DEVICES = 3
+RADIO_TYPE = "SRDA"
 
 # ------------------------------------------------------------------------------- #
 # Configuration
@@ -50,7 +53,7 @@ time.sleep(1)
 
 print("Sync with frontend")
 # Inform the frontend that experiment has started
-frontend.send_multipart([flask_script_id, b"Online", b"0", b"0"])
+frontend.send_multipart([flask_script_id, b"Online", b"0", RADIO_TYPE.encode()])
 
 print("Starting main loop...")
 tx_msg_nbr = 0

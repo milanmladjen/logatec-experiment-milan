@@ -5,7 +5,11 @@ ul.device_states {
     padding-left: 0;
 }
 
-
+.radio_type {
+    visibility: hidden;
+    height: 35px;
+    line-height: 35px;
+}
 
 /* ================================================================= */
 /* Locations of nodes in the testbed                                 */

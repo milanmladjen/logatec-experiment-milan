@@ -17,7 +17,7 @@ import ast  # From str to json conversion
 # Global variables:
 message_to_send = []
 update_testbed = False
-experiment_started = False
+experiment_started = "False"
 
 # Thread init
 lock = Lock()
@@ -76,7 +76,7 @@ def connect():
 
     lock.acquire()
     global experiment_started
-    reply = {"data":str(experiment_started)}
+    reply = {"data":experiment_started}
     lock.release()
 
     emit("after connect", reply)
@@ -206,17 +206,17 @@ def zmqThread():
                     print("Experiment has started")
 
                     lock.acquire()
-                    experiment_started = True
+                    experiment_started = msg[2]
                     lock.release()
 
-                    socketio.emit("experiment started", {}, broadcast=True)
+                    socketio.emit("experiment started", {"data":experiment_started}, broadcast=True)
 
                 # When broker exits, inform the user
                 elif msg[0] == "End":
                     print("Experiment has stopped")
 
                     lock.acquire()
-                    experiment_started = False
+                    experiment_started = "False"
                     lock.release()
 
                     socketio.emit("experiment stopped", {}, broadcast=True)
