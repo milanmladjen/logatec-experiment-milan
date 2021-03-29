@@ -1,4 +1,10 @@
 
+
+.tooltip_templates {
+    display:none;
+}
+
+
 ul.device_states {
     list-style-type: none;
     margin-left: 2px;
@@ -19,7 +25,7 @@ ul.device_states {
     width: 20px;
     height: 20px;
     /*display: none;*/
-    visibility: hidden;
+    visibility: visible;
     color: black;
 }
 

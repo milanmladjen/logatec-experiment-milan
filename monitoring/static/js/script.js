@@ -151,7 +151,7 @@ class Nodes {
 
     remove_all(){
         for(let i=1; i<28; i++){
-            $("#node_" + i).css("visibility", "hidden");
+            $("#node_" + i).css("visibility", "visible");
         }
     }
 
@@ -237,6 +237,10 @@ function experiment_stopped(){
 // Document ready
 // ------------------------------------------------------------------------------------------------------------
 $(document).ready(function(){
+  
+    $("#node_1").tooltipster({
+        contentCloning: true   // Ztu da majo usi isti HTML template
+    });
 
     var tloris = new Nodes();
     var dropdown = new Dropdown_menu();
