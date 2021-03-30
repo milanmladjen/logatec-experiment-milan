@@ -151,16 +151,28 @@ class Nodes {
 
     remove_all(){
         for(let i=1; i<28; i++){
-            $("#node_" + i).css("visibility", "visible");
+            $("#node_" + i).css("visibility", "hidden");
         }
     }
 
     update_dev(name, state){
         let loc = this._get_dev_loc(name);
+        let ip = this._get_dev_ip(name);
+
         if (loc > 0){
             $("#node_" + loc).css("visibility", "visible");
             $("#node_" + loc).css("color", this._get_state_color(state));
         }
+
+        // Update and show tooltip
+        // Had problems with updating HTML template - creating new one from scratch
+        var new_content = "<table><tr><th>Name: </th><td>" + name + 
+        "</td></tr><tr><th>IP: </th><td>" + ip +
+        "</td></tr><tr><th>Location: </th><td>" + loc +
+        "</td></tr><tr><th>Status: </th><td>" + state +
+        "</td></tr></table>";
+        
+        $("#node_" + loc).tooltipster("content", $((new_content)));
     }
 
     show_srda_dev(){
@@ -238,10 +250,6 @@ function experiment_stopped(){
 // ------------------------------------------------------------------------------------------------------------
 $(document).ready(function(){
   
-    $("#node_1").tooltipster({
-        contentCloning: true   // Ztu da majo usi isti HTML template
-    });
-
     var tloris = new Nodes();
     var dropdown = new Dropdown_menu();
 
@@ -251,6 +259,8 @@ $(document).ready(function(){
     // Remove all nodes from tloris
     tloris.remove_all();
 
+
+    $(".node").tooltipster();
 
     //tloris.show_srda_dev();
    
@@ -317,7 +327,7 @@ $(document).ready(function(){
         }
 
         // Update state of the device in the tloris
-        tloris.update_dev(lgtc.address, lgtc.state)
+        tloris.update_dev(lgtc.address, lgtc.state);
 
     });
 

@@ -14,17 +14,17 @@
 
 		<!-- FONT AWESOME - bootstrap 4 is not supporting glyphicons -->
 		<!-- link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" -->
-
-		<!-- TIPSO -->
+		
+		<!-- TOOLTIPSTER -->
 		<script type="text/javascript" src="/static/js/tooltipster.bundle.min.js"></script>
-		<script type="text/javascript" src="/static/js/script.js"></script>
-		<!-- script type="text/javascript" src="/controller/static/js/script.js"></script-->
-		<!-- script type="text/javascript" src="/controller/static/js/tipso.js"></script-->
-
-		<link href="{{ url_for('static',filename='css/main.css') }}" rel="stylesheet" type="text/css">
 		<link href="{{ url_for('static',filename='css/tooltipster.bundle.css') }}" rel="stylesheet" type="text/css">
+		<!-- script type="text/javascript" src="/controller/static/js/tooltipster.bundle.min.js"></script-->
+		<!-- link href="/controller/static/css/tooltipster.bundle.css.css" rel="stylesheet" type="text/css" -->
+
+		<script type="text/javascript" src="/static/js/script.js"></script>
+		<link href="{{ url_for('static',filename='css/main.css') }}" rel="stylesheet" type="text/css">
+		<!-- script type="text/javascript" src="/controller/static/js/script.js"></script-->
 		<!-- link href="/controller/static/css/main.css" rel="stylesheet" type="text/css" -->
-		<!-- link href="/controller/static/css/tipso.css" rel="stylesheet" type="text/css" -->
 
 		<link rel="icon" href="data:,">
 	</head> 
@@ -133,7 +133,7 @@
 							<img src="/static/img/tloris.png" style="height: 100%; width: 100%; object-fit: contain;">
 							<!-- img src="/controller/static/img/tloris.png" style="height: 100%; width: 100%; object-fit: contain;"-->
 
-								<span class="glyphicon glyphicon-map-marker node" id="node_1" data-tooltip-content="#tooltip_content"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_1"></span>
 								<span class="glyphicon glyphicon-map-marker node" id="node_2"></span>
 								<span class="glyphicon glyphicon-map-marker node" id="node_3"></span>
 								<span class="glyphicon glyphicon-map-marker node" id="node_4"></span>
@@ -163,10 +163,29 @@
 								<span class="glyphicon glyphicon-map-marker node" id="node_26"></span>
 								<span class="glyphicon glyphicon-map-marker node" id="node_27"></span>
 
-								<div class="tooltip_templates">
-									<span id="tooltip_content"> my contenasdasdadt <br> sadasdas</span>
+								<!-- Tooltip template -->
+								<div style="display: none;">
+									<div class="tooltip_template">
+										<table>
+											<tr>
+												<th>Name: </th>
+												<td id="tooltip_dev_name">LGTCxy</td>
+											</tr>
+											<tr>
+												<th>IP: </th>
+												<td id="tooltip_dev_ip">192.168.12.xy</td>
+											</tr>
+											<tr>
+												<th>Location: </th>
+												<td id="tooltip_dev_loc"> 0</td>
+											</tr>
+											<tr>
+												<th>Status: </th>
+												<td id="tooltip_dev_status">OFFLINE</td>
+											</tr>
+										</table>
+									</div>
 								</div>
-						
 						</div>
 					</div>
 				</div>
