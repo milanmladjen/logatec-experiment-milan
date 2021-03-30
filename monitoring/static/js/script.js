@@ -162,17 +162,17 @@ class Nodes {
         if (loc > 0){
             $("#node_" + loc).css("visibility", "visible");
             $("#node_" + loc).css("color", this._get_state_color(state));
-        }
-
-        // Update and show tooltip
-        // Had problems with updating HTML template - creating new one from scratch
-        var new_content = "<table><tr><th>Name: </th><td>" + name + 
-        "</td></tr><tr><th>IP: </th><td>" + ip +
-        "</td></tr><tr><th>Location: </th><td>" + loc +
-        "</td></tr><tr><th>Status: </th><td>" + state +
-        "</td></tr></table>";
         
-        $("#node_" + loc).tooltipster("content", $((new_content)));
+            // Update and show tooltip
+            // Had problems with updating HTML template - creating new one from scratch
+            var new_content = "<table><tr><th>Name: </th><td>" + name + 
+            "</td></tr><tr><th>IP: </th><td>" + ip +
+            "</td></tr><tr><th>Location: </th><td>" + loc +
+            "</td></tr><tr><th>Status: </th><td>" + state +
+            "</td></tr></table>";
+            
+            $("#node_" + loc).tooltipster("content", $((new_content)));
+        }
     }
 
     show_srda_dev(){
