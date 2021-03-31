@@ -259,11 +259,9 @@ $(document).ready(function(){
     // Remove all nodes from tloris
     tloris.remove_all();
 
-
+    // Init tooltips on tloris devices
     $(".node").tooltipster();
 
-    //tloris.show_srda_dev();
-   
     // --------------------------------------------------------------------------------------------------------
     // Web Sockets and its handlers
     // --------------------------------------------------------------------------------------------------------
