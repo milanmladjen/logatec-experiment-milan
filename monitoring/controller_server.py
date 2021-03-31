@@ -128,9 +128,9 @@ def zmqThread():
     zmq_soc = context.socket(zmq.DEALER)
     zmq_soc.setsockopt(zmq.IDENTITY, b"flask_process")
     #zmq_soc.connect("ipc:///tmp/zmq_ipc")      # local test (on PC)
-    zmq_soc.connect("tcp://192.168.88.239:5563")# local test (Docker)
+    #zmq_soc.connect("tcp://192.168.88.239:5563")# local test (Docker)
     #zmq_soc.connect("tcp://192.168.89.250:5563")# local test (WiFi)
-    #zmq_soc.connect("tcp://193.2.205.19:5563") # testbed 
+    zmq_soc.connect("tcp://193.2.205.19:5563") # testbed 
 
     poller = zmq.Poller()
     poller.register(zmq_soc, zmq.POLLIN)
