@@ -1,5 +1,10 @@
+# TODO
+# Option 1: run the root node in daemon mode (-d) and all other nodes in normal mode - that way they will finish execution aprox. together
+# Option 2: run the script with strategy: free, so all the nodes will run simultaneously but they will not wait or each other 
+
 ---
 - hosts: 192.168.12.51, 192.168.12.52, 192.168.12.53, 192.168.12.54, 192.168.12.55, 192.168.12.56, 192.168.12.57, 192.168.12.58, 192.168.12.59, 192.168.12.60, 192.168.12.61, 192.168.12.62, 192.168.12.63, 192.168.12.64, 192.168.12.65, 192.168.12.66, 192.168.12.67, 192.168.12.68, 192.168.12.69, 192.168.12.70, 192.168.12.71  
+  #strategy: free
   remote_user: videk
 
 # Select which application to test, duration in minutes and which device should be the root of the network
@@ -22,7 +27,7 @@
 
 # Recursive option will also download the sub-modules
 # Update will pull the changes from Github
-# Force will delete local changes (but it doesn't)
+# Force will delete local changes
 # Version you can change which branch to pull
   - name: Pull changes from github
     git:
@@ -41,11 +46,11 @@
     args:
       chdir: ~/deploy/logatec-experiment
 
-# Delete potential local changes (since force option in git task doesn't work)
+# Delete potential local changes (since force option in git task doesn't work for submodules)
   - name: Delete local changes
     shell: "{{ item }} "
     with_items:
-      - cd ~/deploy/logatec-experiment && git clean -f -d
+      #- cd ~/deploy/logatec-experiment && git clean -f -d
       - cd ~/deploy/logatec-experiment/contiki-ng && git clean -f -d
       - cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
 
@@ -66,10 +71,10 @@
 
     # Root node
   - name: Run docker image for root
-    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_root -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
+    command: docker run -d --name target --privileged --net=host -e TARGET=run_experiment_root -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
     when: inventory_hostname == root_node
 
     # Other nodes
   - name: Run docker image
-    command: docker run -d --name target --privileged --net=host -it -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
+    command: docker run --name target --privileged --net=host -e TARGET=run_experiment_node -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
     when: inventory_hostname != root_node

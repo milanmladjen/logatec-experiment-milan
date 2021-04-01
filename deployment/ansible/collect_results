@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 
-DIR=deployment/ansible
-
-ansible-playbook $DIR/collect_results.yml
+# Flag -f is alowing ansible to make 50 forks at the same time
+ansible-playbook -f 50 deployment/ansible/collect_results.yml
