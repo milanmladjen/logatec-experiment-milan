@@ -14,6 +14,9 @@ RUN mkdir logatec-experiment
 
 WORKDIR /root/logatec-experiment
 
+# Prepare folder for results
+RUN mkdir results/
+
 # Copy the logatec-experiment directory into container (without files in .dockerignore)
 COPY ./ ./
 

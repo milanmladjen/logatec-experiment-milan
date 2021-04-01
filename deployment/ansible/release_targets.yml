@@ -1,5 +1,10 @@
+# TODO
+# Option 1: run the root node in daemon mode (-d) and all other nodes in normal mode - that way they will finish execution aprox. together
+# Option 2: run the script with strategy: free, so all the nodes will run simultaneously but they will not wait or each other 
+
 ---
 - hosts: 192.168.12.81, 192.168.12.83
+  strategy: free
   remote_user: videk
 
   vars:
@@ -43,4 +48,4 @@
 
     # Root node
   - name: Run docker image 
-    command: docker run -d --name target_BLE --privileged --net=host -it -e TARGET=run_experiment -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" lgtc-ble-experiment
+    command: docker run --name target_BLE --privileged --net=host -it -e TARGET=run_experiment -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" lgtc-ble-experiment
