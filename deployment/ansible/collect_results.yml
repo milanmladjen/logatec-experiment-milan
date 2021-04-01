@@ -1,14 +1,16 @@
 ---
-- hosts: 172.17.0.1
+- hosts: 192.168.12.81, 192.168.12.83
   remote_user: videk
   tasks:
 
-  - name: Stop docker container (controller)
-    command: docker stop controller
+# If it is still running, stop the container
+  - name: Stop docker container (target)
+    ignore_errors: yes
+    command: docker stop target
 
-# Script server.py makes dir results where measurements are stored
+# Get measurements from container
   - name: Copy file from the container
-    command: docker cp controller:/root/logatec-experiment/deployment/tasks/results/ .
+    command: docker cp target:/root/logatec-experiment/results/ .
     args:
       chdir: ~/deploy/logatec-experiment
 
