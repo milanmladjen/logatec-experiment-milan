@@ -4,9 +4,10 @@ from datetime import datetime
 from bluepy.btle import Scanner, DefaultDelegate
 import argparse
 import os
+import sys
 
-# Filename must be named like this, so client.py will send it to servers
-filename = "node_results.txt"
+# Get the filename
+filename = "node_" + str(sys.arg[1]) + ".txt"
 
 try:
 	APP_DURATION = int(os.environ['APP_DURATION_MIN'])

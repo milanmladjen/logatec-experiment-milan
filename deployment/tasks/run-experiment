@@ -4,19 +4,25 @@
 cd /root/logatec-experiment/applications/$APP_DIR
 pwd
 
+# Obtain node adresses
+IPADDR=$(hostname -I)
+# Get only our network address
+IPADDR=${IPADDR#*"192.168.12."}
+# Get only last 3 digits of IP address
+IPADDR=${IPADDR:0:3}
+
 # Remove first 3 characters from APP_DIR string to get the app name
 APP=${APP_DIR:3}
-echo "Testing $APP application"
+echo "Testing $APP application on node $IPADDR"
 
 # Start BT advertisment
 hciconfig hci0 leadv3
 
 # Start the experiment
-python3 $APP.py
+python3 $APP.py ${IPADDR}
 
 # Stop BT  advertisement: 
 hciconfig hci0 noleadv
 
-# Transfer colected results to the server 
-cd /root/logatec-experiment/deployment/tasks/
-python3 client.py
+# Move results ("node_results.txt") to dedicated folder
+mv *.txt /root/logatec-experiment/results/
