@@ -18,6 +18,9 @@ WORKDIR /root/logatec-experiment
 # Clone it from Github once and then it is cached...pull new changes inside container
 RUN git clone --single-branch --branch master https://github.com/gcerar/contiki-ng.git
 
+# Prepare folder for results
+RUN mkdir results/
+
 # Copy the logatec-experiment directory into container (without files in .dockerignore)
 COPY ./ ./
 
