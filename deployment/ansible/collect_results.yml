@@ -3,6 +3,9 @@
   remote_user: videk
   tasks:
 
+  #- name: Stop docker container (controller_BLE)
+  #  command: docker stop controller_BLE
+  
 # If it is still running, stop the container
 # (TODO pointless? collect_results is called only when all containers are stopped)
   - name: Stop docker container (target)
@@ -11,6 +14,7 @@
 
 # Get measurements from container to device
   - name: Copy file from the container
+    #command: docker cp controller_BLE:/root/logatec-experiment/deployment/tasks/results/ .
     command: docker cp target:/root/logatec-experiment/results/ .
     args:
       chdir: ~/deploy/logatec-experiment

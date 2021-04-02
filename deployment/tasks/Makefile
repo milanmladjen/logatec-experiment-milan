@@ -1,8 +1,5 @@
-experiment_node:
-	./run-experiment-node
-
-experiment_root:
-	./run-experiment-root
+run_experiment:
+	./run-experiment
 
 experiment_with_controller:
 	./run-experiment-with-controller
