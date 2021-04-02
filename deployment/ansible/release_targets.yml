@@ -70,4 +70,4 @@
       - docker rm target
 
   - name: Run docker image
-    command: docker run --name target --privileged --net=host -e TARGET=experiment_with_monitor -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
+    command: docker run --name target --privileged --net=host -e TARGET=experiment_with_controller -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers
