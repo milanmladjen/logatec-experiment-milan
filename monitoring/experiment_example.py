@@ -80,7 +80,7 @@ def main_thread(input_q, output_q, filename, lgtcname):
 
     # ------------------------------------------------------------------------------------
     monitor = serial_monitor.serial_monitor(2)
-    log = file_logger.file_logger()
+    txt = file_logger.file_logger()
 
     # Link multithread input output queue
     in_q = input_q
@@ -98,8 +98,8 @@ def main_thread(input_q, output_q, filename, lgtcname):
     logging.info("Starting serial monitor thread")
 
     # Open file to store measurements
-    log.prepare_file(filename, lgtcname)
-    log.open_file()  
+    txt.prepare_file(filename, lgtcname)
+    txt.open_file()  
 
     # Connect to VESNA serial port
     if not monitor.connect_to("ttyS2"):
@@ -132,12 +132,12 @@ def main_thread(input_q, output_q, filename, lgtcname):
                     if elapsed_sec % 10 == 0:
 
                         if not monitor.serial_avaliable:
-                            log.store_lgtc_line("Timeout detected.")
+                            txt.store_lgtc_line("Timeout detected.")
                             timeout_cnt += 1
                             logging.debug("No lines read for more than a 10 seconds")
 
                         if timeout_cnt > 5:
-                            log.warning("VESNA did not respond for more than a minute")
+                            txt.warning("VESNA did not respond for more than a minute")
                             out_q.put(["-1", "VESNA_TIMEOUT"])
                             timeout_cnt = 0
                             logging.error("VESNA did not respond for more than a minute")
@@ -154,7 +154,7 @@ def main_thread(input_q, output_q, filename, lgtcname):
                             # not captured for more than 3 seconds. Something went wrong, 
                             # so stop waiting for it
                             if _command_timeout:
-                                log.warning("Command timeout occurred!")
+                                txt.warning("Command timeout occurred!")
                                 out_q.put([_command_waiting, "Failed to get response ..."])
                                 logging.warning("Command timeout occurred!")
                                 _command_timeout = False
@@ -168,7 +168,7 @@ def main_thread(input_q, output_q, filename, lgtcname):
                 data = monitor.read_line()
 
                 # Store the line into file
-                log.store_line(data)
+                txt.store_line(data)
                 _lines_stored += 1
 
                 # If we got response on the command
@@ -202,12 +202,12 @@ def main_thread(input_q, output_q, filename, lgtcname):
                     if cmd[1] == "SYNC_WITH_VESNA":
                         if not monitor.sync_with_vesna():
                             out_q.put(["-1", "VESNA_ERR"])
-                            log.warning("Couldn't sync with VESNA.")
+                            txt.warning("Couldn't sync with VESNA.")
                             logging.error("Couldn't sync with VESNA.")
                             break
                         
                         out_q.put(["-1", "SYNCED_WITH_VESNA"])
-                        log.store_lgtc_line("Synced with VESNA ...")
+                        txt.store_lgtc_line("Synced with VESNA ...")
                         logging.info("Synced with VESNA ...")
                     
                     # > Start the app (with app running time as an argument)
@@ -218,30 +218,36 @@ def main_thread(input_q, output_q, filename, lgtcname):
 
                         if not monitor.start_app(str(APP_DURATION * 60)):
                             out_q.put(["-1", "VESNA_ERR"])
-                            log.warning("Couldn't start the APP.")
+                            txt.warning("Couldn't start the APP.")
                             logging.error("Couldn't start the APP.")
                             break
                         
-                        # In case we restart experiment, start from 0
+                        # In case we restarted experiment, start from 0
                         elapsed_sec = 0
                         _lines_stored = 0
 
                         _is_app_running = True
                         out_q.put(["-1", "START_APP"])
-                        log.store_lgtc_line("Application started!")
+                        txt.store_lgtc_line("Application started!")
                         logging.info("Application started!")
 
                     # = Stop the app
                     elif cmd[1] == "STOP_APP":
                         if not monitor.stop_app():
                             out_q.put(["-1", "VESNA_TIMEOUT"])
-                            log.warning("Couldn't stop the APP.")
+                            txt.warning("Couldn't stop the APP.")
                             logging.error("Couldn't stop the APP.")
                         
                         _is_app_running = False
                         out_q.put(["-1", "STOP_APP"])
-                        log.store_lgtc_line("Application stopped!")
+                        txt.store_lgtc_line("Application stopped!")
                         logging.info("Application stopped!")
+
+                    elif cmd[1] == "EXIT":
+                        monitor.stop_app()
+                        txt.store_lgtc_line("Application exit!")
+                        logging.info("Received exit command!")
+                        break
 
                 # EXPERIMENT COMMANDS
                 else:
@@ -259,7 +265,7 @@ def main_thread(input_q, output_q, filename, lgtcname):
                         _command_waiting = cmd[0]
 
                     # Log it to file as well
-                    log.store_lgtc_line("Received command [" + cmd[0] + "]: " + cmd[1])
+                    txt.store_lgtc_line("Received command [" + cmd[0] + "]: " + cmd[1])
                     logging.debug("Received command [" + cmd[0] + "]: " + cmd[1])
 
             # -------------------------------------------------------------------------------
@@ -283,7 +289,7 @@ def main_thread(input_q, output_q, filename, lgtcname):
     # ------------------------------------------------------------------------------------
         # Clear resources
         monitor.close()
-        log.close()
+        txt.close()
         return
 
 

@@ -79,7 +79,7 @@ class zmq_client_thread(threading.Thread):
                     self.client.transmit_async(response)
             
             # --------------------------------------------------------------------------------
-            # If there is some incoming commad from the broker
+            # If there is some incoming commad from the controller broker
             inp = self.client.check_input(0)
             if inp:
                 msg_nbr, msg = self.client.receive_async(inp)
@@ -92,7 +92,9 @@ class zmq_client_thread(threading.Thread):
                     if msg_nbr == "-1":
 
                         if msg == "EXIT":
-                            logging.info("Closing the app.")
+                            self.LGTC_set_state("OFFLINE")
+                            self.out_q.put([msg_nbr, msg])
+                            logging.info("Closing client thread.")
                             break
 
                         elif msg == "STATE":
@@ -203,6 +205,9 @@ class zmq_client_thread(threading.Thread):
         os.system('echo 1 > /sys/class/gpio/gpio66/value')
 
 
+# 
+# This thread is designed for communication with controller script and updating LGTC 
+# states. If experiment uses VESNA device, this thread can compile and flash it. 
 
 # ----------------------------------------------------------------------------------------
 # POSSIBLE LGTC STATES
