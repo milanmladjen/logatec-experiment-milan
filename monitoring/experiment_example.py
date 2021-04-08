@@ -1,6 +1,10 @@
-# Serial monitor application with client to communicate with server.
-
 #!/usr/bin/python3
+
+# ----------------------------------------------------------------------------------------
+# Serial monitor application with client thread to communicate with controller server.
+#
+# ----------------------------------------------------------------------------------------
+
 from queue import Queue
 import threading
 import sys
@@ -17,11 +21,64 @@ import controller_client
 
 
 # ----------------------------------------------------------------------------------------
+# EXPERIMENT DEFINITIONS AND CONFIGURATION
+# ----------------------------------------------------------------------------------------
+
+# DEFINITIONS
+LOG_LEVEL = logging.DEBUG
+
+ROUTER_HOSTNAME = "tcp://localhost:5562"
+SUBSCR_HOSTNAME = "tcp://localhost:5561"
+
+SERIAL_TIMEOUT = 2  # In seconds
+
+DEFAULT_FILENAME = "node_results.txt"
+
+# ENVIRONMENTAL VARIABLES
+# Device id should be given as argument at start of the script
+try:
+    LGTC_ID = sys.argv[1]
+    LGTC_ID = LGTC_ID.replace(" ", "")
+    LGTC_ID = "LGTC" + LGTC_ID
+except:
+    print("No device name was given...going with default")
+    LGTC_ID = "LGTCxy"
+
+# Application name and duration should be defined as variable while running container
+try:
+    APP_DURATION = int(os.environ['APP_DURATION_MIN'])
+except:
+    print("No app duration was defined...going with default 60min")
+    APP_DURATION = 60
+
+try:
+    APP_DIR = int(os.environ['APP_DIR'])
+except:
+    print("No application was given...aborting!")
+    #sys.exit(1) TODO
+    APP_DIR = "00_test"
+
+# TODO: change when in container
+# APP_PATH = "/root/logatec-experiment/application" + APP_DIR
+APP_PATH = "/home/logatec/magistrska/logatec-experiment/applications/" + APP_DIR
+APP_NAME = APP_DIR[3:]
+
+# TODO what name to use dor storing measurements?
+FILENAME = DEFAULT_FILENAME
+
+print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_ID)
+
+
+
+
+
+
+# ----------------------------------------------------------------------------------------
 # MAIN THREAD - SERIAL MONITOR
 # ----------------------------------------------------------------------------------------
 def main_thread(input_q, output_q, filename, lgtcname):
 
-    # Init lib  
+    # ------------------------------------------------------------------------------------
     monitor = serial_monitor.serial_monitor(2)
     log = file_logger.file_logger()
 
@@ -37,7 +94,7 @@ def main_thread(input_q, output_q, filename, lgtcname):
 
 
 
-    
+    # ----------------------------------------------------------------------------------------
     logging.info("Starting serial monitor thread")
 
     # Open file to store measurements
@@ -52,16 +109,14 @@ def main_thread(input_q, output_q, filename, lgtcname):
     
     logging.info("Connected to VESNA serial port ....")
 
-
     elapsed_sec = 0
     timeout_cnt = 0
     loop_time = timer()
 
-    # ------------------------------------------------------------------
     try:
         while(True):
 
-            # ------------------------------------------------------------------
+            # -------------------------------------------------------------------------------
             # Failsafe - Check if serial was available in last 10 seconds
             # Failsafe - Check if we got respond on a command in last 3 sec
             # Failsafe enabled only while some application is running 
@@ -89,24 +144,25 @@ def main_thread(input_q, output_q, filename, lgtcname):
                             _is_app_running = False
                             # We don't do anything here - let the user interfeer
 
-                        # Force variable to False, so when monitor reads something, it goes back to True
+                        # Set to False, so when monitor reads something, it goes back to True
                         monitor.serial_avaliable = False
 
                     # Every 3 seconds
                     if elapsed_sec % 3 == 0:
                         if _command_waiting != None:
-                            # If _command_timeout allready occurred - response on command was not captured 
-                            # for more than 3 seconds. Something went wrong, so stop waiting for it
+                            # If _command_timeout allready occurred - response on command was
+                            # not captured for more than 3 seconds. Something went wrong, 
+                            # so stop waiting for it
                             if _command_timeout:
                                 log.warning("Command timeout occurred!")
-                                out_q.put([_command_waiting, "Failed to get response from VESNA"])
+                                out_q.put([_command_waiting, "Failed to get response ..."])
                                 logging.warning("Command timeout occurred!")
                                 _command_timeout = False
                                 _command_waiting = None
                             
                             _command_timeout = True
 
-            # ------------------------------------------------------------------
+            # -------------------------------------------------------------------------------
             # Read line from VESNA
             if monitor.input_waiting():
                 data = monitor.read_line()
@@ -132,7 +188,7 @@ def main_thread(input_q, output_q, filename, lgtcname):
                 
                 
 
-            # ------------------------------------------------------------------
+            # -------------------------------------------------------------------------------
             # If we are not witing for any response
             # and there is any command in queue, send it to VESNA
             elif (not in_q.empty() and _command_waiting == None):
@@ -141,7 +197,8 @@ def main_thread(input_q, output_q, filename, lgtcname):
                 # SYSTEM COMMANDS
                 if cmd[0] == "-1":
 
-                    # @ Sync with VESNA - start the serial_monitor but not the app #TODO add while(1) to VESNA main loop
+                    # @ Sync with VESNA - start the serial_monitor but not the app 
+                    # #TODO add while(1) to VESNA main loop
                     if cmd[1] == "SYNC_WITH_VESNA":
                         if not monitor.sync_with_vesna():
                             out_q.put(["-1", "VESNA_ERR"])
@@ -205,7 +262,7 @@ def main_thread(input_q, output_q, filename, lgtcname):
                     log.store_lgtc_line("Received command [" + cmd[0] + "]: " + cmd[1])
                     logging.debug("Received command [" + cmd[0] + "]: " + cmd[1])
 
-            # ------------------------------------------------------------------
+            # -------------------------------------------------------------------------------
             #else:
                 # TODO: Update status line in terminal.
                 #print("Line: " + str(line) + " (~ " + str(elapsedMin) + "|" + 
@@ -223,7 +280,7 @@ def main_thread(input_q, output_q, filename, lgtcname):
         logging.warn("Serial port disconnected!.. Stopping the monitor")
 
     finally:
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------
         # Clear resources
         monitor.close()
         log.close()
@@ -234,82 +291,18 @@ def main_thread(input_q, output_q, filename, lgtcname):
 
 
 
-
-
-
-
-
-
-
-
-
-# ----------------------------------------------------------------------------------------
-# EXPERIMENT DEFINITIONS AND CONFIGURATION
-# ----------------------------------------------------------------------------------------
-# DEFINITIONS
-LOG_LEVEL = logging.DEBUG
-
-ROUTER_HOSTNAME = "tcp://localhost:5562"
-SUBSCR_HOSTNAME = "tcp://localhost:5561"
-
-SERIAL_TIMEOUT = 2  # In seconds
-
-DEFAULT_FILENAME = "node_results.txt"
-
-# ENVIRONMENTAL VARIABLES
-# Device id should be given as argument at start of the script
-try:
-    LGTC_ID = sys.argv[1]
-    LGTC_ID = LGTC_ID.replace(" ", "")
-    LGTC_ID = "LGTC" + LGTC_ID
-except:
-    print("No device name was given...going with default")
-    LGTC_ID = "LGTCxy"
-
-# Application name and duration should be defined as variable while running container
-try:
-    APP_DURATION = int(os.environ['APP_DURATION_MIN'])
-except:
-    print("No app duration was defined...going with default 60min")
-    APP_DURATION = 60
-
-try:
-    APP_DIR = int(os.environ['APP_DIR'])
-except:
-    print("No application was given...aborting!")
-    #sys.exit(1) TODO
-    APP_DIR = "00_test"
-
-# TODO: change when in container
-# APP_PATH = "/root/logatec-experiment/application" + APP_DIR
-APP_PATH = "/home/logatec/magistrska/logatec-experiment/applications/" + APP_DIR
-APP_NAME = APP_DIR[3:]
-
-# TODO what name to use dor storing measurements?
-FILENAME = DEFAULT_FILENAME
-
-print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_ID)
-
-
-# ----------------------------------------------------------------------------------------
-# GLOBAL VARIABLES
-# ----------------------------------------------------------------------------------------
-
-#logging.basicConfig(format="[%(module)15s: %(funcName)16s()] %(message)s", level=LOG_LEVEL) # To long module names
-logging.basicConfig(format="[%(levelname)5s:%(funcName)16s()] %(message)s", level=LOG_LEVEL)
-
-# LGTC -> VESNA
-L_V_QUEUE = Queue()
-# VESNA -> LGTC
-V_L_QUEUE = Queue()
-
-
-
 # ----------------------------------------------------------------------------------------
 # MAIN
 # ----------------------------------------------------------------------------------------
-
 if __name__ == "__main__":
+
+    # LGTC -> VESNA
+    L_V_QUEUE = Queue()
+    # VESNA -> LGTC
+    V_L_QUEUE = Queue()
+
+    #logging.basicConfig(format="[%(module)15s: %(funcName)16s()] %(message)s", level=LOG_LEVEL) # To long module names
+    logging.basicConfig(format="[%(levelname)5s:%(funcName)16s()] %(message)s", level=LOG_LEVEL)
 
     # Start client thread (ZMQ)
     client_thread = controller_client.zmq_client_thread(V_L_QUEUE, L_V_QUEUE, LGTC_ID, SUBSCR_HOSTNAME, ROUTER_HOSTNAME)
