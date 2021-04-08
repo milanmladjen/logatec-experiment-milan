@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 
-# ----------------------------------------------------------------------------------------
-# Serial monitor application with client thread to communicate with controller server.
-#
-# ----------------------------------------------------------------------------------------
+# LGTC EMULATOR - for testing without VESNA device connected to LGTC
+
 
 from queue import Queue
 import threading
@@ -13,10 +11,16 @@ import logging
 import time
 from timeit import default_timer as timer
 
+
+# Workaround to import files from parent dir
+cdir = os.path.dirname(os.path.realpath(__file__))
+pdir = os.path.dirname(cdir)
+sys.path.append(pdir)
+
 from lib import serial_monitor
 from lib import file_logger
 
-import controller_client
+import controller_client_emu
 
 
 # ----------------------------------------------------------------------------------------
@@ -26,8 +30,11 @@ import controller_client
 # DEFINITIONS
 LOG_LEVEL = logging.DEBUG
 
-ROUTER_HOSTNAME = "tcp://localhost:5562"
-SUBSCR_HOSTNAME = "tcp://localhost:5561"
+ROUTER_HOSTNAME = "tcp://192.168.88.239:5562"
+SUBSCR_HOSTNAME = "tcp://192.168.88.239:5561"
+
+#ROUTER_HOSTNAME = "tcp://192.168.89.250:5562"
+#SUBSCR_HOSTNAME = "tcp://192.168.89.250:5561"
 
 SERIAL_TIMEOUT = 2  # In seconds
 
@@ -68,17 +75,13 @@ FILENAME = DEFAULT_FILENAME
 print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_ID)
 
 
-
-
-
-
 # ----------------------------------------------------------------------------------------
 # MAIN THREAD - SERIAL MONITOR
 # ----------------------------------------------------------------------------------------
 def main_thread(input_q, output_q, filename, lgtcname):
 
     # ------------------------------------------------------------------------------------
-    monitor = serial_monitor.serial_monitor(2)
+    """monitor = serial_monitor.serial_monitor(2)"""
     txt = file_logger.file_logger()
 
     # Link multithread input output queue
@@ -100,13 +103,17 @@ def main_thread(input_q, output_q, filename, lgtcname):
     txt.prepare_file(filename, lgtcname)
     txt.open_file()  
 
+    """
     # Connect to VESNA serial port
     if not monitor.connect_to("ttyS2"):
         logging.error("Couldn't connect to VESNA.")
         out_q.put(["-1", "VESNA_ERR"])
         return
+    """
     
     logging.info("Connected to VESNA serial port ....")
+
+    #TODO inform with ONLINE state
 
     elapsed_sec = 0
     timeout_cnt = 0
@@ -163,6 +170,7 @@ def main_thread(input_q, output_q, filename, lgtcname):
 
             # -------------------------------------------------------------------------------
             # Read line from VESNA
+            """
             if monitor.input_waiting():
                 data = monitor.read_line()
 
@@ -184,8 +192,22 @@ def main_thread(input_q, output_q, filename, lgtcname):
                     _command_timeout = False
                     _is_app_running = False
                     logging.debug("Got end-of-app response")
-                
-                
+            """
+
+            # Fejk odgovor na poslan ukaz
+            if command_waiting != None:
+                fake_data = "*Odgovor na CMD*"
+                self.out_q.put([command_waiting, fake_data[1:]])
+                command_waiting = None
+                command_timeout = False
+                logging.debug("Got response " + fake_data[1:])
+            else:
+                time.sleep(0.7)
+                fake_data = "Prebrana vrstica"
+
+            # Store the line into file
+            self.log.store_line(fake_data)
+            self._lines_stored += 1
 
             # -------------------------------------------------------------------------------
             # If we are not witing for any response
@@ -199,12 +221,13 @@ def main_thread(input_q, output_q, filename, lgtcname):
                     # @ Sync with VESNA - start the serial_monitor but not the app 
                     # #TODO add while(1) to VESNA main loop
                     if cmd[1] == "SYNC_WITH_VESNA":
+                        """
                         if not monitor.sync_with_vesna():
                             out_q.put(["-1", "VESNA_ERR"])
                             txt.warning("Couldn't sync with VESNA.")
                             logging.error("Couldn't sync with VESNA.")
                             break
-                        
+                        """
                         out_q.put(["-1", "SYNCED_WITH_VESNA"])
                         txt.store_lgtc_line("Synced with VESNA ...")
                         logging.info("Synced with VESNA ...")
@@ -214,17 +237,16 @@ def main_thread(input_q, output_q, filename, lgtcname):
                         if _is_app_running == True:
                             logging.info("Application allready running..")
                             # TODO: inform user about this?
-
+                        """
                         if not monitor.start_app(str(APP_DURATION * 60)):
                             out_q.put(["-1", "VESNA_ERR"])
                             txt.warning("Couldn't start the APP.")
                             logging.error("Couldn't start the APP.")
                             break
-                        
+                        """
                         # In case we restarted experiment, start from 0
                         elapsed_sec = 0
                         _lines_stored = 0
-
                         _is_app_running = True
                         out_q.put(["-1", "START_APP"])
                         txt.store_lgtc_line("Application started!")
@@ -232,18 +254,19 @@ def main_thread(input_q, output_q, filename, lgtcname):
 
                     # = Stop the app
                     elif cmd[1] == "STOP_APP":
+                        """
                         if not monitor.stop_app():
                             out_q.put(["-1", "VESNA_TIMEOUT"])
                             txt.warning("Couldn't stop the APP.")
                             logging.error("Couldn't stop the APP.")
-                        
+                        """
                         _is_app_running = False
                         out_q.put(["-1", "STOP_APP"])
                         txt.store_lgtc_line("Application stopped!")
                         logging.info("Application stopped!")
 
                     elif cmd[1] == "EXIT":
-                        monitor.stop_app()
+                        """monitor.stop_app()"""
                         txt.store_lgtc_line("Application exit!")
                         logging.info("Received exit command!")
                         break
@@ -260,7 +283,9 @@ def main_thread(input_q, output_q, filename, lgtcname):
 
                     # Forward command to VESNA
                     else:
+                        """
                         monitor.send_command(cmd[1])
+                        """
                         _command_waiting = cmd[0]
 
                     # Log it to file as well
@@ -287,7 +312,7 @@ def main_thread(input_q, output_q, filename, lgtcname):
     finally:
     # ------------------------------------------------------------------------------------
         # Clear resources
-        monitor.close()
+        """monitor.close()"""
         txt.close()
         return
 
@@ -330,7 +355,6 @@ if __name__ == "__main__":
 
 
 
-
 # ----------------------------------------------------------------------------------------
 # POSSIBLE LGTC STATES
 # ----------------------------------------------------------------------------------------
@@ -349,7 +373,7 @@ if __name__ == "__main__":
 # ----------------------------------------------------------------------------------------
 # SUPPORTED COMMANDS
 # ----------------------------------------------------------------------------------------
-# Incoming commands must be formated as a list with 2 string arguments: message number 
+# Incomeing commands must be formated as a list with 2 string arguments: message number 
 # and command itself (example: ["66", "STATE"]). Message number is used as a sequence
 # number, but if it is set to "-1", command represents SYSTEM COMMAND:
 #
@@ -362,13 +386,11 @@ if __name__ == "__main__":
 #       * SYNC_WITH_VESNA - start the serial monitor
 #       * EXIT            - exit monitoring application
 #       * STATE           - return the current state of monitoring application
-#       * SYNC            - used to synchronize LGTC with broker/server
-#       * ACK             - acknowledge packet sent as a response on every message
-#       
-# --> EXPERIMENT COMMANDS - used for controll over the VESNA experiment application
-#
 #       * LINES           - return the number of lines stored in measurement file
 #       * SEC             - return the number of elapsed seconds since the beginning of exp.
+#       
+# --> EXPERIMENT COMMANDS - used for controll over the VESNA experiment application
+#        
 #       TODO:
 #       They should start with the char "*" so VESNA will know?
 #       Depend on Contiki-NG application
