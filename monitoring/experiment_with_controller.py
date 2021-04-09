@@ -252,7 +252,7 @@ def main_thread(input_q, output_q, filename, lgtcname):
                 else:
                     # Return number of lines read
                     if cmd[1] == "LINES":
-                        out_q.put([cmd[0], ("LINES " + str(self._lines_stored))])
+                        out_q.put([cmd[0], ("LINES " + str(_lines_stored))])
 
                     # Return number of seconds since the beginning of app
                     elif cmd[1] == "SEC":
