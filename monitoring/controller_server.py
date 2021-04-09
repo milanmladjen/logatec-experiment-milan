@@ -4,8 +4,8 @@
 # -------------------------------------------------------------------------------
 
 
-# import eventlet
-# eventlet.monkey_patch()
+import eventlet
+eventlet.monkey_patch()
 
 from threading import Thread, Lock, Event
 from flask import Flask, render_template, send_from_directory
@@ -236,14 +236,21 @@ def zmqThread():
                     socketio.emit("command response", response, broadcast=True)
             else:
                 socketio.sleep(0.5)
+    
+    print("Leaving 0MQ thread")
 
-# Run the ZMQ thread in the beginning
 thread = socketio.start_background_task(zmqThread)
 
-if __name__ == '__main__':
+# Run the ZMQ thread in the beginning
 
-    print("Start the server!")
-    socketio.run(app, host="localhost", port=8001, debug=False)
+if __name__ == '__main__':
+    try:
+        print("Start the server!")
+        socketio.run(app, host="localhost", port=8001, debug=False)
+    except KeyboardInterrupt:
+        print("Stopping Flask server.")
+        thread_stop_event.set()
+        thread.join()
 
 
 
@@ -310,4 +317,8 @@ if __name__ == '__main__':
 # IPC (inter process communication) sockets can be used if this script is 
 # running on the same machine as broker script. Otherwise use TCP sockets.
 # zmq.connect() must have parametrized address!
-# While in Docker container, 127.0.0.1 won't work - use machine IP address  
+# While in Docker container, 127.0.0.1 won't work - use machine IP address
+#
+# TODO:
+# Still haven't found a way to stop the background task when gunicorn exits.
+# Now daemon task keeps running...but not so important because container dies.
