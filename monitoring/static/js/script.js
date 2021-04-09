@@ -267,11 +267,11 @@ $(document).ready(function(){
     // --------------------------------------------------------------------------------------------------------
 
     // If websocket are on the same domain
-    var socket = io();
+    //var socket = io();
 
     // For different domain, WebSocket server (flask_server.py) must have CORS enabled 
     // https://socket.io/docs/v3/client-initialization/
-    //var socket = io({path: "/controller/socket.io"});
+    var socket = io({path: "/controller/socket.io"});
 
 
     socket.on("after connect", function(msg){

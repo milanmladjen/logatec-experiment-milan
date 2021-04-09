@@ -121,7 +121,6 @@ def main_thread(input_q, output_q, filename, lgtcname):
 
     try:
         while(True):
-
             # -------------------------------------------------------------------------------
             # Failsafe - Check if serial was available in last 10 seconds
             # Failsafe - Check if we got respond on a command in last 3 sec
@@ -195,24 +194,23 @@ def main_thread(input_q, output_q, filename, lgtcname):
             """
 
             # Fejk odgovor na poslan ukaz
-            if command_waiting != None:
+            if _command_waiting != None:
                 fake_data = "*Odgovor na CMD*"
-                self.out_q.put([command_waiting, fake_data[1:]])
-                command_waiting = None
-                command_timeout = False
+                out_q.put([_command_waiting, fake_data[1:]])
+                _command_waiting = None
+                _command_timeout = False
                 logging.debug("Got response " + fake_data[1:])
             else:
                 time.sleep(0.7)
                 fake_data = "Prebrana vrstica"
 
             # Store the line into file
-            self.log.store_line(fake_data)
-            self._lines_stored += 1
-
+            txt.store_line(fake_data)
+            _lines_stored += 1
             # -------------------------------------------------------------------------------
             # If we are not witing for any response
             # and there is any command in queue, send it to VESNA
-            elif (not in_q.empty() and _command_waiting == None):
+            if (not in_q.empty() and _command_waiting == None):
                 cmd = in_q.get()
 
                 # SYSTEM COMMANDS
@@ -275,7 +273,7 @@ def main_thread(input_q, output_q, filename, lgtcname):
                 else:
                     # Return number of lines read
                     if cmd[1] == "LINES":
-                        out_q.put([cmd[0], ("LINES " + str(self._lines_stored))])
+                        out_q.put([cmd[0], ("LINES " + str(_lines_stored))])
 
                     # Return number of seconds since the beginning of app
                     elif cmd[1] == "SEC":
@@ -335,7 +333,7 @@ if __name__ == "__main__":
     logging.basicConfig(format="[%(levelname)5s:%(funcName)16s()] %(message)s", level=LOG_LEVEL)
 
     # Start client thread (ZMQ)
-    client_thread = controller_client.zmq_client_thread(V_L_QUEUE, L_V_QUEUE, LGTC_ID, SUBSCR_HOSTNAME, ROUTER_HOSTNAME)
+    client_thread = controller_client_emu.zmq_client_thread(V_L_QUEUE, L_V_QUEUE, LGTC_ID, SUBSCR_HOSTNAME, ROUTER_HOSTNAME)
     client_thread.start()
     
     # Start main thread (Serial Monitor)
