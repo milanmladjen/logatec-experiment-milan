@@ -17,15 +17,14 @@ APP=${APP_DIR:3}
 echo "Testing application $APP on node $IPADDR"
 
 
-
-# 
-python ../../monitoring/experiment_with_controller.py IPADDR APP_DIR
-
+# Start the Serial Monitor with controller running in the background
+python3 ../../monitoring/experiment_with_controller.py IPADDR 
 
 
-# Move results - TODO
-#cd /root/logatec-experiment/applications/$APP_DIR
-#mv *.txt /root/logatec-experiment/results/
+
+# Move results
+cd /root/logatec-experiment/monitoring/
+mv *.txt /root/logatec-experiment/results/
 
 # Put Vesna to reset state so it doesnt interfeer with other networks
 cd /root/logatec-experiment/deployment/tasks

@@ -1,3 +1,7 @@
+# TODO:
+# Morbt bi loh dau zmq_client.py class kr sm u ta fajl?
+
+
 #!/usr/bin/python3
 import threading
 from queue import Queue
@@ -59,6 +63,9 @@ class zmq_client_thread(threading.Thread):
                     
                     elif response[1] == "SYNCED_WITH_VESNA":
                         self.LGTC_set_state("ONLINE")
+                    
+                    elif response[1] == "FLASHED":
+                        self.LGTC_set_state("ONLINE")
 
                     elif response[1] == "END_OF_APP":
                         self.LGTC_set_state("FINISHED")
@@ -91,28 +98,22 @@ class zmq_client_thread(threading.Thread):
                     # SYSTEM COMMANDS - application controll
                     if msg_nbr == "-1":
 
-                        if msg == "EXIT":
+                        if msg == "STATE":
+                            self.client.transmit_async(["-1", self.LGTC_get_state()])
+
+                        elif msg == "EXIT":
                             self.LGTC_set_state("OFFLINE")
                             self.out_q.put([msg_nbr, msg])
                             logging.info("Closing client thread.")
                             break
-
-                        elif msg == "STATE":
-                            self.client.transmit_async(["-1", self.LGTC_get_state()])
                             
                         elif msg == "FLASH":
-                            logging.info("Compile the application ... ")
                             self.LGTC_set_state("COMPILING")
-                            if not self.LGTC_flash_vesna():
-                                self.LGTC_exit("COMPILE_ERROR")
-                                break
+                            self.out_q.put([msg_nbr, msg])
+                            logging.info("Compile the application ... ")
 
                         elif msg == "RESTART_APP":
-                            # TODO: Store measurements under a different filename?
-                            self.out_q.put(["-1", "STOP_APP"])
-                            time.sleep(1)   # Wait a little?
-                            self.LGTC_reset_vesna()
-                            self.out_q.put(["-1", "START_APP"])
+                            self.out_q.put([msg_nbr, msg])
 
                         elif msg == "START_APP":
                             self.out_q.put([msg_nbr, msg])
@@ -171,38 +172,6 @@ class zmq_client_thread(threading.Thread):
         self.__LGTC_STATE = state
         # Send new state to the server (WARNING: async method used...)
         self.client.transmit_async(["-1", state])
-
-    # Compile the C app and VESNA with its binary
-    def LGTC_flash_vesna(self):
-        # Compile the application
-        procCompile = Popen(["make", APP_NAME, "-j2"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
-        stdout, stderr = procCompile.communicate()
-        logging.debug(stdout)
-        if(stderr):
-            logging.debug(stderr)
-            return False
-
-        # Flash the VESNA with app binary
-        logging.info("Flash the app to VESNA .. ")
-        procFlash = Popen(["make", APP_NAME + ".logatec3"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
-        stdout, stderr = procFlash.communicate()
-        logging.debug(stdout)
-        if(stderr):
-            logging.debug(stderr)
-            return False
-
-        return True
-
-    # Make a hardware reset on VESNA
-    def LGTC_reset_vesna(self):
-        try:
-            os.system('echo 66 > /sys/class/gpio/export')
-        except Exception:
-            pass
-        os.system('echo out > /sys/class/gpio/gpio66/direction')
-
-        os.system('echo 0 > /sys/class/gpio/gpio66/value')
-        os.system('echo 1 > /sys/class/gpio/gpio66/value')
 
 
 # 
