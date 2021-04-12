@@ -52,6 +52,7 @@ class serial_monitor():
     def read_line(self):
         #logging.debug("Serial read")
         #data = self.ser.readline()
+        # TODO:AttributeError: 'NoneType' object has no attribute 'read_until'
         data = self.ser.read_until(b'\n', None)
         data = data.decode()
         self.serial_avaliable = True
