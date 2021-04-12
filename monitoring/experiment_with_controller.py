@@ -87,6 +87,7 @@ class experiment():
     def __init__(self, input_q, output_q, filename, lgtcname):
 
         self.log = logging.getLogger(__name__)
+        self.log.setLevel(LOG_LEVEL)
 
         # Init lib
         self.monitor = serial_monitor.serial_monitor(2)
@@ -398,11 +399,10 @@ class experiment():
 # ----------------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    # Use this logging setup for testbed usage
-    #logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=logging.DEBUG, filename=LOGGING_FILENAME)
-    # Use this logging setup for testing 
-    logging.basicConfig(format="[%(levelname)5s:%(funcName)16s()] %(message)s", level=LOG_LEVEL)
-    #logging.root.setLevel(logging.DEBUG)
+    # Config logging module format for all scripts. Log level is defined in each submodule with var LOG_LEVEL.
+    #logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
+    logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
+
 
     # Create 2 queue for communication between threads
     # LGTC -> VESNA

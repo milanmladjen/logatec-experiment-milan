@@ -13,6 +13,8 @@ import time
 
 from lib import zmq_client
 
+LOG_LEVEL = logging.DEBUG
+
 class zmq_client_thread(threading.Thread):
 
     # ----------------------------------------------------------------------------------------
@@ -30,6 +32,7 @@ class zmq_client_thread(threading.Thread):
         self.__LGTC_STATE = "OFFLINE"
 
         self.log = logging.getLogger(__name__)
+        self.log.setLevel(LOG_LEVEL)
 
 
     # ----------------------------------------------------------------------------------------

@@ -5,6 +5,7 @@ import sys
 from datetime import datetime as timer
 #from timeit import default_timer as timer #TODO test if better
 
+LOG_LEVEL = logging.DEBUG
 
 class zmq_client():
 
@@ -21,6 +22,7 @@ class zmq_client():
     def __init__(self, SUBS_HOSTNAME, ROUT_HOSTNAME, deviceID="NoName"):
 
         self.log = logging.getLogger(__name__)
+        self.log.setLevel(LOG_LEVEL)
 
         context = zmq.Context()
 

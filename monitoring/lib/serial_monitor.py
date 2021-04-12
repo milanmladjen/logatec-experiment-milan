@@ -6,6 +6,7 @@ import serial
 import logging
 from timeit import default_timer as timer
 
+LOG_LEVEL = logging.DEBUG
 
 # ----------------------------------------------------------------------
 class serial_monitor():
@@ -22,6 +23,7 @@ class serial_monitor():
         self.serial_avaliable = False
 
         self.log = logging.getLogger(__name__)
+        self.log.setLevel(LOG_LEVEL)
         
 
     # Basic serial commands    
