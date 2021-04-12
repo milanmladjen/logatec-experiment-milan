@@ -109,6 +109,9 @@ class experiment():
 
         logging.info("Starting experiment main thread!")
 
+        # Flash VESNA with application
+        self.LGTC_vesna_flash()
+
         # Connect to VESNA serial port
         if not self.monitor.connect_to("ttyS2"):
             logging.error("Couldn't connect to VESNA.")
