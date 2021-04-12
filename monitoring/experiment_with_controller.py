@@ -17,6 +17,7 @@ import os
 import logging
 import time
 from timeit import default_timer as timer
+from subprocess import Popen, PIPE
 
 from lib import serial_monitor
 from lib import file_logger
@@ -110,6 +111,7 @@ class experiment():
         logging.info("Starting experiment main thread!")
 
         # Flash VESNA with application
+        self.LGTC_sys_resp("COMPILING")
         self.LGTC_vesna_flash()
 
         # Connect to VESNA serial port
@@ -210,14 +212,14 @@ class experiment():
                 # and there is new command in queue, forward it to VESNA
                 elif (not self.in_q.empty() and self._command_waiting == None):
 
-                    cmd = LGTC_rec_cmd()
+                    cmd = self.LGTC_rec_cmd()
 
                     # SYSTEM COMMANDS
                     if cmd[0] == "-1":
 
                         # > Start the app (with app running time as an argument)
                         if cmd[1] == "START_APP":
-                            if _is_app_running == True:
+                            if self._is_app_running == True:
                                 self.LGTC_cmd_resp("0", "App is allready running...")
                             else:
                                 if not self.LGTC_app_start(APP_DURATION):
@@ -281,19 +283,19 @@ class experiment():
             logging.info("\n Keyboard interrupt!.. Stopping the monitor")
             self.LGTC_app_exit()
             self.LGTC_sys_resp("END_OF_APP")
-    
+
         except serial.SerialException:
             logging.error("Serial error!.. Stopping the monitor")
 
         except IOError:
             logging.error("Serial port disconnected!.. Stopping the monitor")
-
+        
         finally:
             # Clear resources
             self.monitor.close()
             self.txt.close()
             return        
-                        
+      
 
     # ------------------------------------------------------------------------------------
     # CLASS FUNCTIONS

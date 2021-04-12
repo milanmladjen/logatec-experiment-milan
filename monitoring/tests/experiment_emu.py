@@ -220,14 +220,14 @@ class experiment():
                 # and there is new command in queue, forward it to VESNA
                 if (not self.in_q.empty() and self._command_waiting == None):
 
-                    cmd = LGTC_rec_cmd()
+                    cmd = self.LGTC_rec_cmd()
 
                     # SYSTEM COMMANDS
                     if cmd[0] == "-1":
 
                         # > Start the app (with app running time as an argument)
                         if cmd[1] == "START_APP":
-                            if _is_app_running == True:
+                            if self._is_app_running == True:
                                 self.LGTC_cmd_resp("0", "App is allready running...")
                             else:
                                 if not self.LGTC_app_start(APP_DURATION):
@@ -279,7 +279,7 @@ class experiment():
 
                         # Forward command to VESNA
                         else:
-                            self.monitor.send_command(cmd[1])
+                            """self.monitor.send_command(cmd[1])"""
                             self._command_waiting = cmd[0]
 
                         # Log it to file as well
@@ -291,19 +291,19 @@ class experiment():
             logging.info("\n Keyboard interrupt!.. Stopping the monitor")
             self.LGTC_app_exit()
             self.LGTC_sys_resp("END_OF_APP")
-    
+
         except serial.SerialException:
             logging.error("Serial error!.. Stopping the monitor")
 
         except IOError:
             logging.error("Serial port disconnected!.. Stopping the monitor")
-
+        
         finally:
             # Clear resources
-            """self.monitor.close()"""
+            #self.monitor.close()
             self.txt.close()
-            return        
-                        
+            return         
+
 
     # ------------------------------------------------------------------------------------
     # CLASS FUNCTIONS

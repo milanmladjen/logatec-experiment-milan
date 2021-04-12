@@ -10,7 +10,6 @@ import sys
 import os
 import logging
 import time
-from subprocess import Popen, PIPE
 
 from lib import zmq_client
 
