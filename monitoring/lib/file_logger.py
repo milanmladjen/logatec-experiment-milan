@@ -28,12 +28,12 @@ class file_logger():
         self.file.write(data)
 
     def store_lgtc_line(self,s):
-        self.file.write("[" + str(datetime.now().time())+" LGTC]: ")
-        self.file.write(s)
+        self.file.write("[" + str(datetime.now().time())+"]: [LGTC]: ")
+        self.file.write(s + "\n")
 
     def warning(self, s):
-        self.file.write("[" + str(datetime.now().time())+"] !WARNING!:")
-        self.file.write(s)
+        self.file.write("[" + str(datetime.now().time())+"]: [LGTC_WARNING]:")
+        self.file.write(s + "\n")
 
     def close(self):
         self.file.close()

@@ -20,6 +20,8 @@ class serial_monitor():
         self.timeout = timeout
         self.ser = None
         self.serial_avaliable = False
+
+        self.log = logging.getLogger(__name__)
         
 
     # Basic serial commands    
@@ -28,11 +30,11 @@ class serial_monitor():
         try:
             port = "/dev/" + p
             self.ser = serial.Serial(port, self.BAUD, self.BYTESIZE, self.PARITY, self.STOPBIT, timeout=self.timeout)
-            logging.debug("Serial monitor opened on port: " + port)
+            self.log.debug("Serial monitor opened on port: " + port)
             return True
 
         except:
-            logging.error("Serial port not connected or in use.")
+            self.log.error("Serial port not connected or in use.")
             return False
 
 
@@ -41,16 +43,16 @@ class serial_monitor():
             try:
                 port = self.BASEPORT + str(i)
                 self.ser = serial.Serial(port, self.BAUD, self.BYTESIZE, self.PARITY, self.STOPBIT, timeout=self.timeout)
-                logging.debug("Serial monitor opened on port: " + port)
+                self.log.debug("Serial monitor opened on port: " + port)
                 break
             except:
-                logging.error("No serial port connected or all in use.")
+                self.log.error("No serial port connected or all in use.")
                 return False
         return True
 
 
     def read_line(self):
-        #logging.debug("Serial read")
+        #self.log.debug("Serial read")
         #data = self.ser.readline()
         # TODO:AttributeError: 'NoneType' object has no attribute 'read_until'
         data = self.ser.read_until(b'\n', None)
@@ -61,11 +63,11 @@ class serial_monitor():
 
     def write_line(self, data):
         # Convert data to string and add \n | send over serial
-        #logging.debug("Serial write")
+        #self.log.debug("Serial write")
         try:
             self.ser.write((data + "\n").encode("ASCII"))
         except:
-            logging.error("Error writing to device!")
+            self.log.error("Error writing to device!")
         finally:
             return
 
@@ -81,7 +83,7 @@ class serial_monitor():
         return
 
     def close(self):
-        logging.debug("Serial close!")
+        self.log.debug("Serial close!")
         self.ser.close()
 
 
@@ -105,7 +107,7 @@ class serial_monitor():
 
 
     def sync_with_vesna(self):
-        logging.debug("Send sync command to VESNA")
+        self.log.debug("Send sync command to VESNA")
         self.write_line("@")
 
         # Wait for response ('@' character) from Vesna for 3 seconds
@@ -113,23 +115,23 @@ class serial_monitor():
 
         # If device is not responding, try again
         if(not gotResponse):
-            logging.debug("No response -> send sync cmd again...")
+            self.log.debug("No response -> send sync cmd again...")
             self.flush()
             self.write_line("=")    # Send stop command in case the app is running
             self.write_line("@")
             gotResponse = self.wait_response(3, "@")
 
         if(not gotResponse):
-            logging.error("No response...please reset the device and try again")
+            self.log.error("No response...please reset the device and try again")
             close()
             return False
 
-        logging.debug("Got response...synced with VESNA")
+        self.log.debug("Got response...synced with VESNA")
         return True
 
 
     def start_app(self, app_duration):
-        logging.debug("Starting application")
+        self.log.debug("Starting application")
         self.write_line(">")
 
         if not self.wait_response(3, ">"):
@@ -140,7 +142,7 @@ class serial_monitor():
         return True
 
     def stop_app(self, app_duration):
-        logging.debug("Stoppin application")
+        self.log.debug("Stoppin application")
         self.write_line("=")
 
         if not self.wait_response(3, "="):
@@ -150,7 +152,7 @@ class serial_monitor():
 
 
     def send_command(self, command):
-        logging.debug("Serial send %s command to VESNA" % command)
+        self.log.debug("Serial send %s command to VESNA" % command)
 
         self.write_line("*" + command)
         # TODO: Vesna can return something else than our data...what to do then?

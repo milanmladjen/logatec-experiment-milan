@@ -29,6 +29,8 @@ class zmq_client_thread(threading.Thread):
         self.client = zmq_client.zmq_client(subscriber, router, lgtc_id)
         self.__LGTC_STATE = "OFFLINE"
 
+        self.log = logging.getLogger(__name__)
+
 
     # ----------------------------------------------------------------------------------------
     # MAIN
@@ -36,10 +38,10 @@ class zmq_client_thread(threading.Thread):
     def run(self):
 
         # Sync with broker with timeout of 10 seconds
-        logging.info("Sync with broker ... ")
+        self.log.info("Sync with broker ... ")
         self.client.transmit(["-1", "SYNC"])
         if self.client.wait_ack("-1", 10) is False:
-            logging.error("Couldn't synchronize with broker...")
+            self.log.error("Couldn't synchronize with broker...")
             # TODO: Continue application without broker?
         
 
@@ -49,7 +51,7 @@ class zmq_client_thread(threading.Thread):
             # If there is a message from VESNA
             # --------------------------------------------------------------------------------
             if not self.in_q.empty():
-                logging.debug("Got message from VESNA")
+                self.log.debug("Got message from VESNA")
                 response = self.in_q.get()
                 
                 # If the message is SYSTEM - application controll
@@ -78,7 +80,7 @@ class zmq_client_thread(threading.Thread):
                     
                     else:
                         self.LGTC_set_state("LGTC_WARNING")
-                        logging.debug("Unsupported state")                    
+                        self.log.debug("Unsupported state")                    
                 
                 # If the message is CMD - experiment response
                 else:
@@ -93,7 +95,7 @@ class zmq_client_thread(threading.Thread):
                 # If the message is not ACK
                 if msg_nbr:
 
-                    logging.info("Received " + msg + " command!")
+                    self.log.info("Received " + msg + " command!")
                     # SYSTEM COMMANDS - application controll
                     if msg_nbr == "-1":
 
@@ -103,13 +105,13 @@ class zmq_client_thread(threading.Thread):
                         elif msg == "EXIT":
                             self.LGTC_set_state("OFFLINE")
                             self.out_q.put([msg_nbr, msg])
-                            logging.info("Closing client thread.")
+                            self.log.info("Closing client thread.")
                             break
                             
                         elif msg == "FLASH":
                             self.LGTC_set_state("COMPILING")
                             self.out_q.put([msg_nbr, msg])
-                            logging.info("Compile the application ... ")
+                            self.log.info("Compile the application ... ")
 
                         elif msg == "RESTART_APP":
                             self.out_q.put([msg_nbr, msg])
@@ -122,7 +124,7 @@ class zmq_client_thread(threading.Thread):
                         
                         else:
                             self.LGTC_set_state("LGTC_WARNING")
-                            logging.warning("Unsupported command!")
+                            self.log.warning("Unsupported command!")
 
 
                     # EXPERIMENT COMMANDS - experiment command
@@ -136,7 +138,7 @@ class zmq_client_thread(threading.Thread):
                 self.client.send_retry()
 
         # ------------------------------------------------------------------------------------
-        logging.debug("Exiting client thread")
+        self.log.debug("Exiting client thread")
         #self.client.close()
 
 
@@ -159,7 +161,7 @@ class zmq_client_thread(threading.Thread):
         if self.client.wait_ack("-1", 3):
             return True
         else:
-            logging.warning("No ACK from server while exiting...force exit.")
+            self.log.warning("No ACK from server while exiting...force exit.")
             return False
 
     # Get global variable

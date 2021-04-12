@@ -47,7 +47,7 @@ try:
     LGTC_ID = sys.argv[1]
     LGTC_ID = LGTC_ID.replace(" ", "")
 except:
-    logging.warning("No device name was given...going with default")
+    print("No device name was given...going with default")
     LGTC_ID = "xy"
 
 LGTC_NAME = "LGTC" + LGTC_ID
@@ -58,13 +58,13 @@ LOGGING_FILENAME += ("_" + LGTC_ID + ".log")
 try:
     APP_DURATION = int(os.environ['APP_DURATION_MIN'])
 except:
-    logging.warning("No app duration was defined...going with default 60min")
+    print("No app duration was defined...going with default 60min")
     APP_DURATION = 60
 
 try:
     APP_DIR = int(os.environ['APP_DIR'])
 except:
-    logging.error("No application was given...aborting!")
+    print("No application was given...aborting!")
     #sys.exit(1) TODO
     APP_DIR = "00_test"
 
@@ -73,7 +73,7 @@ except:
 APP_PATH = "/home/logatec/magistrska/logatec-experiment/applications/" + APP_DIR
 APP_NAME = APP_DIR[3:]
 
-logging.info("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME)
+print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME)
 
 
 
@@ -85,6 +85,8 @@ logging.info("Testing application " + APP_NAME + " for " + str(APP_DURATION) + "
 class experiment():
 
     def __init__(self, input_q, output_q, filename, lgtcname):
+
+        self.log = logging.getLogger(__name__)
 
         # Init lib
         self.monitor = serial_monitor.serial_monitor(2)
@@ -108,7 +110,7 @@ class experiment():
 
     def run(self):
 
-        logging.info("Starting experiment main thread!")
+        self.log.info("Starting experiment main thread!")
 
         # Flash VESNA with application
         self.LGTC_sys_resp("COMPILING")
@@ -116,11 +118,11 @@ class experiment():
 
         # Connect to VESNA serial port
         if not self.monitor.connect_to("ttyS2"):
-            logging.error("Couldn't connect to VESNA.")
+            self.log.error("Couldn't connect to VESNA.")
             self.LGTC_sys_resp("VESNA_ERR")
             return
         
-        logging.info("Successfully connected to VESNA serial port!")
+        self.log.info("Successfully connected to VESNA serial port!")
 
         # TODO: Inform controller that we are online (thread does that?)
 
@@ -142,7 +144,7 @@ class experiment():
                     if ((timer() - loop_time) > 1):
                         elapsed_sec += (timer() - loop_time)
                         loop_time = timer()
-                        #logging.debug("Elapsed seconds: " + str(elapsed_sec))
+                        #self.log.debug("Elapsed seconds: " + str(elapsed_sec))
 
                         # Every 10 seconds
                         if elapsed_sec % 10 == 0:
@@ -151,12 +153,12 @@ class experiment():
                             if not self.monitor.serial_avaliable:
                                 self.txt.store_lgtc_line("Timeout detected.")
                                 timeout_cnt += 1
-                                logging.warning("No lines read for more than 10 seconds..")
+                                self.log.warning("No lines read for more than 10 seconds..")
 
                             if timeout_cnt > 5:
                                 self.txt.warning("VESNA did not respond for more than a minute")
                                 self.LGTC_sys_resp("VESNA_TIMEOUT")
-                                logging.error("VESNA did not respond for more than a minute")
+                                self.log.error("VESNA did not respond for more than a minute")
                                 timeout_cnt = 0
                                 self._is_app_running = False
                                 # We don't do anything here - let the user interfeer
@@ -173,7 +175,7 @@ class experiment():
                                 if self._command_timeout:
                                     self.txt.warning("Command timeout occurred!")
                                     self.LGTC_cmd_resp([self._command_waiting, "Failed to get response ..."])
-                                    logging.warning("No response on command for more than 3 seconds!")
+                                    self.log.warning("No response on command for more than 3 seconds!")
                                     self._command_timeout = False
                                     self._command_waiting = None
                                 
@@ -195,7 +197,7 @@ class experiment():
                         self.LGTC_cmd_resp([self._command_waiting, data[1:]])
                         self._command_waiting = None
                         self._command_timeout = False
-                        logging.debug("Got response on cmd " + data[1:])
+                        self.log.debug("Got response on cmd " + data[1:])
                     
                     # If we got stop command
                     elif data[0] == "=":
@@ -203,7 +205,7 @@ class experiment():
                         self._command_waiting = None
                         self._command_timeout = False
                         self._is_app_running = False
-                        logging.info("Got end-of-app response!")
+                        self.log.info("Got end-of-app response!")
 
                 # -------------------------------------------------------------------------------
                 # CONTROLLER CLIENT - GET COMMANDS
@@ -276,19 +278,19 @@ class experiment():
 
                         # Log it to file as well
                         self.txt.store_lgtc_line("Received command [" + cmd[0] + "]: " + cmd[1])
-                        logging.debug("Received command [" + cmd[0] + "]: " + cmd[1])
+                        self.log.debug("Received command [" + cmd[0] + "]: " + cmd[1])
 
         # ------------------------------------------------------------------------------------
         except KeyboardInterrupt:
-            logging.info("\n Keyboard interrupt!.. Stopping the monitor")
+            self.log.info("\n Keyboard interrupt!.. Stopping the monitor")
             self.LGTC_app_exit()
             self.LGTC_sys_resp("END_OF_APP")
 
         except serial.SerialException:
-            logging.error("Serial error!.. Stopping the monitor")
+            self.log.error("Serial error!.. Stopping the monitor")
 
         except IOError:
-            logging.error("Serial port disconnected!.. Stopping the monitor")
+            self.log.error("Serial port disconnected!.. Stopping the monitor")
         
         finally:
             # Clear resources
@@ -315,30 +317,30 @@ class experiment():
         if not self.monitor.start_app(str(duration * 60)):
             self.txt.warning("Couldn't start the APP.")
             self.LGTC_sys_resp("VESNA_ERR")
-            logging.error("Couldn't start the APP.")
+            self.log.error("Couldn't start the APP.")
             return False
         
         self.txt.store_lgtc_line("Application started!")
         self.LGTC_sys_resp("START_APP")
-        logging.info("Application started!")
+        self.log.info("Application started!")
         return True
 
     def LGTC_app_stop(self):
         if not self.monitor.stop_app():
             self.txt.warning("Couldn't stop the APP.")
             self.LGTC_sys_resp("VESNA_ERR")
-            logging.error("Couldn't stop the APP.")
+            self.log.error("Couldn't stop the APP.")
             return False
         
         self.txt.store_lgtc_line("Application stopped!")
         self.LGTC_sys_resp("STOP_APP")
-        logging.info("Application stopped!")
+        self.log.info("Application stopped!")
         return True
 
     def LGTC_app_exit(self):
         self.monitor.stop_app()
         self.txt.store_lgtc_line("Application exit!")
-        logging.info("Application exit!")
+        self.log.info("Application exit!")
 
 
     # Sync with application 
@@ -346,40 +348,40 @@ class experiment():
         if not self.monitor.sync_with_vesna():
             self.txt.warning("Couldn't sync with VESNA.")
             self.LGTC_sys_resp("VESNA_ERR")
-            logging.error("Couldn't sync with VESNA.")
+            self.log.error("Couldn't sync with VESNA.")
             return False
 
         self.txt.store_lgtc_line("Synced with VESNA ...")
         self.LGTC_sys_resp("SYNCED_WITH_VESNA")
-        logging.info("Synced with VESNA over serial ...")
+        self.log.info("Synced with VESNA over serial ...")
         return True
 
     # Compile the C app and VESNA with its binary
     def LGTC_vesna_flash(self):
         # Compile the application
-        logging.info("Complie the application.")
+        self.log.info("Complie the application.")
         procCompile = Popen(["make", APP_NAME, "-j2"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
         stdout, stderr = procCompile.communicate()
-        logging.debug(stdout)
+        self.log.debug(stdout)
         if(stderr):
-            logging.debug(stderr)
+            self.log.debug(stderr)
             return False
 
         # Flash the VESNA with app binary
-        logging.info("Flash the app to VESNA .. ")
+        self.log.info("Flash the app to VESNA .. ")
         procFlash = Popen(["make", APP_NAME + ".logatec3"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
         stdout, stderr = procFlash.communicate()
-        logging.debug(stdout)
+        self.log.debug(stdout)
         if(stderr):
-            logging.debug(stderr)
+            self.log.debug(stderr)
             return False
 
-        logging.info("Successfully flashed VESNA")
+        self.log.info("Successfully flashed VESNA")
         return True
 
     # Make a hardware reset on VESNA
     def LGTC_vesna_reset(self):
-        logging.info("VESNA hardware reset.")
+        self.log.info("VESNA hardware reset.")
         try:
             os.system('echo 66 > /sys/class/gpio/export')
         except Exception:
@@ -400,7 +402,7 @@ if __name__ == "__main__":
     #logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=logging.DEBUG, filename=LOGGING_FILENAME)
     # Use this logging setup for testing 
     logging.basicConfig(format="[%(levelname)5s:%(funcName)16s()] %(message)s", level=LOG_LEVEL)
-    logging.root.setLevel(logging.DEBUG)
+    #logging.root.setLevel(logging.DEBUG)
 
     # Create 2 queue for communication between threads
     # LGTC -> VESNA
