@@ -6,7 +6,7 @@ all: $(CONTIKI_PROJECT)
 CONTIKI := ../../contiki-ng
 VSNDRIVERS := ../../vesna-drivers
 
-TARGET=vesna
+TARGET = vesna
 AT86RF2XX_BOARD = ISMTV_v1.1
 
 

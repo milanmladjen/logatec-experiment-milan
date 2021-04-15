@@ -1,9 +1,7 @@
 /* -----------------------------------------------------------------------------
- * BASIC VERSION OF TESTBED APPLICATION
+ * TEST APPLICATION - TESTBED EXPERIMENT CONTROLLER DEMO
  *
- * Vesna starts only with serial_input process. When LGTC sends "start" command,
- * which is character '>', Vesna will start with stats_process.
- * If root also sends '*' command, set device as root of the network.
+ *
  * -----------------------------------------------------------------------------
 */
 
@@ -20,7 +18,7 @@
 uint32_t app_duration = DEFAULT_APP_DUR_IN_SEC;
 
 /*---------------------------------------------------------------------------*/
-PROCESS(log_process, "Logging process");
+PROCESS(experiment_process, "Experiment process");
 PROCESS(serial_input_process, "Serial input command");
 AUTOSTART_PROCESSES(&serial_input_process);
 
@@ -47,28 +45,34 @@ input_command(char *data){
 	char time[8];
 	char *p;
     switch(cmd){
+		// SYNC cmd
 		case '@':
 			printf("@ \n");
 			break;
-			
+
+		// START cmd	
 		case '>':
-			process_start(&log_process, NULL);
+			process_start(&experiment_process, NULL);
 			break;
 
-		case '*':
-			set_device_as_root();
-			break;
-
+		// STOP cmd
 		case '=':
-			printf("= Application stopped.\n");	// Confirm received stop command
-			process_exit(&log_process);
+			printf("= Application stopped.\n");
+			process_exit(&experiment_process);
 			break;
 
+		// APP DURATION
 		case '&':
 			p = data + 1;
 			strcpy(time, p);
 			app_duration = atoi(time);
-			printf("App duration %ld \n", app_duration);
+			printf("Received app duration %ld \n", app_duration);
+			break;
+
+		case '*':
+			p = data + 1;
+			printf("Received command %s", p);
+			printf("* Command response");
 			break;
 
 		default:
@@ -78,14 +82,14 @@ input_command(char *data){
 }
 
 /*---------------------------------------------------------------------------*/
-PROCESS_THREAD(log_process, ev, data)
+PROCESS_THREAD(experiment_process, ev, data)
 {
 	static struct etimer timer;
 	static uint32_t time_counter = 0;
 
 	PROCESS_BEGIN();
 
-	// Send start command ('>') back to LGTC so it knows we started log_process
+	// Send start command ('>') back to LGTC so it knows we started the experiment
 	printf("> Application started!\n");
 
 	// Setup a periodic timer that expires after 1 second

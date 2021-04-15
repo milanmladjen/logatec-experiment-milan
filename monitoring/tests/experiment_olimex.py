@@ -19,7 +19,6 @@ import time
 from timeit import default_timer as timer
 from subprocess import Popen, PIPE
 
-
 # Workaround to import files from parent dir
 cdir = os.path.dirname(os.path.realpath(__file__))
 pdir = os.path.dirname(cdir)
@@ -70,13 +69,9 @@ except:
 try:
     APP_DIR = int(os.environ['APP_DIR'])
 except:
-    print("No application was given...aborting!")
-    #sys.exit(1) TODO
     APP_DIR = "00_test"
 
-# TODO: change when in container
-# APP_PATH = "/root/logatec-experiment/application" + APP_DIR
-APP_PATH = "/home/logatec/magistrska/logatec-experiment/applications/" + APP_DIR
+APP_PATH = "/home/grega/Workspace/magistrska/logatec-experiment/applications/" + APP_DIR
 APP_NAME = APP_DIR[3:]
 
 #print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME)
@@ -96,7 +91,7 @@ class experiment():
         self.log.setLevel(LOG_LEVEL)
 
         # Init lib
-        """self.monitor = serial_monitor.serial_monitor(2)"""
+        self.monitor = serial_monitor.serial_monitor(2)
         self.f = file_logger.file_logger()
 
         # controller_client.py - link multithread input output queue
@@ -119,11 +114,10 @@ class experiment():
 
         self.log.info("Starting experiment main thread!")
 
-        """
         # Connect to VESNA serial port
         if not self.LGTC_vesna_connect():
             return
-        
+
         # Flash VESNA with application
         if not self.LGTC_vesna_flash():
             return        
@@ -131,17 +125,6 @@ class experiment():
         # Sync with experiment application
         if not self.LGTC_vesna_sync():
             return        
-        """
-
-        try:
-            self.LGTC_sys_resp("COMPILING")
-            print("Device is \"compiling\" the code for VESNA...")
-            time.sleep(10)
-        except KeyboardInterrupt:
-            print(" ")
-        finally:
-            print("Compiled application!")
-            self.LGTC_sys_resp("FLASHED")
 
         elapsed_sec = 0
         timeout_cnt = 0
@@ -202,7 +185,6 @@ class experiment():
                 # SERIAL MONITOR - READ UART
                 # Read and store everything that comes on Serial connection
                 # If line is a response, forward it to controller
-                """
                 if self.monitor.input_waiting():
                     data = self.monitor.read_line()
 
@@ -224,28 +206,13 @@ class experiment():
                         self._command_timeout = False
                         self._is_app_running = False
                         self.log.info("Got end-of-app response!")
-                """
-                # Fake response
-                if self._command_waiting != None:
-                    fake_data = "*Odgovor na CMD*"
-                    self.LGTC_cmd_resp([self._command_waiting, fake_data[1:]])
-                    self._command_waiting = None
-                    self._command_timeout = False
-                    self.log.debug("Got response " + fake_data[1:])
-                else:
-                    time.sleep(0.7)
-                    fake_data = "Prebrana vrstica"
-
-                # Store fake line into the file
-                self.txt.store_line(fake_data)
-                self._lines_stored += 1
 
                 # -------------------------------------------------------------------------------
                 # CONTROLLER CLIENT - GET COMMANDS
                 # Check for incoming commands only when there is time - nothing to do on UART
                 # If all comand responses were received (not waiting for one)
                 # and there is new command in queue, forward it to VESNA
-                if (not self.in_q.empty() and self._command_waiting == None):
+                elif (not self.in_q.empty() and self._command_waiting == None):
 
                     cmd = self.LGTC_rec_cmd()
 
@@ -304,7 +271,7 @@ class experiment():
 
                         # Forward command to VESNA
                         else:
-                            """self.monitor.send_command(cmd[1])"""
+                            self.monitor.send_command(cmd[1])
                             self._command_waiting = cmd[0]
 
                         # Log it to file as well
@@ -325,7 +292,7 @@ class experiment():
         
         finally:
             # Clear resources
-            """self.monitor.close()"""
+            self.monitor.close()
             self.f.close()
             return        
       
@@ -345,68 +312,63 @@ class experiment():
 
 
     def LGTC_app_start(self, duration):
-        """
         if not self.monitor.start_app(str(duration * 60)):
             self.f.warning("Couldn't start the APP.")
             self.LGTC_sys_resp("VESNA_ERR")
             self.log.error("Couldn't start the APP.")
             return False
-        """
+        
         self.f.store_lgtc_line("Application started!")
         self.LGTC_sys_resp("START_APP")
         self.log.info("Application started!")
         return True
 
     def LGTC_app_stop(self):
-        """
         if not self.monitor.stop_app():
             self.f.warning("Couldn't stop the APP.")
             self.LGTC_sys_resp("VESNA_ERR")
             self.log.error("Couldn't stop the APP.")
             return False
-        """
+        
         self.f.store_lgtc_line("Application stopped!")
         self.LGTC_sys_resp("STOP_APP")
         self.log.info("Application stopped!")
         return True
 
     def LGTC_app_exit(self):
-        """self.monitor.stop_app()"""
+        self.monitor.stop_app()
         self.f.store_lgtc_line("Application exit!")
         self.log.info("Application exit!")
 
 
     # Connect to VESNA serial port
     def LGTC_vesna_connect(self):
-        """
-        if not self.monitor.connect_to("ttyS2"):
+        if not self.monitor.connect_to("ttyUSB0"):
             self.f.error("Couldn't connect to VESNA.")
             self.LGTC_sys_resp("VESNA_ERR")
             self.log.error("Couldn't connect to VESNA.")
             return
-        """
+        
         self.log.info("Successfully connected to VESNA serial port!")
 
     # Sync with application 
     def LGTC_vesna_sync(self):
-        """
         if not self.monitor.sync_with_vesna():
             self.f.error("Couldn't sync with VESNA.")
             self.LGTC_sys_resp("VESNA_ERR")
             self.log.error("Couldn't sync with VESNA.")
             return False
-        """
+
         self.LGTC_sys_resp("SYNCED_WITH_VESNA")
         self.log.info("Synced with VESNA over serial ...")
         return True
 
     # Compile the C app and VESNA with its binary
     def LGTC_vesna_flash(self):
-        """
         # Compile the application
         self.LGTC_sys_resp("COMPILING")
         self.log.info("Complie the application.")
-        procCompile = Popen(["make", APP_NAME, "-j2"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
+        procCompile = Popen(["make", APP_NAME, "-j9"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
         stdout, stderr = procCompile.communicate()
         self.log.debug(stdout)
         if(stderr):
@@ -416,22 +378,23 @@ class experiment():
 
         # Flash the VESNA with app binary
         self.log.info("Flash the app to VESNA .. ")
-        procFlash = Popen(["make", APP_NAME + ".logatec3"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
+        procFlash = Popen(["make", APP_NAME + ".olimex"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
         stdout, stderr = procFlash.communicate()
         self.log.debug(stdout)
         if(stderr):
-            self.log.debug(stderr)
+            self.log.debug(stderr
             self.LGTC_sys_resp("COMPILE_ERR")
             return False
 
         self.log.info("Successfully flashed VESNA ...")
         self.LGTC_sys_resp("FLASHED")
-        """
         return True
 
     # Make a hardware reset on VESNA
     def LGTC_vesna_reset(self):
         self.log.info("VESNA hardware reset.")
+        print("\n\n Preform reset please!")
+        time.sleep(1)
         """
         try:
             os.system('echo 66 > /sys/class/gpio/export')
@@ -442,6 +405,7 @@ class experiment():
         os.system('echo 0 > /sys/class/gpio/gpio66/value')
         os.system('echo 1 > /sys/class/gpio/gpio66/value')
         """
+
 
 
 # ----------------------------------------------------------------------------------------
