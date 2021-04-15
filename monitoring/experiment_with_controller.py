@@ -113,19 +113,17 @@ class experiment():
 
         self.log.info("Starting experiment main thread!")
 
-        # Flash VESNA with application
-        self.LGTC_sys_resp("COMPILING")
-        self.LGTC_vesna_flash()
-
         # Connect to VESNA serial port
-        if not self.monitor.connect_to("ttyS2"):
-            self.log.error("Couldn't connect to VESNA.")
-            self.LGTC_sys_resp("VESNA_ERR")
+        if not self.LGTC_vesna_connect():
             return
-        
-        self.log.info("Successfully connected to VESNA serial port!")
 
-        # TODO: Inform controller that we are online (thread does that?)
+        # Flash VESNA with application
+        if not self.LGTC_vesna_flash():
+            return        
+
+        # Sync with experiment application
+        if not self.LGTC_vesna_sync():
+            return        
 
         elapsed_sec = 0
         timeout_cnt = 0
@@ -247,20 +245,18 @@ class experiment():
                             self._is_app_running = True
                             elapsed_sec = 0
 
-                        # @ Sync with VESNA - start the serial_monitor but not the app 
-                        # #TODO add while(1) to VESNA main loop
                         if cmd[1] == "SYNC_WITH_VESNA":
                             if not self.LGTC_vesna_sync():
+                                break
+
+                        elif cmd[1] == "FLASH":
+                            if not self.LGTC_vesna_flash():
                                 break
 
                         elif cmd[1] == "EXIT":
                             self.LGTC_app_exit()
                             break
 
-                        elif cmd[1] == "FLASH":
-                            if not self.LGTC_vesna_flash():
-                                self.LGTC_sys_resp("COMPILE_ERR")
-                            self.LGTC_sys_resp("FLASHED") 
 
                     # EXPERIMENT COMMANDS
                     else:
@@ -344,15 +340,24 @@ class experiment():
         self.log.info("Application exit!")
 
 
+    # Connect to VESNA serial port
+    def LGTC_vesna_connect(self):
+        if not self.monitor.connect_to("ttyS2"):
+            self.f.error("Couldn't connect to VESNA.")
+            self.LGTC_sys_resp("VESNA_ERR")
+            self.log.error("Couldn't connect to VESNA.")
+            return
+        
+        self.log.info("Successfully connected to VESNA serial port!")
+
     # Sync with application 
     def LGTC_vesna_sync(self):
         if not self.monitor.sync_with_vesna():
-            self.f.warning("Couldn't sync with VESNA.")
+            self.f.error("Couldn't sync with VESNA.")
             self.LGTC_sys_resp("VESNA_ERR")
             self.log.error("Couldn't sync with VESNA.")
             return False
 
-        self.f.store_lgtc_line("Synced with VESNA ...")
         self.LGTC_sys_resp("SYNCED_WITH_VESNA")
         self.log.info("Synced with VESNA over serial ...")
         return True
@@ -360,12 +365,14 @@ class experiment():
     # Compile the C app and VESNA with its binary
     def LGTC_vesna_flash(self):
         # Compile the application
+        self.LGTC_sys_resp("COMPILING")
         self.log.info("Complie the application.")
         procCompile = Popen(["make", APP_NAME, "-j2"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
         stdout, stderr = procCompile.communicate()
         self.log.debug(stdout)
         if(stderr):
             self.log.debug(stderr)
+            self.LGTC_sys_resp("COMPILE_ERR")
             return False
 
         # Flash the VESNA with app binary
@@ -374,10 +381,12 @@ class experiment():
         stdout, stderr = procFlash.communicate()
         self.log.debug(stdout)
         if(stderr):
-            self.log.debug(stderr)
+            self.log.debug(stderr
+            self.LGTC_sys_resp("COMPILE_ERR")
             return False
 
-        self.log.info("Successfully flashed VESNA")
+        self.log.info("Successfully flashed VESNA ...")
+        self.LGTC_sys_resp("FLASHED")
         return True
 
     # Make a hardware reset on VESNA
