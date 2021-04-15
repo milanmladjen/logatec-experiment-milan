@@ -1,5 +1,7 @@
 #   TODO different var names
-#   TODO make it multitherad?
+#   TODO make it multitherad? meh
+#   TODO fix logging
+#   TODO struktura
 
 
 import zmq 

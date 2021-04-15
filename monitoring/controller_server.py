@@ -1,6 +1,7 @@
 # -------------------------------------------------------------------------------
 # TODO:
 # * Display essential values from DB when clients connects to the server
+# * set debug logging to file
 # -------------------------------------------------------------------------------
 
 

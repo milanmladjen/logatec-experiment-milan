@@ -1,5 +1,5 @@
 # TODO:
-# Morbt bi loh dau zmq_client.py class kr sm u ta fajl?
+# Put zmq_client.py in this file as well?
 
 
 #!/usr/bin/python3
