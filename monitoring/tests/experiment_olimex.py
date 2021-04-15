@@ -116,8 +116,10 @@ class experiment():
 
         # Connect to VESNA serial port
         if not self.LGTC_vesna_connect():
+            print("sdasda")
             return
 
+        print("sss")
         # Flash VESNA with application
         if not self.LGTC_vesna_flash():
             return        
@@ -290,6 +292,11 @@ class experiment():
         except IOError:
             self.log.error("Serial port disconnected!.. Stopping the monitor")
         
+        except Exception as e:
+            #e = sys.exc_info()[0]
+            print("j")
+            self.log.error(e)
+        
         finally:
             # Clear resources
             self.monitor.close()
@@ -350,6 +357,7 @@ class experiment():
             return
         
         self.log.info("Successfully connected to VESNA serial port!")
+        return True
 
     # Sync with application 
     def LGTC_vesna_sync(self):
@@ -366,6 +374,7 @@ class experiment():
     # Compile the C app and VESNA with its binary
     def LGTC_vesna_flash(self):
         # Compile the application
+        print("ss")
         self.LGTC_sys_resp("COMPILING")
         self.log.info("Complie the application.")
         procCompile = Popen(["make", APP_NAME, "-j9"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
@@ -382,9 +391,10 @@ class experiment():
         stdout, stderr = procFlash.communicate()
         self.log.debug(stdout)
         if(stderr):
-            self.log.debug(stderr
-            self.LGTC_sys_resp("COMPILE_ERR")
-            return False
+            self.log.debug(stderr)
+            # TODO: If flashing is successfull I still got stderr...
+            #self.LGTC_sys_resp("COMPILE_ERR")
+            #return False
 
         self.log.info("Successfully flashed VESNA ...")
         self.LGTC_sys_resp("FLASHED")

@@ -349,6 +349,7 @@ class experiment():
             return
         
         self.log.info("Successfully connected to VESNA serial port!")
+        return True
 
     # Sync with application 
     def LGTC_vesna_sync(self):
@@ -381,7 +382,7 @@ class experiment():
         stdout, stderr = procFlash.communicate()
         self.log.debug(stdout)
         if(stderr):
-            self.log.debug(stderr
+            self.log.debug(stderr)
             self.LGTC_sys_resp("COMPILE_ERR")
             return False
 

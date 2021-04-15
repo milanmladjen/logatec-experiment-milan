@@ -386,6 +386,7 @@ class experiment():
             return
         """
         self.log.info("Successfully connected to VESNA serial port!")
+        return True
 
     # Sync with application 
     def LGTC_vesna_sync(self):

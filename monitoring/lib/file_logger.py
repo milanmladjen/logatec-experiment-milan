@@ -35,5 +35,9 @@ class file_logger():
         self.file.write("[" + str(datetime.now().time())+"]: [LGTC_WARNING]:")
         self.file.write(s + "\n")
 
+    def error(self, s):
+        self.file.write("[" + str(datetime.now().time())+"]: [LGTC_ERROR]:")
+        self.file.write(s + "\n")
+
     def close(self):
         self.file.close()
