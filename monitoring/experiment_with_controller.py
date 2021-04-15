@@ -73,7 +73,7 @@ except:
 APP_PATH = "/home/logatec/magistrska/logatec-experiment/applications/" + APP_DIR
 APP_NAME = APP_DIR[3:]
 
-print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME)
+#print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME)
 
 
 
@@ -91,15 +91,15 @@ class experiment():
 
         # Init lib
         self.monitor = serial_monitor.serial_monitor(2)
-        self.txt = file_logger.file_logger()
+        self.f = file_logger.file_logger()
 
         # controller_client.py - link multithread input output queue
         self.in_q = input_q
         self.out_q = output_q
 
         # file_logger.py - prepare measurements file
-        self.txt.prepare_file(filename, lgtcname)
-        self.txt.open_file()  
+        self.f.prepare_file(filename, lgtcname)
+        self.f.open_file()  
 
         # Experiment vars
         self._is_app_running = False
@@ -152,12 +152,12 @@ class experiment():
                             
                             # Check if serial_monitor received something
                             if not self.monitor.serial_avaliable:
-                                self.txt.store_lgtc_line("Timeout detected.")
+                                self.f.store_lgtc_line("Timeout detected.")
                                 timeout_cnt += 1
                                 self.log.warning("No lines read for more than 10 seconds..")
 
                             if timeout_cnt > 5:
-                                self.txt.warning("VESNA did not respond for more than a minute")
+                                self.f.warning("VESNA did not respond for more than a minute")
                                 self.LGTC_sys_resp("VESNA_TIMEOUT")
                                 self.log.error("VESNA did not respond for more than a minute")
                                 timeout_cnt = 0
@@ -174,7 +174,7 @@ class experiment():
                                 # not captured for more than 3 seconds. Something went wrong, 
                                 # so stop waiting for it
                                 if self._command_timeout:
-                                    self.txt.warning("Command timeout occurred!")
+                                    self.f.warning("Command timeout occurred!")
                                     self.LGTC_cmd_resp([self._command_waiting, "Failed to get response ..."])
                                     self.log.warning("No response on command for more than 3 seconds!")
                                     self._command_timeout = False
@@ -189,7 +189,7 @@ class experiment():
                 if self.monitor.input_waiting():
                     data = self.monitor.read_line()
 
-                    self.txt.store_line(data)
+                    self.f.store_line(data)
                     self._lines_stored += 1
 
                     # If we got response on the command
@@ -278,7 +278,7 @@ class experiment():
                             self._command_waiting = cmd[0]
 
                         # Log it to file as well
-                        self.txt.store_lgtc_line("Received command [" + cmd[0] + "]: " + cmd[1])
+                        self.f.store_lgtc_line("Received command [" + cmd[0] + "]: " + cmd[1])
                         self.log.debug("Received command [" + cmd[0] + "]: " + cmd[1])
 
         # ------------------------------------------------------------------------------------
@@ -296,7 +296,7 @@ class experiment():
         finally:
             # Clear resources
             self.monitor.close()
-            self.txt.close()
+            self.f.close()
             return        
       
 
@@ -316,43 +316,43 @@ class experiment():
 
     def LGTC_app_start(self, duration):
         if not self.monitor.start_app(str(duration * 60)):
-            self.txt.warning("Couldn't start the APP.")
+            self.f.warning("Couldn't start the APP.")
             self.LGTC_sys_resp("VESNA_ERR")
             self.log.error("Couldn't start the APP.")
             return False
         
-        self.txt.store_lgtc_line("Application started!")
+        self.f.store_lgtc_line("Application started!")
         self.LGTC_sys_resp("START_APP")
         self.log.info("Application started!")
         return True
 
     def LGTC_app_stop(self):
         if not self.monitor.stop_app():
-            self.txt.warning("Couldn't stop the APP.")
+            self.f.warning("Couldn't stop the APP.")
             self.LGTC_sys_resp("VESNA_ERR")
             self.log.error("Couldn't stop the APP.")
             return False
         
-        self.txt.store_lgtc_line("Application stopped!")
+        self.f.store_lgtc_line("Application stopped!")
         self.LGTC_sys_resp("STOP_APP")
         self.log.info("Application stopped!")
         return True
 
     def LGTC_app_exit(self):
         self.monitor.stop_app()
-        self.txt.store_lgtc_line("Application exit!")
+        self.f.store_lgtc_line("Application exit!")
         self.log.info("Application exit!")
 
 
     # Sync with application 
     def LGTC_vesna_sync(self):
         if not self.monitor.sync_with_vesna():
-            self.txt.warning("Couldn't sync with VESNA.")
+            self.f.warning("Couldn't sync with VESNA.")
             self.LGTC_sys_resp("VESNA_ERR")
             self.log.error("Couldn't sync with VESNA.")
             return False
 
-        self.txt.store_lgtc_line("Synced with VESNA ...")
+        self.f.store_lgtc_line("Synced with VESNA ...")
         self.LGTC_sys_resp("SYNCED_WITH_VESNA")
         self.log.info("Synced with VESNA over serial ...")
         return True
@@ -403,6 +403,7 @@ if __name__ == "__main__":
     #logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
     logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
 
+    logging.info("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME + "!")
 
     # Create 2 queue for communication between threads
     # LGTC -> VESNA
