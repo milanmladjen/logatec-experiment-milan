@@ -150,8 +150,8 @@ try:
                         # TODO send END command to LGTC with stated reason
 
                 # If device exited the experiment, remove it from the database
-                elif msg[2] == "VESNA_ERROR":  
-                    md.removeDevice(msg[0])
+                elif msg[2] == "ERROR":  
+                    db.remove_dev(msg[0])
 
                     devstate = {"address":msg[0], "state":"OFFLINE"}
                     devstate = str(devstate)

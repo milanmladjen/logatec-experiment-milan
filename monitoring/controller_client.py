@@ -82,7 +82,7 @@ class zmq_client_thread(threading.Thread):
                         self.LGTC_set_state("TIMEOUT")
 
                     elif response[1] == "VESNA_ERR":
-                        self.LGTC_exit("VESNA_ERROR")
+                        self.LGTC_exit("ERROR")
                         break
                     
                     else:
