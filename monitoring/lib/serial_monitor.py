@@ -125,7 +125,7 @@ class serial_monitor():
 
         if(not gotResponse):
             self.log.error("No response...please reset the device and try again")
-            close()
+            self.close()
             return False
 
         self.log.debug("Got response...synced with VESNA")
