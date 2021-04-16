@@ -143,8 +143,8 @@ class serial_monitor():
 
         return True
 
-    def stop_app(self, app_duration):
-        self.log.debug("Stoppin application")
+    def stop_app(self):
+        self.log.debug("Stopping application")
         self.write_line("=")
 
         if not self.wait_response(3, "="):
@@ -156,9 +156,8 @@ class serial_monitor():
     def send_command(self, command):
         self.log.debug("Serial send %s command to VESNA" % command)
 
+        # Append '*' before command so VESNA will know
         self.write_line("*" + command)
-        # TODO: Vesna can return something else than our data...what to do then?
-        # TODO: response may also be formed in multiple lines...
 
 
 

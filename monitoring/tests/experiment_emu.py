@@ -191,7 +191,7 @@ class experiment():
                                 # so stop waiting for it
                                 if self._command_timeout:
                                     self.f.warning("Command timeout occurred!")
-                                    self.LGTC_cmd_resp([self._command_waiting, "Failed to get response ..."])
+                                    self.LGTC_cmd_resp(self._command_waiting, "Failed to get response ...")
                                     self.log.warning("No response on command for more than 3 seconds!")
                                     self._command_timeout = False
                                     self._command_waiting = None
@@ -264,9 +264,12 @@ class experiment():
                                 elapsed_sec = 0
 
                         elif cmd[1] == "STOP_APP":
-                            if not self.LGTC_app_stop():
-                                break
-                            self._is_app_running = False
+                            if self._is_app_running == False:
+                                self.LGTC_cmd_resp("0", "No application running...")
+                            else:
+                                if not self.LGTC_app_stop():
+                                    break
+                                self._is_app_running = False
 
                         elif cmd[1] == "RESTAR_APP":
                             #self.LGTC_app_stop()
@@ -294,22 +297,32 @@ class experiment():
 
                     # EXPERIMENT COMMANDS
                     else:
+
+                        self.f.store_lgtc_line("Got command [" + cmd[0] + "]: " + cmd[1])
+                        self.log.info("Got command [" + cmd[0] + "]: " + cmd[1])
+
                         # Return number of lines read
                         if cmd[1] == "LINES":
-                            self.LGTC_cmd_resp([cmd[0], ("LINES " + str(_lines_stored))])
+                            resp = "Lines stored: " + str(self._lines_stored)
+                            self.LGTC_cmd_resp(cmd[0], resp)
+                            self.f.store_lgtc_line(resp)
 
                         # Return number of seconds since the beginning of app
                         elif cmd[1] == "SEC":
-                            self.LGTC_cmd_resp([cmd[0], ("SEC " + str(elapsed_sec))])
+                            resp = "Seconds passed: " + str(round(elapsed_sec, 1)) + "s"
+                            self.LGTC_cmd_resp(cmd[0], resp)
+                            self.f.store_lgtc_line(resp)
+
+                        # Return the predefined application duration
+                        elif cmd[1] == "DURATION":
+                            resp = "Defined duration: " + str(APP_DURATION)
+                            self.LGTC_cmd_resp(cmd[0], resp)
+                            self.f.store_lgtc_line(resp)
 
                         # Forward command to VESNA
                         else:
                             """self.monitor.send_command(cmd[1])"""
                             self._command_waiting = cmd[0]
-
-                        # Log it to file as well
-                        self.f.store_lgtc_line("Received command [" + cmd[0] + "]: " + cmd[1])
-                        self.log.debug("Received command [" + cmd[0] + "]: " + cmd[1])
 
         # ------------------------------------------------------------------------------------
         except KeyboardInterrupt:

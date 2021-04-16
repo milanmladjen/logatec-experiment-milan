@@ -54,16 +54,20 @@ class zmq_client_thread(threading.Thread):
             # If there is a message from VESNA
             # --------------------------------------------------------------------------------
             if not self.in_q.empty():
-                self.log.debug("Got message from VESNA")
                 response = self.in_q.get()
                 
                 # If the message is SYSTEM - application controll
                 if response[0] == "-1":
+                    self.log.debug("New state: " + response[1])
+
                     if response[1] == "START_APP":
                         self.LGTC_set_state("RUNNING")
 
                     elif response[1] == "STOP_APP":
                         self.LGTC_set_state("STOPPED")
+                    
+                    elif response[1] == "COMPILING":
+                        self.LGTC_set_state("COMPILING")
                     
                     elif response[1] == "SYNCED_WITH_VESNA":
                         self.LGTC_set_state("ONLINE")
@@ -83,10 +87,11 @@ class zmq_client_thread(threading.Thread):
                     
                     else:
                         self.LGTC_set_state("LGTC_WARNING")
-                        self.log.debug("Unsupported state")                    
+                        self.log.warning("+--> Unsupported state!")                    
                 
                 # If the message is CMD - experiment response
                 else:
+                    self.log.debug("Forwarding cmd response to broker...")
                     self.client.transmit_async(response)
             
             # --------------------------------------------------------------------------------
@@ -98,7 +103,7 @@ class zmq_client_thread(threading.Thread):
                 # If the message is not ACK
                 if msg_nbr:
 
-                    self.log.info("Received " + msg + " command!")
+                    self.log.debug("Received command from broker: [" + msg_nbr + "] " + msg)
                     # SYSTEM COMMANDS - application controll
                     if msg_nbr == "-1":
 
@@ -112,9 +117,7 @@ class zmq_client_thread(threading.Thread):
                             break
                             
                         elif msg == "FLASH":
-                            self.LGTC_set_state("COMPILING")
                             self.out_q.put([msg_nbr, msg])
-                            self.log.info("Compile the application ... ")
 
                         elif msg == "RESTART_APP":
                             self.out_q.put([msg_nbr, msg])
@@ -127,7 +130,7 @@ class zmq_client_thread(threading.Thread):
                         
                         else:
                             self.LGTC_set_state("LGTC_WARNING")
-                            self.log.warning("Unsupported command!")
+                            self.log.warning("Unsupported SYS command!")
 
 
                     # EXPERIMENT COMMANDS - experiment command
