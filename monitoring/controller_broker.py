@@ -14,21 +14,34 @@ from timeit import default_timer as timer
 from lib import testbed_database
 
 LOG_LEVEL = logging.DEBUG
+LOGGING_FILENAME = "controller.log"
 
-#TODO: obtain following values from environmental variables
-NUMBER_OF_DEVICES = 3
-RADIO_TYPE = "SRDA"
+try:
+    NUMBER_OF_DEVICES = int(os.environ["DEV_NUMBER"])
+except:
+    print("No device number given...going with default: 21")
+    NUMBER_OF_DEVICES = 21
 
-# ------------------------------------------------------------------------------- #
+try:
+    RADIO_TYPE = os.environ(["RADIO_TYPE"])
+except:
+    print("No radio type given...going with default: TEST_TYPE")
+    RADIO_TYPE = "TEST_TYPE"
+
+
+
+# -------------------------------------------------------------------------------
 # Configuration
-# ------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------
 # Logging module
-logging.basicConfig(format='%(levelname)s:%(message)s', level=LOG_LEVEL)
+# Config logging module format for all scripts. Log level is defined in each submodule with var LOG_LEVEL.
+#logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
+logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
 
-#if __name__ == '__main__':
-
+# Database library
 db = testbed_database.testbed_database("test_database.db")
 
+# ZMQ init
 context = zmq.Context.instance()
 
 # Socket for publishing commands
@@ -44,22 +57,24 @@ backend.bind('tcp://*:5562')
 frontend = context.socket(zmq.ROUTER)
 #frontend.bind("ipc:///tmp/zmq_ipc")
 frontend.bind("tcp://*:5563")
-flask_script_id = b"flask_process"    # As defined in flask
+controller_server_id = b"flask_process"      # As defined in controller_server.py
 
 # Configure poller
 poller = zmq.Poller()
 poller.register(backend, zmq.POLLIN)
 poller.register(frontend, zmq.POLLIN)
 
-
 # Small delay for zmq init
 time.sleep(1)
 
-print("Sync with frontend")
-# Inform the frontend that experiment has started
-frontend.send_multipart([flask_script_id, b"Online", b"0", RADIO_TYPE.encode()])
 
-print("Starting main loop...")
+# -------------------------------------------------------------------------------
+# Sync with frontend
+# -------------------------------------------------------------------------------
+logging.info("Inform frontend about beginning of an experiment.")
+frontend.send_multipart([controller_server_id, b"Online", b"0", RADIO_TYPE.encode()])
+
+logging.debug("Starting main loop...")
 tx_msg_nbr = 0
 subscribers = 0
 
@@ -79,9 +94,9 @@ try:
         # If there is a message in polling queue from the flask server, forward it to LGTC devices
         if sockets.get(frontend) == zmq.POLLIN:
 
-            logging.info("Received from frontend...")
+            logging.debug("Received from frontend...")
 
-            dummy_flask_script_id, device, count, data = frontend.recv_multipart()
+            dummy_controller_server_id, device, count, data = frontend.recv_multipart()
 
             # [device, count, data] From bytes to string for loging output
             msg = [device.decode(), count.decode(), data.decode()]
@@ -94,7 +109,8 @@ try:
                 # Send testbed state to the frontend
                 testbed = db.get_tb_state_json()
                 testbed = str(testbed)
-                frontend.send_multipart([flask_script_id, b"TestbedUpdate", b"", testbed.encode()])
+                frontend.send_multipart([controller_server_id, b"TestbedUpdate", b"", testbed.encode()])
+                logging.debug("Return testbed state: \n" + db.get_tb_state_str)
 
 
             # PUBLISH COMMAND - if message is for all devices
@@ -113,6 +129,10 @@ try:
                     logging.debug("Router sent message [%s]: %s to device %s" % (msg[1], msg[2], msg[0]))
                 else:
                     # Inform frontend that address is not in database
+                    frontend.send_multipart([controller_server_id, device, "0", "Device is not active..."])
+                    devstate = {"address":device, "state":"OFFLINE"}    #TODO some other state maybe? To delete device from tloris and dropdown
+                    devstate = str(devstate)
+                    frontend.send_multipart([controller_server_id, b"DeviceUpdate", b"-1", devstate.encode()])
                     logging.warning("Device address is not in DB")
 
         # -------------------------------------------------------------------------------
@@ -121,7 +141,7 @@ try:
         # If there is any message in pollin queue from LGTC devices, forward it to flask_server
         elif sockets.get(backend) == zmq.POLLIN:
 
-            print("Received from backend...")
+            logging.debug("Received from backend...")
 
             address, data_nbr, data = backend.recv_multipart()
 
@@ -141,15 +161,16 @@ try:
 
                         devstate = {"address":msg[0], "state":"ONLINE"}
                         devstate = str(devstate)
-                        frontend.send_multipart([flask_script_id, b"DeviceUpdate", b"-1", devstate.encode()])
-                        print("Device %s joined the experiment" % msg[0])
+                        frontend.send_multipart([controller_server_id, b"DeviceUpdate", b"-1", devstate.encode()])
+                        logging.debug("Device %s joined the experiment" % msg[0])
 
                         subscribers += 1
                         if subscribers == NUMBER_OF_DEVICES:
-                            print("All devices (" + str(NUMBER_OF_DEVICES) + ") active")
+                            logging.info("All devices (" + str(NUMBER_OF_DEVICES) + ") active")
+                            # TODO: inform frontend about this
 
                     else:
-                        print("Device with the name %s allready in the experiment" % msg[0])
+                        logging.warning("Device with the name %s allready in the experiment" % msg[0])
                         # TODO send END command to LGTC with stated reason
 
                 # If device exited the experiment, remove it from the database
@@ -158,23 +179,23 @@ try:
 
                     devstate = {"address":msg[0], "state":"OFFLINE"}
                     devstate = str(devstate)
-                    frontend.send_multipart([flask_script_id, b"DeviceUpdate", b"-1", devstate.encode()])
-                    print("Device %s send VESNA_ERROR message" % msg[0])
+                    frontend.send_multipart([controller_server_id, b"DeviceUpdate", b"-1", devstate.encode()])
+                    logging.warning("Device %s send ERROR message" % msg[0])
 
                 # Else update device state in the database
                 else:
                     db.update_dev_state(msg[0], msg[2])
-                    print("New state of device %s: %s" % (msg[0], db.get_dev_state(msg[0])))
+                    logging.info("New state of device %s: %s" % (msg[0], db.get_dev_state(msg[0])))
 
                     devstate = {"address":msg[0], "state":msg[2]}
                     devstate = str(devstate)
-                    frontend.send_multipart([flask_script_id, b"DeviceUpdate", b"-1", devstate.encode()])
+                    frontend.send_multipart([controller_server_id, b"DeviceUpdate", b"-1", devstate.encode()])
 
             # EXPERIMENT COMMAND response
             else:
-                # Send response back to the server [device, count, data]
-                frontend.send_multipart([flask_script_id, address, data_nbr, data])
-                logging.info("Received [%s] from device %s: %s" % (msg[1], msg[0], msg[2]))
+                # Forward response back to the server [device, count, data]
+                frontend.send_multipart([controller_server_id, address, data_nbr, data])
+                logging.debug("Received response [%s] from device %s: %s" % (msg[1], msg[0], msg[2]))
 
 
         # -------------------------------------------------------------------------------
@@ -192,15 +213,15 @@ try:
 
 
 except KeyboardInterrupt:
-    print("Keyboard interrupt...exiting now.")
+    logging.info("Keyboard interrupt...exiting now.")
 
 tx_msg_nbr += 1
-print("Sent messages %i" % tx_msg_nbr)
+logging.info("Messages sent: %i" % tx_msg_nbr)
 
 # Inform devices in backend that monitoring is over
 msg =b"-1 EXIT"
 backend_pub.send(msg)
 
 # Inform the frontend that experiment has stopped
-frontend.send_multipart([flask_script_id, b"End", b"0", b"0"])
+frontend.send_multipart([controller_server_id, b"End", b"0", b"0"])
 
