@@ -10,22 +10,27 @@
 
 import json
 import os
+import logging
 
+LOG_LEVEL = logging.DEBUG
 
 class testbed_database():
     
     # Init DB and delete old one if there is any
     def __init__(self, DATABASE):
+        self.log = logging.getLogger(__name__)
+        self.log.setLevel(LOG_LEVEL)
+
         self.location = DATABASE
         self.db = {}
 
         if (os.path.exists(self.location)):
-            print("[WARN init] Overwriting old database")
+            self.log.warning("Overwriting old database")
             try:
                 f = open(self.location, "w")
                 f.write("")
             except:
-                print("[ERR init] Can not access database")
+                self.log.error("Can not access database")
             finally:
                 f.close()
 
@@ -33,14 +38,14 @@ class testbed_database():
         try:
             json.dump(self.db, open(self.location, "w+"))
         except:
-            print("[ERR] saving database")
+            self.log.error("Saving database")
 
     def _cleardb(self):
         try:
             self.db.clear()
             self._dumpdb()
         except:
-            print("[ERR] cleaning database")
+            self.log.error("Cleaning database")
 
     def _update(self, addr, state):
         try:
@@ -48,7 +53,7 @@ class testbed_database():
             self._dumpdb()
             return True
         except:
-            print("[ERR] updating database")
+            self.log.error("Updating database")
             return False
 
     def delete(self):
@@ -66,12 +71,12 @@ class testbed_database():
         try:
             self.db.pop(addr)
         except:
-            print("[ERR remove] %s not in database" % addr)
+            self.log.error("%s not in database" % addr)
 
     # Insert new device to DB
     def insert_dev(self, addr, state):
         if addr in self.db:
-            print("[WARN insert] device is allready in database. Updating its state.")
+            self.log.warning("Device is allready in database. Updating its state.")
         
         self._update(addr, state)
 
@@ -80,14 +85,14 @@ class testbed_database():
         if addr in self.db:
             self._update(addr, state)
         else:
-            print("[ERR update] %s not in database" % addr)
+            self.log.error("%s not in database" % addr)
 
     # Return the device state stored in the DB
     def get_dev_state(self, addr):
         if addr in self.db:
             return self.db.get(addr)
         else:
-            print("[ERR get] %s not in database" % addr)
+            self.log.error("%s not in database" % addr)
             return None
 
 
