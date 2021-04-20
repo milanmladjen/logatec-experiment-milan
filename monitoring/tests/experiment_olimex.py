@@ -459,6 +459,9 @@ if __name__ == "__main__":
 
     logging.info("Main thread stopped, trying to stop client thread.")
 
+    # Wait for a second so client can finish its transmission
+    time.sleep(1)
+
     # Notify zmq client thread to exit its operation and join until quit
     client_thread.stop()
     client_thread.join()
