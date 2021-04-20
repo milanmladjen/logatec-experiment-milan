@@ -315,7 +315,7 @@ class experiment():
 
                         # Return the predefined application duration
                         elif cmd[1] == "DURATION":
-                            resp = "Defined duration: " + str(APP_DURATION)
+                            resp = "Defined duration: " + str(APP_DURATION) + "min"
                             self.LGTC_cmd_resp(cmd[0], resp)
                             self.f.store_lgtc_line(resp)
 
@@ -484,6 +484,9 @@ if __name__ == "__main__":
     main_thread.run()
 
     logging.info("Main thread stopped, trying to stop client thread.")
+
+    # Wait for a second so client can finish its transmission
+    time.sleep(1)
 
     # Notify zmq client thread to exit its operation and join until quit
     client_thread.stop()

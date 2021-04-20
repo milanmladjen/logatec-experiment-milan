@@ -283,7 +283,7 @@ class experiment():
 
                         # Return the predefined application duration
                         elif cmd[1] == "DURATION":
-                            resp = "Defined duration: " + str(APP_DURATION)
+                            resp = "Defined duration: " + str(APP_DURATION) + "min"
                             self.LGTC_cmd_resp(cmd[0], resp)
                             self.f.store_lgtc_line(resp)
 

@@ -8,6 +8,8 @@ import zmq
 import time
 import logging
 
+from timeit import default_timer as timer
+
 #from lib import mongodb_client
 from lib import testbed_database
 
@@ -61,6 +63,7 @@ print("Starting main loop...")
 tx_msg_nbr = 0
 subscribers = 0
 
+hb_time = timer()
 # -------------------------------------------------------------------------------
 # Start the main loop
 # -------------------------------------------------------------------------------
@@ -174,14 +177,20 @@ try:
                 logging.info("Received [%s] from device %s: %s" % (msg[1], msg[0], msg[2]))
 
 
-            print(" ")
         # -------------------------------------------------------------------------------
-        # HEARTBEAT
+        # HEARTBEAT - TODO
         # -------------------------------------------------------------------------------
-        # TODO Heatbeat: Check status of devices and update it in DB
-        #else ...
+        else:
+            # Every 3 seconds send STATE command all of active devices in the experiment
+            # Update database accordingly to
+            if((timer() - hb_time) > 3):
+                hb_time = timer()
 
-        #print(".")
+                #device = TODO: get it from DB
+                #cmd = [device, "-1", "STATE"]
+                #backend.send_multipart(cmd)
+
+
 except KeyboardInterrupt:
     print("Keyboard interrupt...exiting now.")
 
