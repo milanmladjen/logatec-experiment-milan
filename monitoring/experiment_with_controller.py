@@ -33,8 +33,8 @@ import controller_client
 # DEFINITIONS
 LOG_LEVEL = logging.DEBUG
 
-ROUTER_HOSTNAME = "tcp://localhost:5562"
-SUBSCR_HOSTNAME = "tcp://localhost:5561"
+ROUTER_HOSTNAME = "tcp://192.168.2.191:5562"
+SUBSCR_HOSTNAME = "tcp://192.168.2.191:5561"
 
 SERIAL_TIMEOUT = 2  # In seconds
 
