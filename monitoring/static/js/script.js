@@ -278,8 +278,8 @@ $(document).ready(function(){
         console.log("Successfully connected to server!");
 
         // Check if experiment is already running
-        if(msg.data !== "False"){
-            console.log("Experiment is already running ["+msg.data +"]");
+        if(msg.data !== "None"){
+            console.log("Experiment is already running ["+ msg.data +"]");
             experiment_started(msg.data);
 
             // Update testbed tloris
@@ -342,7 +342,16 @@ $(document).ready(function(){
             tloris.update_dev(lgtc.address, lgtc.state);
             dropdown.add_dev(lgtc.address);
             available_devices.push(lgtc.address);
-        }                   
+        }
+    });
+
+    socket.on("info", function(msg){
+        console.log("Received info");
+
+        // Append text into textarea (don't delete old one)
+        $("#output_field").val( $("#output_field").val() + msg.data);
+        // Scroll to bottom
+        $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
     });
 
     // --------------------------------------------------------------------------------------------------------
