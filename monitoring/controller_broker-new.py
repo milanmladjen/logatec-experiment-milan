@@ -14,7 +14,7 @@ from lib import testbed_database
 # --------------------------------------------------------------------------------------------
 
 LOG_LEVEL = logging.DEBUG
-LOGGING_FILENAME = "controller.log"
+LOGGING_FILENAME = "controller_broker.log"
 
 try:
     NUMBER_OF_DEVICES = int(os.environ["DEV_NUMBER"])
@@ -41,7 +41,7 @@ class zmq_broker():
     # Initialize sockets and poller
     # ----------------------------------------------------------------------------------------
     def __init__(self):
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger("zmq_broker")
         self.log.setLevel(LOG_LEVEL)
 
         context = zmq.Context.instance()
@@ -63,8 +63,8 @@ class zmq_broker():
 
         # Configure poller
         self.poller = zmq.Poller()
-        self.poller.register(backend, zmq.POLLIN)
-        self.poller.register(frontend, zmq.POLLIN)
+        self.poller.register(self.backend, zmq.POLLIN)
+        self.poller.register(self.frontend, zmq.POLLIN)
 
 
 
@@ -191,9 +191,10 @@ if __name__ == "__main__":
 
     # Config logging module format for all scripts. 
     # Log level is defined in each submodule with var LOG_LEVEL.
-    #logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
-    logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
-
+    logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)16s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
+    #logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
+    log = logging.getLogger("main")
+    
     # Init ZMQ 
     broker = zmq_broker()
 
@@ -207,7 +208,7 @@ if __name__ == "__main__":
     broker.frontend_send("Online", "", RADIO_TYPE)
     broker.frontend_info("------ \n New active experiment in the testbed! \n")
 
-    logging.debug("Starting main loop...")
+    log.info("Starting main loop...")
 
     subscribers = 0
     hb_time = timer()
@@ -225,7 +226,8 @@ if __name__ == "__main__":
 
             # UPDATE TESTBED STATE - return state of testbed to server
             if address == "TestbedUpdate":
-                logging.debug("Return testbed state: \n" + db.get_tb_state_str)
+                log.info("Return testbed state:")
+                log.debug(db.get_tb_state_str)
                 broker.frontend_send(address, "", str(db.get_tb_state_json()))
 
             # FORWARD COMMAND - to LGTC devices
@@ -234,7 +236,7 @@ if __name__ == "__main__":
                 if db.is_dev(address) or (address == "All"):
                     broker.backend_send(address, number, data)
                 else:
-                    logging.warning("Device address is not in DB")
+                    log.warning("Device address is not in DB")
                     broker.frontend_info("Device " + address + " is not active!")
                     broker.frontend_deviceUpdate(address,"OFFLINE")
 
@@ -254,33 +256,34 @@ if __name__ == "__main__":
                     if not db.is_dev(address):
                         db.insert_dev(address, "ONLINE")
                         broker.frontend_deviceUpdate(address, "ONLINE")
+                        log.info("New device " + address)
 
                         subscribers += 1
                         if subscribers == NUMBER_OF_DEVICES:
-                            logging.info("All devices ("+ str(NUMBER_OF_DEVICES) +") active")
+                            log.info("All devices ("+ str(NUMBER_OF_DEVICES) +") active")
                             # TODO: inform frontend about this
 
                     else:
-                        logging.warning("Device %s allready in the experiment" % address)
+                        log.warning("Device %s allready in the experiment" % address)
                         # TODO send END command to LGTC with stated reason
 
                 # If device exited the experiment, remove it from the database
                 elif data == "ERROR":  
                     db.remove_dev(address)
                     broker.frontend_deviceUpdate(address, "OFFLINE")
-                    logging.warning("Device %s send ERROR message..." % address)
+                    log.warning("Device %s send ERROR message..." % address)
 
                 # Else update device state in the database
                 else:
                     db.update_dev_state(address, data)
                     broker.frontend_deviceUpdate(address, data)
-                    logging.info("New state of device %s: %s" % (address, data))
+                    log.info("New state of device %s: %s" % (address, data))
 
             # EXPERIMENT COMMAND (response)
             else:
                 # Forward response back to the server
                 broker.frontend_send(address, number, data)
-                logging.debug("Response [%s] from device %s: %s" % (number, address, data))
+                log.debug("Response [%s] from device %s: %s" % (number, address, data))
 
         # -----------------------------------------------------------------------------------
         # HEARTBEAT - TODO
@@ -306,4 +309,4 @@ if __name__ == "__main__":
     broker.frontend_send("End", "", "")
     broker.frontend_info("\n ----------------- \n Experiment ended! \n -----------------")
 
-    logging.info("End of controller main loop...")
+    log.info("End of controller main loop...")

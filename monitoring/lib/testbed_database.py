@@ -18,8 +18,10 @@ class testbed_database():
     
     # Init DB and delete old one if there is any
     def __init__(self, DATABASE):
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger("testbed_database")
         self.log.setLevel(LOG_LEVEL)
+
+        self.log.info("Init database.")
 
         self.location = DATABASE
         self.db = {}
@@ -70,6 +72,7 @@ class testbed_database():
     def remove_dev(self, addr):
         try:
             self.db.pop(addr)
+            self.log.debug("Removed device " + addr)
         except:
             self.log.error("%s not in database" % addr)
 
@@ -79,11 +82,13 @@ class testbed_database():
             self.log.warning("Device is allready in database. Updating its state.")
         
         self._update(addr, state)
+        self.log.debug("New device " + addr )
 
     # Update the device in DB
     def update_dev_state(self, addr, state):
         if addr in self.db:
             self._update(addr, state)
+            self.log.debug("Update %s : %s" %(addr, state))
         else:
             self.log.error("%s not in database" % addr)
 
