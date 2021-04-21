@@ -1,8 +1,3 @@
-#   TODO different var names
-#   TODO make it multitherad? meh
-#   TODO fix logging
-#   TODO struktura
-
 
 import zmq 
 import time
@@ -13,8 +8,13 @@ from timeit import default_timer as timer
 #from lib import mongodb_client
 from lib import testbed_database
 
+
+# --------------------------------------------------------------------------------------------
+# EXPERIMENT DEFINITIONS AND CONFIGURATION
+# --------------------------------------------------------------------------------------------
+
 LOG_LEVEL = logging.DEBUG
-LOGGING_FILENAME = "controller.log"
+LOGGING_FILENAME = "controller_broker.log"
 
 try:
     NUMBER_OF_DEVICES = int(os.environ["DEV_NUMBER"])
@@ -30,177 +30,263 @@ except:
 
 
 
-# -------------------------------------------------------------------------------
-# Configuration
-# -------------------------------------------------------------------------------
-# Logging module
-# Config logging module format for all scripts. Log level is defined in each submodule with var LOG_LEVEL.
-#logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
-logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
-
-# Database library
-db = testbed_database.testbed_database("test_database.db")
-
-# ZMQ init
-context = zmq.Context.instance()
-
-# Socket for publishing commands
-backend_pub = context.socket(zmq.PUB)
-backend_pub.sndhwm = 1100000
-backend_pub.bind('tcp://*:5561')
-
-# Socket to get responses
-backend = context.socket(zmq.ROUTER)
-backend.bind('tcp://*:5562')
-
-# Socket for intra-process communication with flask server
-frontend = context.socket(zmq.ROUTER)
-#frontend.bind("ipc:///tmp/zmq_ipc")
-frontend.bind("tcp://*:5563")
-controller_server_id = b"flask_process"      # As defined in controller_server.py
-
-# Configure poller
-poller = zmq.Poller()
-poller.register(backend, zmq.POLLIN)
-poller.register(frontend, zmq.POLLIN)
-
-# Small delay for zmq init
-time.sleep(1)
 
 
-# -------------------------------------------------------------------------------
-# Sync with frontend
-# -------------------------------------------------------------------------------
-logging.info("Inform frontend about beginning of an experiment.")
-frontend.send_multipart([controller_server_id, b"Online", b"0", RADIO_TYPE.encode()])
+# --------------------------------------------------------------------------------------------
+# ZeroMQ class
+# --------------------------------------------------------------------------------------------
+class zmq_broker():
 
-logging.debug("Starting main loop...")
-tx_msg_nbr = 0
-subscribers = 0
+    # ----------------------------------------------------------------------------------------
+    # Initialize sockets and poller
+    # ----------------------------------------------------------------------------------------
+    def __init__(self):
+        self.log = logging.getLogger("zmq_broker")
+        self.log.setLevel(LOG_LEVEL)
 
-hb_time = timer()
-# -------------------------------------------------------------------------------
-# Start the main loop
-# -------------------------------------------------------------------------------
+        context = zmq.Context.instance()
 
-try:
+        # Socket for communication with Flask server
+        self.frontend = context.socket(zmq.ROUTER)
+        #frontend.bind("ipc:///tmp/zmq_ipc")
+        self.frontend.bind("tcp://*:5563")
+        self.controller_server_id = b"flask_process"      # As defined in controller_server.py
+
+        # Socket for publishing LGTC commands
+        self.backend_pub = context.socket(zmq.PUB)
+        self.backend_pub.sndhwm = 1100000
+        self.backend_pub.bind('tcp://*:5561')
+
+        # Socket to get responses from LGTC
+        self.backend = context.socket(zmq.ROUTER)
+        self.backend.bind('tcp://*:5562')
+
+        # Configure poller
+        self.poller = zmq.Poller()
+        self.poller.register(self.backend, zmq.POLLIN)
+        self.poller.register(self.frontend, zmq.POLLIN)
+
+
+
+    # ----------------------------------------------------------------------------------------
+    # Check poller for any incoming message
+    #
+    #   @params:    timeout - number of ms to wait (0 = return immediately)
+    #   @return:    name of the instance that received the message
+    # ----------------------------------------------------------------------------------------
+    def check_input(self, timeout):
+        sockets = dict(self.poller.poll(timeout))
+
+        if sockets.get(self.backend) == zmq.POLLIN:
+            return "BACKEND"
+        elif sockets.get(self.frontend) == zmq.POLLIN:
+            return "FRONTEND"
+        else:
+            return None
+
+
+
+    # ----------------------------------------------------------------------------------------
+    # Read received message from backend socket. 
+    #
+    #   @return:    adr - name of the device that sent the message
+    #               nbr - number of received message (-1 means SYSTEM message)
+    #               data - ...
+    # ----------------------------------------------------------------------------------------
+    def backend_receive(self):
+        self.log.debug("Received from backend...")
+
+        adr, nbr, data = self.backend.recv_multipart()
+
+        return adr.decode(), nbr.decode(), data.decode()
+
+
+    # ----------------------------------------------------------------------------------------
+    # Send a message to a device in backend.
+    #
+    #   @params:    adr - name of targeted device
+    #                     if adr is "All" send message to all devices (publish socket)
+    #               nbr - number of sent message (-1 means SYSTEM message)
+    #               data - ...
+    # ----------------------------------------------------------------------------------------
+    def backend_send(self, adr, nbr, data):
+
+        if adr == "All":
+            self.log.debug("Publish message [%s]: %s" % (nbr, data))
+
+            cmd ="%s %s" % (nbr, data)
+            self.backend_pub.send(cmd.encode())
+
+        else:
+            self.log.debug("Router send message [%s]: %s to device %s" % (nbr, data, adr))
+
+            self.backend.send_multipart([adr.encode(), nbr.encode(), data.encode()])
+
+
+
+
+    # ----------------------------------------------------------------------------------------
+    # Read received message from frontend socket. Used for forwarding commands from F -> B and
+    # for sending user commands targeted for broker script (depends on the the adr var)
+    #
+    #   @return:    adr - (=tip) name of targeted device OR type of message for broker
+    #               nbr - number of received message
+    #               data - ...
+    # ----------------------------------------------------------------------------------------
+    def frontend_receive(self):
+        self.log.debug("Received from frontend...")
+
+        # dummy is the frontend ID
+        dummy, adr, nbr, data = self.frontend.recv_multipart()
+
+        return adr.decode(), nbr.decode(), data.decode()
+
+    # ----------------------------------------------------------------------------------------
+    # Send message to the frontend socket. Used for forwarding responses B -> F and for 
+    # sending some experiment commands for server script
+    #
+    #   @params:    tip - (=adr) name of device OR type (tip) of message for server
+    #               nbr - number of received message
+    #               data - ...
+    # ----------------------------------------------------------------------------------------
+    def frontend_send(self, tip, nbr, data):
+        self.log.debug("Send to frontend...")
+
+        self.frontend.send_multipart(
+            [self.controller_server_id, tip.encode(), nbr.encode(), data.encode()])
+
+    # ----------------------------------------------------------------------------------------
+    # Send device state to frontend socket - costum function to inform server about new state.
+    #
+    #  @params:     device - name of device
+    #               state  - new state of device
+    # ----------------------------------------------------------------------------------------
+    def frontend_deviceUpdate(self, device, state):
+        self.log.debug("Send new state of device to frontend...")
+
+        data = str({"address":device, "state":state})
+        self.frontend.send_multipart(
+            [self.controller_server_id, b"DeviceUpdate", b"-1", data.encode()])
+
+    # ----------------------------------------------------------------------------------------
+    # Send some info string to frontend socket - costum function to inform user about smth.
+    #
+    #  @params:     info - string which will be displayed to the user console
+    #               
+    # ----------------------------------------------------------------------------------------
+    def frontend_info(self, info):
+        self.log.debug("Send info to frontend: " + info)
+
+        self.frontend.send_multipart(
+            [self.controller_server_id, b"Info", b"", info.encode()])
+
+
+
+
+
+# --------------------------------------------------------------------------------------------
+# MAIN
+# --------------------------------------------------------------------------------------------
+if __name__ == "__main__":
+
+    # Config logging module format for all scripts. 
+    # Log level is defined in each submodule with var LOG_LEVEL.
+    logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)16s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
+    #logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
+    log = logging.getLogger("main")
+    
+    # Init ZMQ 
+    broker = zmq_broker()
+
+    # Small delay for zmq init
+    time.sleep(1)
+
+    # Init database library
+    db = testbed_database.testbed_database("test_database.db")
+
+    # Inform frontend that experiment began
+    broker.frontend_send("Online", "", RADIO_TYPE)
+    broker.frontend_info("------ \n New active experiment in the testbed! \n")
+
+    log.info("Starting main loop...")
+
+    subscribers = 0
+    hb_time = timer()
+
+    # ----------------------------------------------------------------------------------------
+    # MAIN LOOP
     while True:
 
-        sockets = dict(poller.poll(100))
+        inp = broker.check_input(100)
 
-        # -------------------------------------------------------------------------------
-        # FRONTEND ---> BACKEND
-        # -------------------------------------------------------------------------------
-        # If there is a message in polling queue from the flask server, forward it to LGTC devices
-        if sockets.get(frontend) == zmq.POLLIN:
+        # ------------------------------------------------------------------------------------
+        # FRONTEND --> BACKEND
+        if inp == "FRONTEND":
+            address, number, data = broker.frontend_receive()
 
-            logging.debug("Received from frontend...")
+            # UPDATE TESTBED STATE - return state of testbed to server
+            if address == "TestbedUpdate":
+                log.info("Return testbed state:")
+                log.debug(db.get_tb_state_str)
+                broker.frontend_send(address, "", str(db.get_tb_state_json()))
 
-            dummy_controller_server_id, device, count, data = frontend.recv_multipart()
-
-            # [device, count, data] From bytes to string for loging output
-            msg = [device.decode(), count.decode(), data.decode()]
-
-            tx_msg_nbr += 1
-
-            # UPDATE TESTBED STATE
-            if msg[0] == "TestbedUpdate":
-
-                # Send testbed state to the frontend
-                testbed = db.get_tb_state_json()
-                testbed = str(testbed)
-                frontend.send_multipart([controller_server_id, b"TestbedUpdate", b"", testbed.encode()])
-                logging.debug("Return testbed state: \n" + db.get_tb_state_str)
-
-
-            # PUBLISH COMMAND - if message is for all devices
-            elif msg[0] == "All":
-
-                cmd ="%s %s" % (msg[1], msg[2])
-                backend_pub.send(cmd.encode())
-                logging.debug("Published message [%s]: %s" % (msg[1], msg[2]))
- 
-            # UNICAST COMMAND - if message is only for one device
+            # FORWARD COMMAND - to LGTC devices
             else:
                 # Addres must be in database, otherwise it is not active
-                if db.is_dev(msg[0]):
-                    cmd = [device, count, data]
-                    backend.send_multipart(cmd)
-                    logging.debug("Router sent message [%s]: %s to device %s" % (msg[1], msg[2], msg[0]))
+                if db.is_dev(address) or (address == "All"):
+                    broker.backend_send(address, number, data)
                 else:
-                    # Inform frontend that address is not in database
-                    frontend.send_multipart([controller_server_id, device, "0", "Device is not active..."])
-                    devstate = {"address":device, "state":"OFFLINE"}    #TODO some other state maybe? To delete device from tloris and dropdown
-                    devstate = str(devstate)
-                    frontend.send_multipart([controller_server_id, b"DeviceUpdate", b"-1", devstate.encode()])
-                    logging.warning("Device address is not in DB")
+                    log.warning("Device address is not in DB")
+                    broker.frontend_info("Device " + address + " is not active!")
+                    broker.frontend_deviceUpdate(address,"OFFLINE")
 
-        # -------------------------------------------------------------------------------
-        # BACKEND ---> FRONTEND
-        # -------------------------------------------------------------------------------
-        # If there is any message in pollin queue from LGTC devices, forward it to flask_server
-        elif sockets.get(backend) == zmq.POLLIN:
-
-            logging.debug("Received from backend...")
-
-            address, data_nbr, data = backend.recv_multipart()
+        # ------------------------------------------------------------------------------------
+        # BACKEND --> FRONTEND 
+        elif inp == "BACKEND":
+            address, number, data = broker.backend_receive()
 
             # Send ACK back
-            backend.send_multipart([address, data_nbr, b"ACK"])
+            broker.backend_send(address, number, "ACK")
 
-            # From bytes to string for loging output [address, count, data]
-            msg = [address.decode(), data_nbr.decode(), data.decode()]
-
-            # SYSTEM message (only to update the database)
-            if msg[1] == "-1":
+            # SYSTEM MESSAGE (only to update the database)
+            if number == "-1":
 
                 # If device come to experiment add it do database
-                if msg[2] == "SYNC":
-                    if not db.is_dev(msg[0]):
-                        db.insert_dev(msg[0], "ONLINE")
-
-                        devstate = {"address":msg[0], "state":"ONLINE"}
-                        devstate = str(devstate)
-                        frontend.send_multipart([controller_server_id, b"DeviceUpdate", b"-1", devstate.encode()])
-                        logging.debug("Device %s joined the experiment" % msg[0])
+                if data == "SYNC":
+                    if not db.is_dev(address):
+                        db.insert_dev(address, "ONLINE")
+                        broker.frontend_deviceUpdate(address, "ONLINE")
+                        log.info("New device " + address)
 
                         subscribers += 1
                         if subscribers == NUMBER_OF_DEVICES:
-                            logging.info("All devices (" + str(NUMBER_OF_DEVICES) + ") active")
+                            log.info("All devices ("+ str(NUMBER_OF_DEVICES) +") active")
                             # TODO: inform frontend about this
 
                     else:
-                        logging.warning("Device with the name %s allready in the experiment" % msg[0])
+                        log.warning("Device %s allready in the experiment" % address)
                         # TODO send END command to LGTC with stated reason
 
                 # If device exited the experiment, remove it from the database
-                elif msg[2] == "ERROR":  
-                    db.remove_dev(msg[0])
-
-                    devstate = {"address":msg[0], "state":"OFFLINE"}
-                    devstate = str(devstate)
-                    frontend.send_multipart([controller_server_id, b"DeviceUpdate", b"-1", devstate.encode()])
-                    logging.warning("Device %s send ERROR message" % msg[0])
+                elif data == "ERROR":  
+                    db.remove_dev(address)
+                    broker.frontend_deviceUpdate(address, "OFFLINE")
+                    log.warning("Device %s send ERROR message..." % address)
 
                 # Else update device state in the database
                 else:
-                    db.update_dev_state(msg[0], msg[2])
-                    logging.info("New state of device %s: %s" % (msg[0], db.get_dev_state(msg[0])))
+                    db.update_dev_state(address, data)
+                    broker.frontend_deviceUpdate(address, data)
+                    log.info("New state of device %s: %s" % (address, data))
 
-                    devstate = {"address":msg[0], "state":msg[2]}
-                    devstate = str(devstate)
-                    frontend.send_multipart([controller_server_id, b"DeviceUpdate", b"-1", devstate.encode()])
-
-            # EXPERIMENT COMMAND response
+            # EXPERIMENT COMMAND (response)
             else:
-                # Forward response back to the server [device, count, data]
-                frontend.send_multipart([controller_server_id, address, data_nbr, data])
-                logging.debug("Received response [%s] from device %s: %s" % (msg[1], msg[0], msg[2]))
+                # Forward response back to the server
+                broker.frontend_send(address, number, data)
+                log.debug("Response [%s] from device %s: %s" % (number, address, data))
 
-
-        # -------------------------------------------------------------------------------
+        # -----------------------------------------------------------------------------------
         # HEARTBEAT - TODO
-        # -------------------------------------------------------------------------------
         else:
             # Every 3 seconds send STATE command all of active devices in the experiment
             # Update database accordingly to
@@ -209,19 +295,18 @@ try:
 
                 #device = TODO: get it from DB
                 #cmd = [device, "-1", "STATE"]
-                #backend.send_multipart(cmd)
 
 
-except KeyboardInterrupt:
-    logging.info("Keyboard interrupt...exiting now.")
 
-tx_msg_nbr += 1
-logging.info("Messages sent: %i" % tx_msg_nbr)
 
-# Inform devices in backend that monitoring is over
-msg =b"-1 EXIT"
-backend_pub.send(msg)
+    # ----------------------------------------------------------------------------------------
+    # END
 
-# Inform the frontend that experiment has stopped
-frontend.send_multipart([controller_server_id, b"End", b"0", b"0"])
+    # Inform devices in backend that monitoring is over
+    broker.backend_send("All", "-1", "EXIT")
 
+    # Inform the frontend that experiment has stopped
+    broker.frontend_send("End", "", "")
+    broker.frontend_info("\n ----------------- \n Experiment ended! \n -----------------")
+
+    log.info("End of controller main loop...")

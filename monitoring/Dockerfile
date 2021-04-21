@@ -29,7 +29,7 @@ EXPOSE 5562
 EXPOSE 5563
 
 #Start the python script
-CMD ["python3", "controller-broker.py"]
+CMD ["python3", "controller_broker.py"]
 #ENTRYPOINT ["python3"]
 
 
