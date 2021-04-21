@@ -19,15 +19,12 @@ import logging
 # Global variables:
 message_to_send = []
 update_testbed = False
-
-experiment = "None"
+experiment_started = "False"
 
 # Thread init
 lock = Lock()
 thread = Thread()
 thread_stop_event = Event()
-ZMQ_queue = Queue()
-
 
 # Flask and SocketIO config
 app = Flask(__name__, static_url_path="", static_folder="static", template_folder="templates")
@@ -37,6 +34,11 @@ socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*", path="
 logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)5s > %(funcName)17s() > %(lineno)3s] - %(message)s", level=logging.DEBUG, filename="flask_server.log")
 f_log = logging.getLogger("Flask")
 z_log = logging.getLogger("ZMQ")
+
+
+
+F_Z_QUEUE = Queue()
+Z_F_QUEUE = Queue()
 
 # ------------------------------------------------------------------------------- #
 # Flask
@@ -83,10 +85,10 @@ def SIO_connect():
         thread = socketio.start_background_task(ZMQ_thread)
 
     lock.acquire()
-    global experiment
-    reply = {"data":experiment}
+    global experiment_started
+    reply = {"data":experiment_started}
     lock.release()
-    
+
     emit("after connect", reply)
 
 @socketio.on("disconnect")
@@ -101,25 +103,33 @@ def SIO_received_command(cmd):
     f_log.info("Client sent: ")
     f_log.debug(cmd)
 
+    # If messages from client come to quickly, overwrite them TODO maybe inform user?
+    lock.acquire()
+    global message_to_send
     message_to_send = [cmd["device"].encode(), cmd["count"].encode(), cmd["data"].encode()] # From dict to byte array
-    ZMQ_queue.put({"type":"command", "data":message_to_send})
+    lock.release()
 
 @socketio.on("testbed update")
 def SIO_get_tb_state():
     f_log.info("Client wants to update testbed state.")
 
-    ZMQ_queue.put({"type":"system", "data":"update testbed"})
-
+    # Same goes here
+    lock.acquire()
+    global update_testbed 
+    update_testbed = True
+    lock.release()
 
 
 
 # ------------------------------------------------------------------------------- #
 # ZeroMQ
 # ------------------------------------------------------------------------------- #
-def ZMQ_thread(input_q):
+def ZMQ_thread(input_q, output_q):
 
 
-    queue = input_q
+    in_q = input_q
+    out_q = output_q
+
     context = zmq.Context()
     zmq_soc = context.socket(zmq.DEALER)
     zmq_soc.setsockopt(zmq.IDENTITY, b"flask_process")
@@ -136,106 +146,113 @@ def ZMQ_thread(input_q):
     socketio.sleep(1)
  
     while not thread_stop_event.is_set():
+        
+        global experiment_started
+        global message_to_send
+        global update_testbed
+        lock.acquire()
 
-        # Check input from background (boker)
-        socks = dict(poller.poll(0))
+        # If there is any message to be sent to backend
+        if message_to_send:
+            z_log.info("Send message to broker!")
+            z_log.debug(message_to_send)
+            zmq_soc.send_multipart(message_to_send)
+            message_to_send = []
+            lock.release()
+        
+        # Or if user wants to update the testbed state manually
+        elif update_testbed:
+            z_log.info("Get testbed state from brokers database.")
+            zmq_soc.send_multipart([b"TestbedUpdate", b"", b""])
+            update_testbed = False
+            lock.release()
 
-        if socks.get(zmq_soc) == zmq.POLLIN:
+        # Else check for incoming messages
+        else:
+            lock.release()
 
-            device, count, data = zmq_soc.recv_multipart()
+            socks = dict(poller.poll(0))
 
-            # From bytes to string [device, count, data]
-            msg = [device.decode(), count.decode(), data.decode()]
+            if socks.get(zmq_soc) == zmq.POLLIN:
 
-            # Received new device state
-            if msg[0] == "DeviceUpdate":
-                z_log.info("Received new device state from brokers database!")
+                device, count, data = zmq_soc.recv_multipart()
 
-                # From string to dict
-                json = ast.literal_eval(msg[2])
+                # From bytes to string [device, count, data]
+                msg = [device.decode(), count.decode(), data.decode()]
 
-                update = {
+                # Received new device state
+                if msg[0] == "DeviceUpdate":
+                    z_log.info("Received new device state from brokers database!")
+
+                    # From string to dict
+                    json = ast.literal_eval(msg[2])
+
+                    update = {
+                            "device" : "Update",
+                            "count" : msg[1],
+                            "data" : json
+                        }
+                    socketio.emit("device state update", update, broadcast=True)
+
+                # Received whole testbed device state
+                elif msg[0] == "TestbedUpdate":
+                    z_log.info("Received testbed state from brokers database!")
+
+                    # From string to list of dicts
+                    json_data = ast.literal_eval(msg[2])
+
+                    state = {
                         "device" : "Update",
                         "count" : msg[1],
-                        "data" : json
+                        "data" : json_data
                     }
-                socketio.emit("device state update", update, broadcast=True)
+                    socketio.emit("testbed state update", state, broadcast=True)
 
-            # Received whole testbed device state
-            elif msg[0] == "TestbedUpdate":
-                z_log.info("Received testbed state from brokers database!")
+                # Sync between broker and flask server in the beginning
+                elif msg[0] == "Online":
+                    z_log.info("Experiment has started!")
 
-                # From string to list of dicts
-                json_data = ast.literal_eval(msg[2])
+                    lock.acquire()
+                    experiment_started = msg[2]
+                    lock.release()
 
-                state = {
-                    "device" : "Update",
-                    "count" : msg[1],
-                    "data" : json_data
-                }
-                socketio.emit("testbed state update", state, broadcast=True)
+                    socketio.emit("experiment started", {"data":experiment_started}, broadcast=True)
 
-            # Sync between broker and flask server in the beginning
-            elif msg[0] == "Online":
-                z_log.info("Experiment has started!")
+                # When broker exits, inform the user
+                elif msg[0] == "End":
+                    z_log.info("Experiment has stopped!")
 
-                radio_type = msg[2]
-                
-                lock.acquire()
-                experiment = radio_type
-                lock.release()
+                    lock.acquire()
+                    experiment_started = "False"
+                    lock.release()
 
-                socketio.emit("experiment started", {"data":radio_type}, broadcast=True)
+                    socketio.emit("experiment stopped", {}, broadcast=True)
 
-            # When broker exits, inform the user
-            elif msg[0] == "End":
-                z_log.info("Experiment has stopped!")
+                elif msg[0] == "Info":
+                    z_log.info("Received info from broker!")
 
-                lock.acquire()
-                experiment = "None"
-                lock.release()
+                    socketio.emit("info", {"data":msg[2]}, broadcast=True)
 
-                socketio.emit("experiment stopped", {}, broadcast=True)
+                # Received command response
+                else:
+                    z_log.info("Received message from broker!")
+     
+                    response = {
+                        "device" : msg[0],
+                        "count" : msg[1],
+                        "data" : msg[2]
+                    }
 
-            elif msg[0] == "Info":
-                z_log.info("Received info from broker!")
-
-                socketio.emit("info", {"data":msg[2]}, broadcast=True)
-
-            # Received command response
+                    # Forward message to the client over websockets
+                    socketio.emit("command response", response, broadcast=True)
             else:
-                z_log.info("Received message from broker!")
+                socketio.sleep(0.5)
     
-                response = {
-                    "device" : msg[0],
-                    "count" : msg[1],
-                    "data" : msg[2]
-                }
-
-                # Forward message to the client over websockets
-                socketio.emit("command response", response, broadcast=True)
-
-        # Check input queue (from Flask process)
-        elif not queue.empty():
-            msg = queue.get()
-
-            if msg["type"] == "system":
-
-                if msg["data"] == "update testbed":
-                    zmq_soc.send_multipart([b"TestbedUpdate", b"", b""])
-
-            elif msg["type"] == "command":
-                zmq_soc.send_multipart(msg["data"])
-        
-        # Else sleep a little - give control to Flask thread
-        else:
-            socketio.sleep(0.5)
-    
-    z_log.info("Leaving 0MQ thread...")
+    z_log.debug("Leaving 0MQ thread")
 
 
 # Run the ZMQ thread in the beginning
-thread = socketio.start_background_task(ZMQ_thread, ZMQ_queue)
+thread = socketio.start_background_task(ZMQ_thread, F_Z_QUEUE, Z_F_QUEUE)
 
 
 if __name__ == '__main__':
@@ -317,9 +334,3 @@ if __name__ == '__main__':
 # TODO:
 # Still haven't found a way to stop the background task when gunicorn exits.
 # Now daemon task keeps running...but not so important because container dies.
-
-
-    """
-    { "type":"system", "data":message for controller}
-    { "type":"command", "data":[message for device]}
-    """
