@@ -206,7 +206,7 @@ if __name__ == "__main__":
 
     # Inform frontend that experiment began
     broker.frontend_send("Online", "", RADIO_TYPE)
-    broker.frontend_info("------ \n New active experiment in the testbed! \n")
+    broker.frontend_info("New active experiment in the testbed! \n")
 
     log.info("Starting main loop...")
 

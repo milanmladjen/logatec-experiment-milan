@@ -1,8 +1,5 @@
-# -------------------------------------------------------------------------------
-# TODO: use queue instead lock
 
-# -------------------------------------------------------------------------------
-# TODO: add "info" tip sporočil - prikažejo naj se direkt v output konzoli, brez kakšnih prependov
+#!/usr/bin/python3
 
 import eventlet
 eventlet.monkey_patch()
@@ -16,31 +13,36 @@ import ast  # From str to json conversion
 import logging
 
 
-# Global variables:
-message_to_send = []
-update_testbed = False
+# --------------------------------------------------------------------------------------------
+# GLOBAL DEFINITIONS
+# --------------------------------------------------------------------------------------------
 
-experiment = "None"
+# Variable stores active experiment type
+EXPERIMENT = "None"
 
-# Thread init
+
+# --------------------------------------------------------------------------------------------
+# INIT
+# --------------------------------------------------------------------------------------------
+# Thread 
 lock = Lock()
 thread = Thread()
 thread_stop_event = Event()
 ZMQ_queue = Queue()
 
-
 # Flask and SocketIO config
 app = Flask(__name__, static_url_path="", static_folder="static", template_folder="templates")
-
 socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*", path="/socket.io")
 
+# Logging module
 logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)5s > %(funcName)17s() > %(lineno)3s] - %(message)s", level=logging.DEBUG, filename="flask_server.log")
 f_log = logging.getLogger("Flask")
 z_log = logging.getLogger("ZMQ")
 
-# ------------------------------------------------------------------------------- #
-# Flask
-# ------------------------------------------------------------------------------- #
+
+# --------------------------------------------------------------------------------------------
+# FLASK
+# --------------------------------------------------------------------------------------------
 
 # Store essential values and use it in case of page reload-TODO from DB
 templateData ={
@@ -50,11 +52,11 @@ templateData ={
 # Serve templates
 @app.route("/")
 def index():
-    # Use jinja2 template to render html with app values
+    # TODO templateData?
     return render_template("index.html", **templateData)
 
 
-# Serve static files - should use Nginx for that
+# Serve static files 
 @app.route("/static/js/<path:path>")
 def send_js(path):
     return send_from_directory("static/js/", path)
@@ -69,9 +71,9 @@ def send_img(path):
 
 
 
-# ------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------------------------
 # SocketIO
-# ------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------------------------
 @socketio.on("connect")
 def SIO_connect():
     f_log.debug("Client connected!")
@@ -83,8 +85,8 @@ def SIO_connect():
         thread = socketio.start_background_task(ZMQ_thread)
 
     lock.acquire()
-    global experiment
-    reply = {"data":experiment}
+    global EXPERIMENT
+    reply = {"data":EXPERIMENT}
     lock.release()
     
     emit("after connect", reply)
@@ -113,9 +115,9 @@ def SIO_get_tb_state():
 
 
 
-# ------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------------------------
 # ZeroMQ
-# ------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------------------------
 def ZMQ_thread(input_q):
 
 
@@ -182,7 +184,7 @@ def ZMQ_thread(input_q):
                 radio_type = msg[2]
                 
                 lock.acquire()
-                experiment = radio_type
+                EXPERIMENT = radio_type
                 lock.release()
 
                 socketio.emit("experiment started", {"data":radio_type}, broadcast=True)
@@ -192,7 +194,7 @@ def ZMQ_thread(input_q):
                 z_log.info("Experiment has stopped!")
 
                 lock.acquire()
-                experiment = "None"
+                EXPERIMENT = "None"
                 lock.release()
 
                 socketio.emit("experiment stopped", {}, broadcast=True)
@@ -234,6 +236,11 @@ def ZMQ_thread(input_q):
     z_log.info("Leaving 0MQ thread...")
 
 
+
+# --------------------------------------------------------------------------------------------
+# MAIN
+# --------------------------------------------------------------------------------------------
+
 # Run the ZMQ thread in the beginning
 thread = socketio.start_background_task(ZMQ_thread, ZMQ_queue)
 
@@ -255,7 +262,7 @@ if __name__ == '__main__':
 
 
 
-# -------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 # DEPLOYMENT WITH GUNICORN & EVENTLET
 #
 # A WSGI server is recommended for Flask app deployment - Gunicorn with eventlet  
@@ -266,7 +273,7 @@ if __name__ == '__main__':
 # Than use monkey patching on the begining of the script
 # https://flask-socketio.readthedocs.io/en/latest/#using-multiple-workers
 # Run with: python3 fserver.py
-# -------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 # STATIC FILES
 # 
 # Recommended way of serving static files is to use Nginx. 
@@ -277,7 +284,7 @@ if __name__ == '__main__':
 #
 # But if we don't want it, Flask can also serve static files...
 # (https://stackoverflow.com/questions/20646822/how-to-serve-static-files-in-flask)
-# -------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 # SOCKET MULTIPLEXING
 #
 # If multiple connections on single websockets are needed, add "namespaces" to 
@@ -285,7 +292,7 @@ if __name__ == '__main__':
 # usecase: if SMS portal will need another WebSocket communication on default URL
 # https://socket.io/docs/v3/namespaces/index.html
 # https://flask-socketio.readthedocs.io/en/latest/
-#-------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 # CORS
 # 
 # For security reasons, CORS is not enabled by default, thus disabling WebSockets
@@ -301,7 +308,7 @@ if __name__ == '__main__':
 # Read more on:
 # https://socket.io/docs/v3/client-initialization/
 # https://flask-socketio.readthedocs.io/en/latest/#cross-origin-controls
-#-------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 # ZMQ
 # 
 # Is used to communicate with Controller Docker container (zmq-broker.py) over
