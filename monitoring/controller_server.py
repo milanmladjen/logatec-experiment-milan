@@ -1,9 +1,8 @@
 # -------------------------------------------------------------------------------
-# TODO:
-# * Display essential values from DB when clients connects to the server
-# * set debug logging to file
-# -------------------------------------------------------------------------------
+# TODO: use queue instead lock
 
+# -------------------------------------------------------------------------------
+# TODO: add "info" tip sporočil - prikažejo naj se direkt v output konzoli, brez kakšnih prependov
 
 import eventlet
 eventlet.monkey_patch()
@@ -13,6 +12,7 @@ from flask import Flask, render_template, send_from_directory
 from flask_socketio import SocketIO, emit
 import zmq
 import ast  # From str to json conversion
+import logging
 
 
 # Global variables:
@@ -30,6 +30,8 @@ app = Flask(__name__, static_url_path="", static_folder="static", template_folde
 
 socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*", path="/socket.io")
 
+
+logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=logging.DEBUG, filename="flask_server.log")
 
 # ------------------------------------------------------------------------------- #
 # Flask
@@ -67,12 +69,12 @@ def send_img(path):
 # ------------------------------------------------------------------------------- #
 @socketio.on("connect")
 def connect():
-    print("Client connected")
+    logging.debug("Client connected!")
 
     # Start ZMQ background thread if it is not active
     global thread
     if not thread.is_alive():
-        print("Start ZMQ thread")
+        logging.debug("Start ZMQ thread")
         thread = socketio.start_background_task(zmqThread)
 
     lock.acquire()
@@ -84,15 +86,15 @@ def connect():
 
 @socketio.on("disconnect")
 def disconnect():
-    print("Client disconnected.")
+    logging.debug("Client disconnected!")
 
     # Stop the ZMQ thread
     #thread_stop_event.set()
 
 @socketio.on("new command")
 def received_command(cmd):
-    print("Client sent: ")
-    print(cmd)
+    logging.info("Client sent: ")
+    logging.debug(cmd)
 
     # If messages from client come to quickly, overwrite them TODO maybe inform user?
     lock.acquire()
@@ -102,7 +104,7 @@ def received_command(cmd):
 
 @socketio.on("testbed update")
 def get_testbed_state():
-    print("Client wants to update testbed state")
+    logging.info("Client wants to update testbed state.")
 
     # Same goes here
     lock.acquire()
@@ -136,7 +138,7 @@ def zmqThread():
     poller = zmq.Poller()
     poller.register(zmq_soc, zmq.POLLIN)
 
-    print("Initialized 0MQ")
+    logging.debug("Initialized 0MQ")
 
     socketio.sleep(1)
  
@@ -149,15 +151,15 @@ def zmqThread():
 
         # If there is any message to be sent to backend
         if message_to_send:
-            print("Send message to broker!")
-            print(message_to_send)
+            logging.info("Send message to broker!")
+            logging.debug(message_to_send)
             zmq_soc.send_multipart(message_to_send)
             message_to_send = []
             lock.release()
         
         # Or if user wants to update the testbed state manually
         elif update_testbed:
-            print("Get testbed state from brokers database.")
+            logging.info("Get testbed state from brokers database.")
             zmq_soc.send_multipart([b"TestbedUpdate", b"", b""])
             update_testbed = False
             lock.release()
@@ -177,7 +179,7 @@ def zmqThread():
 
                 # Received new device state
                 if msg[0] == "DeviceUpdate":
-                    print("Received new device state from brokers database!")
+                    logging.info("Received new device state from brokers database!")
 
                     # From string to dict
                     json = ast.literal_eval(msg[2])
@@ -191,7 +193,7 @@ def zmqThread():
 
                 # Received whole testbed device state
                 elif msg[0] == "TestbedUpdate":
-                    print("Received testbed state from brokers database!")
+                    logging.info("Received testbed state from brokers database!")
 
                     # From string to list of dicts
                     json_data = ast.literal_eval(msg[2])
@@ -205,7 +207,7 @@ def zmqThread():
 
                 # Sync between broker and flask server in the beginning
                 elif msg[0] == "Online":
-                    print("Experiment has started")
+                    logging.info("Experiment has started!")
 
                     lock.acquire()
                     experiment_started = msg[2]
@@ -215,7 +217,7 @@ def zmqThread():
 
                 # When broker exits, inform the user
                 elif msg[0] == "End":
-                    print("Experiment has stopped")
+                    logging.info("Experiment has stopped!")
 
                     lock.acquire()
                     experiment_started = "False"
@@ -223,9 +225,14 @@ def zmqThread():
 
                     socketio.emit("experiment stopped", {}, broadcast=True)
 
+                elif msg[0] == "Info":
+                    logging.info("Received info from broker!")
+
+                    socketio.emit("info", {"data":msg[2]}, broadcast=True)
+
                 # Received command response
                 else:
-                    print("Received message from broker!")
+                    logging.info("Received message from broker!")
      
                     response = {
                         "device" : msg[0],
@@ -238,11 +245,12 @@ def zmqThread():
             else:
                 socketio.sleep(0.5)
     
-    print("Leaving 0MQ thread")
+    logging.debug("Leaving 0MQ thread")
 
-thread = socketio.start_background_task(zmqThread)
 
 # Run the ZMQ thread in the beginning
+thread = socketio.start_background_task(zmqThread)
+
 
 if __name__ == '__main__':
     try:

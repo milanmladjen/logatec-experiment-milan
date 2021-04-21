@@ -280,9 +280,9 @@ if __name__ == "__main__":
             else:
                 # Forward response back to the server
                 broker.frontend_send(address, number, data)
-                logging.debug("Received response [%s] from device %s: %s" % (number, address, data))
+                logging.debug("Response [%s] from device %s: %s" % (number, address, data))
 
-        # -------------------------------------------------------------------------------
+        # -----------------------------------------------------------------------------------
         # HEARTBEAT - TODO
         else:
             # Every 3 seconds send STATE command all of active devices in the experiment
@@ -296,7 +296,7 @@ if __name__ == "__main__":
 
 
 
-    # -------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------
     # END
 
     # Inform devices in backend that monitoring is over
