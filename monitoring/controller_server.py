@@ -31,8 +31,8 @@ app = Flask(__name__, static_url_path="", static_folder="static", template_folde
 socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*", path="/socket.io")
 
 logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)5s > %(funcName)17s() > %(lineno)3s] - %(message)s", level=logging.DEBUG, filename="flask_server.log")
-f_log.logging.getLogger("Flask")
-z_log.logging.getLogger("0MQ")
+f_log = logging.getLogger("Flask")
+z_log = logging.getLogger("0MQ")
 
 # ------------------------------------------------------------------------------- #
 # Flask
