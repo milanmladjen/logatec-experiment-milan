@@ -19,7 +19,7 @@
 #      msg: "Testing {{application}}, duration {{duration}} minutes"
 #    when: inventory_hostname == 192.168.12.81
 
-
+  tasks:
   - name: Create directory
     file:
       path: ~/deploy/logatec-experiment

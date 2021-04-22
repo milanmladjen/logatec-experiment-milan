@@ -9,7 +9,7 @@
     radio_type: TEST_TYPE
     device_num: 3
 
-tasks: 
+  tasks: 
   - name: Create directory
     file:
       path: ~/deploy/logatec-experiment
