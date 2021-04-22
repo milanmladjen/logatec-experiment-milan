@@ -2,12 +2,20 @@ FROM sensorlab6/vesna-tools
 
 # Set debian frontend
 ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Ljubljana
 
 # Get dependencies
-RUN apt-get update --fix-missing && \
-	apt-get install -y python-pip python3-pip nano && \
-	apt-get clean && \
-	pip3 install pyserial
+RUN set -ex \
+	&& apt-get update --fix-missing \
+	&& apt-get install -y \
+					python3-pip \
+					nano \
+	&& apt-get clean
+
+# Install pip3 packages
+RUN set -ex \
+	&& pip3 install pyserial \
+					pyzmq
 
 RUN mkdir logatec-experiment
 
