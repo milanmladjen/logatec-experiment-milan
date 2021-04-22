@@ -5,7 +5,6 @@ import logging
 
 from timeit import default_timer as timer
 
-#from lib import mongodb_client
 from lib import testbed_database
 
 
@@ -288,8 +287,8 @@ if __name__ == "__main__":
         # -----------------------------------------------------------------------------------
         # HEARTBEAT - TODO
         else:
-            # Every 3 seconds send STATE command all of active devices in the experiment
-            # Update database accordingly to
+            # Every 3 seconds send STATE command to all of active devices in the experiment
+            # Update database accordingly
             if((timer() - hb_time) > 3):
                 hb_time = timer()
 

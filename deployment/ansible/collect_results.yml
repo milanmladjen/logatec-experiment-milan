@@ -16,7 +16,7 @@
       chdir: ~/deploy/logatec-experiment
 
 # Fetch measurements from device to SMS container --> from there they will be forwarded to Github
-# On that container we have: videk-ci/<tag_name>/ folder...in it, there are logatec-experiment (a clone from
+# On SMS container there is: videk-ci/<tag_name>/ folder...in it, there are logatec-experiment (a clone from
 # Github repo) and a folder out. We are calling this script from logatec-experiment/deployment/ansible, so dest:
 # is then ../../../out
   - name: Fetch data file to out folder
@@ -31,3 +31,6 @@
 #    file: 
 #      path:  ~/deploy/logatec-experiment/results
 #      state: absent
+
+# TODO: Export also .log files back to user or leave them on device container? 
+# TODO: Should we stop controller container or will it stop automatically?
