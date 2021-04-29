@@ -71,11 +71,11 @@ except:
     APP_DIR = "00_test"
 
 # TODO: change when in container
-# APP_PATH = "/root/logatec-experiment/application" + APP_DIR
-APP_PATH = "/home/logatec/magistrska/logatec-experiment/applications/" + APP_DIR
+APP_PATH = "/root/logatec-experiment/applications/" + APP_DIR
+#APP_PATH = "/home/logatec/magistrska/logatec-experiment/applications/" + APP_DIR
 APP_NAME = APP_DIR[3:]
 
-#print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME)
+print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME)
 
 
 
