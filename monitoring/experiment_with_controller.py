@@ -75,8 +75,6 @@ APP_PATH = "/root/logatec-experiment/applications/" + APP_DIR
 #APP_PATH = "/home/logatec/magistrska/logatec-experiment/applications/" + APP_DIR
 APP_NAME = APP_DIR[3:]
 
-print("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME)
-
 
 
 
@@ -388,20 +386,20 @@ class experiment():
         with Popen(["make", APP_NAME, "-j2"], stdout = PIPE, bufsize=1, universal_newlines=True, cwd = APP_PATH) as p:
             for line in p.stdout:
                 self.log.debug(line)    #TODO maybe use print(line, end="")
-            if (p.returncode != 0) or (p.returncode != None):
-                self.log.error("Command " + str(p.args) + " returned non-zero exit status " + str(p.returncode))
-                self.LGTC_sys_resp("COMPILE_ERR")
-                return False
+        if p.returncode:
+            self.log.error("Command " + str(p.args) + " returned non-zero exit status " + str(p.returncode))
+            self.LGTC_sys_resp("COMPILE_ERR")
+            return False
 
         # Flash the VESNA with app binary
         self.log.info("Flash the app to VESNA .. ")
         with Popen(["make", APP_NAME + ".logatec3"], stdout = PIPE, bufsize=1, universal_newlines=True, cwd = APP_PATH) as p:
             for line in p.stdout:
                 self.log.debug(line)
-            if (p.returncode != 0) or (p.returncode != None):
-                self.log.error("Command " + str(p.args) + " returned non-zero exit status " + str(p.returncode))
-                self.LGTC_sys_resp("COMPILE_ERR")
-                return False
+        if p.returncode:
+            self.log.error("Command " + str(p.args) + " returned non-zero exit status " + str(p.returncode))
+            self.LGTC_sys_resp("COMPILE_ERR")
+            return False
 
         self.log.info("Successfully flashed VESNA ...")
         self.LGTC_sys_resp("FLASHED")

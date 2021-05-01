@@ -115,12 +115,15 @@ class experiment():
         self.log.info("Starting experiment main thread!")
 
         # Connect to VESNA serial port
-        if not self.LGTC_vesna_connect():
-            return
+        #if not self.LGTC_vesna_connect():
+        #    return
 
         # Flash VESNA with application
         if not self.LGTC_vesna_flash():
             return        
+
+        while(True):
+            time.sleep(1)
 
         # Sync with experiment application
         if not self.LGTC_vesna_sync():
@@ -391,24 +394,23 @@ class experiment():
         self.LGTC_sys_resp("COMPILING")
         self.log.info("Complie the application.")
         #procDistclean = Popen(["make", "distclean"])
-        procCompile = Popen(["make", APP_NAME, "-j9"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
-        stdout, stderr = procCompile.communicate()
-        self.log.debug(stdout)
-        if(stderr):
-            self.log.debug(stderr)
+        with Popen(["make", APP_NAME, "-j9"], stdout = PIPE, bufsize=1, universal_newlines=True, cwd = APP_PATH) as pr:
+            for line in pr.stdout:
+                self.log.debug(line)    #TODO maybe use print(line, end="")
+        if pr.returncode:
+            self.log.error("Command " + str(pr.args) + " returned non-zero exit status " + str(pr.returncode))
             self.LGTC_sys_resp("COMPILE_ERR")
             return False
 
         # Flash the VESNA with app binary
         self.log.info("Flash the app to VESNA .. ")
-        procFlash = Popen(["make", APP_NAME + ".olimex"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
-        stdout, stderr = procFlash.communicate()
-        self.log.debug(stdout)
-        if(stderr):
-            self.log.debug(stderr)
-            # TODO: If flashing is successfull I still got stderr...
-            #self.LGTC_sys_resp("COMPILE_ERR")
-            #return False
+        with Popen(["make", APP_NAME + ".olimex"], stdout = PIPE, bufsize=1, universal_newlines=True, cwd = APP_PATH) as p:
+            for line in p.stdout:
+                self.log.debug(line)
+        if p.returncode:
+            self.log.error("Command " + str(p.args) + " returned non-zero exit status " + str(p.returncode))
+            self.LGTC_sys_resp("COMPILE_ERR")
+            return False
 
         self.log.info("Successfully flashed VESNA ...")
         self.LGTC_sys_resp("FLASHED")
