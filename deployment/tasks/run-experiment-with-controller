@@ -19,7 +19,7 @@ echo "Testing application $APP on node $IPADDR"
 
 # Start the Serial Monitor with controller running in the background
 cd /root/logatec-experiment/monitoring/
-python3 experiment_with_controller.py IPADDR 
+python3 experiment_with_controller.py $IPADDR 
 
 # Move results
 mv *.txt /root/logatec-experiment/results/

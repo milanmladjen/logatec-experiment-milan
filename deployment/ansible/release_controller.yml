@@ -30,7 +30,7 @@
     args:
       chdir: ~/deploy/logatec-experiment
 
-  - name: Cleanup old docker container (controller)
+  - name: Cleanup old docker container (controller-test)
     ignore_errors: yes
     command: "{{ item }}"
     with_items:
