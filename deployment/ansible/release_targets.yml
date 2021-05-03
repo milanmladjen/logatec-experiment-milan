@@ -54,10 +54,9 @@
       - cd ~/deploy/logatec-experiment/contiki-ng && git clean -f -d
       - cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
 
-# Build...with -f flag so we can later copy logatec-experiment directory into container
-# with Dockerfile command COPY...else we get error "Forbidden path outside the build context"
+# Build...with -f flag so we can copy whole 'logatec-experiment' directory into container
   - name: Build docker file
-    command: docker build -t vesna-drivers-test -f deployment/docker/Dockerfile . 
+    command: docker build -t logatec-experiment -f deployment/docker/Dockerfile . 
     args:
       chdir: ~/deploy/logatec-experiment
 
@@ -70,4 +69,4 @@
       - docker rm target
 
   - name: Run docker image
-    command: docker run --name target --privileged --net=host -e TARGET=experiment_with_controller -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" vesna-drivers-test
+    command: docker run --name target --privileged --net=host -e TARGET=experiment_with_controller -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" logatec-experiment
