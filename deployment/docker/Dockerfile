@@ -1,5 +1,5 @@
 # From base image
-FROM sensorlab6/logatec-experiment:latest
+FROM sensorlab6/vesna-tools-v2:latest
 
 # Install dependencies for experiment
 RUN set -ex \
