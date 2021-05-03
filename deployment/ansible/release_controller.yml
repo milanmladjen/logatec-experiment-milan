@@ -26,7 +26,7 @@
       version: develop/grega
 
   - name: Build docker file
-    command: docker build -t controller -f monitoring/Dockerfile .
+    command: docker build -t controller -f monitoring/docker/Dockerfile .
     args:
       chdir: ~/deploy/logatec-experiment
 
