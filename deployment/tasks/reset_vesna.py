@@ -29,7 +29,7 @@ class reset_vesna():
         return
 
 
-if __name__ = '__main__':
+if __name__ == '__main__':
 
     vesna = reset_vesna()
     
