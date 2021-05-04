@@ -24,7 +24,9 @@
       src: "{{ item }}"
       dest: ../../../out/
       mode: pull
-    with_items: "~/deploy/logatec-experiment/results/*.txt"
+    with_items: 
+      - "~/deploy/logatec-experiment/results/*.txt"
+      - "~/deploy/logatec-experiment/results/*.log"
 
 # TODO: Leave results on devices?
 #  - name: Delete results
@@ -32,5 +34,11 @@
 #      path:  ~/deploy/logatec-experiment/results
 #      state: absent
 
-# TODO: Export also .log files back to user or leave them on device container? 
-# TODO: Should we stop controller container or will it stop automatically?
+
+# TODO: 
+# Should we stop controller container or will it stop automatically?
+# It can stop automatically...but how to access log files then? Another Ansible playbook?
+# With another bash script or should I put it in the same one?
+# $ docker stop controller
+# $ docker cp controller:/root/logatec-experiment/controller_broker.log .
+# $ sync to out

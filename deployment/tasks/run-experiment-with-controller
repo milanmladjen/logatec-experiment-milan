@@ -21,8 +21,9 @@ echo "Testing application $APP on node $IPADDR"
 cd /root/logatec-experiment/monitoring/
 python3 experiment_with_controller.py $IPADDR 
 
-# Move results
+# Move results and logs
 mv *.txt /root/logatec-experiment/results/
+mv *.log /root/logatec-experiment/results/
 
 # Put Vesna to reset state so it doesnt interfeer with other networks
 cd /root/logatec-experiment/deployment/tasks

@@ -193,6 +193,8 @@ if __name__ == "__main__":
     logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)16s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
     #logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
     log = logging.getLogger("main")
+
+    log.info("New experiment " + RADIO_TYPE + " with " + NUMBER_OF_DEVICES + " devices available!")
     
     # Init ZMQ 
     broker = zmq_broker()
@@ -201,7 +203,7 @@ if __name__ == "__main__":
     time.sleep(1)
 
     # Init database library
-    db = testbed_database.testbed_database("test_database.db")
+    db = testbed_database.testbed_database("database.db")
 
     # Inform frontend that experiment began
     broker.frontend_send("Online", "", RADIO_TYPE)

@@ -54,7 +54,7 @@
       - cd ~/deploy/logatec-experiment/contiki-ng && git clean -f -d
       - cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
 
-# Build...with -f flag so we can copy whole 'logatec-experiment' directory into container
+# Build...with -f flag so we can copy 'logatec-experiment' directory into container
   - name: Build docker file
     command: docker build -t logatec-experiment -f deployment/docker/Dockerfile . 
     args:
