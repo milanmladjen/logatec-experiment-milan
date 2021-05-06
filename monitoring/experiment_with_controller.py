@@ -61,7 +61,7 @@ try:
     APP_DURATION = int(os.environ['APP_DURATION_MIN'])
 except:
     print("No app duration was defined...going with default 60min")
-    APP_DURATION = 60
+    APP_DURATION = 10
 
 try:
     APP_DIR = int(os.environ['APP_DIR'])
@@ -128,6 +128,7 @@ class experiment():
         elapsed_sec = 0
         timeout_cnt = 0
         loop_time = timer()
+        broker_died = False
 
         try:
             while(True):
@@ -207,6 +208,10 @@ class experiment():
                         self._is_app_running = False
                         self.log.info("Got end-of-app response!")
 
+                        # If broker died during experiment, exit after end of experiment
+                        if broker_died:
+                            self.LGTC_app_exit()
+
                 # -------------------------------------------------------------------------------
                 # CONTROLLER CLIENT - GET COMMANDS
                 # Check for incoming commands only when there is time - nothing to do on UART
@@ -249,7 +254,7 @@ class experiment():
                             self._is_app_running = True
                             elapsed_sec = 0
 
-                        if cmd[1] == "SYNC_WITH_VESNA":
+                        elif cmd[1] == "SYNC_WITH_VESNA":
                             if not self.LGTC_vesna_sync():
                                 break
 
@@ -261,6 +266,8 @@ class experiment():
                             self.LGTC_app_exit()
                             break
 
+                        elif cmd[1] == "BROKER_DIED":
+                            broker_died = True
 
                     # EXPERIMENT COMMANDS
                     else:

@@ -45,8 +45,7 @@ class zmq_client_thread(threading.Thread):
         self.client.transmit(["-1", "SYNC"])
         if self.client.wait_ack("-1", 10) is False:
             self.log.error("Couldn't synchronize with broker...")
-            # TODO: Continue application without broker?
-        
+            self.out_q.put(["-1", "BROKER_DIED"])
 
         # ------------------------------------------------------------------------------------
         while self._is_thread_running:
@@ -142,6 +141,7 @@ class zmq_client_thread(threading.Thread):
             # If there is still some message that didn't receive ACK back from server, re send it
             elif (len(self.client.waitingForAck) != 0):
                 self.client.send_retry()
+                #TODO self.out_q.put(["-1", "BROKER_DIED"])
 
         # ------------------------------------------------------------------------------------
         self.log.debug("Exiting client thread")
