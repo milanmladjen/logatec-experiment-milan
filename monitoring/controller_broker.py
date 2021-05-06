@@ -194,7 +194,7 @@ if __name__ == "__main__":
     #logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
     log = logging.getLogger("main")
 
-    log.info("New experiment " + RADIO_TYPE + " with " + NUMBER_OF_DEVICES + " devices available!")
+    log.info("New experiment " + RADIO_TYPE + " with " + str(NUMBER_OF_DEVICES) + " devices available!")
     
     # Init ZMQ 
     broker = zmq_broker()
