@@ -2,6 +2,7 @@
 import zmq 
 import time
 import logging
+import signal, sys
 
 from timeit import default_timer as timer
 
@@ -181,12 +182,17 @@ class zmq_broker():
 
 
 
+def sigterm_handler(_signo, _stack_frame):
+    sys.exit(0)
 
 
 # --------------------------------------------------------------------------------------------
 # MAIN
 # --------------------------------------------------------------------------------------------
 if __name__ == "__main__":
+
+    # For gracefull stop with $docker stop command
+    signal.signal(signal.SIGTERM, sigterm_handler)
 
     # Config logging module format for all scripts. 
     # Log level is defined in each submodule with var LOG_LEVEL.
