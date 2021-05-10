@@ -184,6 +184,7 @@ def ZMQ_thread(input_q):
                 radio_type = msg[2]
                 
                 lock.acquire()
+                global EXPERIMENT
                 EXPERIMENT = radio_type
                 lock.release()
 
@@ -194,6 +195,7 @@ def ZMQ_thread(input_q):
                 z_log.info("Experiment has stopped!")
 
                 lock.acquire()
+                global EXPERIMENT
                 EXPERIMENT = "None"
                 lock.release()
 
