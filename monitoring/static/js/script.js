@@ -285,6 +285,8 @@ $(document).ready(function(){
     socket.on("after connect", function(msg){
         console.log("Successfully connected to server!");
 
+        console.log(msg.data);
+
         // Check if experiment is already running
         if(msg.data !== "None"){
             console.log("Experiment is already running ["+ msg.data +"]");
