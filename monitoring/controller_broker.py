@@ -216,98 +216,105 @@ if __name__ == "__main__":
 
     # ----------------------------------------------------------------------------------------
     # MAIN LOOP
-    while True:
+    try:
+        while True:
 
-        inp = broker.check_input(100)
+            inp = broker.check_input(100)
 
-        # ------------------------------------------------------------------------------------
-        # FRONTEND --> BACKEND
-        if inp == "FRONTEND":
-            address, number, data = broker.frontend_receive()
+            # ------------------------------------------------------------------------------------
+            # FRONTEND --> BACKEND
+            if inp == "FRONTEND":
+                address, number, data = broker.frontend_receive()
 
-            # UPDATE TESTBED STATE - return state of testbed to server
-            if address == "TestbedUpdate":
-                log.info("Return testbed state:")
-                log.debug(db.get_tb_state_str)
-                broker.frontend_send(address, "", str(db.get_tb_state_json()))
+                # UPDATE TESTBED STATE - return state of testbed to server
+                if address == "TestbedUpdate":
+                    log.info("Return testbed state:")
+                    log.debug(db.get_tb_state_str)
+                    broker.frontend_send(address, "", str(db.get_tb_state_json()))
 
-            # FORWARD COMMAND - to LGTC devices
-            else:
-                # Addres must be in database, otherwise it is not active
-                if db.is_dev(address) or (address == "All"):
-                    broker.backend_send(address, number, data)
+                # FORWARD COMMAND - to LGTC devices
                 else:
-                    log.warning("Device address is not in DB")
-                    broker.frontend_info("Device " + address + " is not active!")
-                    broker.frontend_deviceUpdate(address,"OFFLINE")
-
-        # ------------------------------------------------------------------------------------
-        # BACKEND --> FRONTEND 
-        elif inp == "BACKEND":
-            address, number, data = broker.backend_receive()
-
-            # Send ACK back
-            broker.backend_send(address, number, "ACK")
-
-            # SYSTEM MESSAGE (only to update the database)
-            if number == "-1":
-
-                # If device come to experiment add it do database
-                if data == "SYNC":
-                    if not db.is_dev(address):
-                        db.insert_dev(address, "ONLINE")
-                        broker.frontend_deviceUpdate(address, "ONLINE")
-                        log.info("New device " + address)
-
-                        subscribers += 1
-                        if subscribers == NUMBER_OF_DEVICES:
-                            log.info("All devices ("+ str(NUMBER_OF_DEVICES) +") active")
-                            # TODO: inform frontend about this
-
+                    # Addres must be in database, otherwise it is not active
+                    if db.is_dev(address) or (address == "All"):
+                        broker.backend_send(address, number, data)
                     else:
-                        log.warning("Device %s allready in the experiment" % address)
-                        # TODO send END command to LGTC with stated reason
+                        log.warning("Device address is not in DB")
+                        broker.frontend_info("Device " + address + " is not active!")
+                        broker.frontend_deviceUpdate(address,"OFFLINE")
 
-                # If device exited the experiment, remove it from the database
-                elif data == "ERROR":  
-                    db.remove_dev(address)
-                    broker.frontend_deviceUpdate(address, "OFFLINE")
-                    log.warning("Device %s send ERROR message..." % address)
+            # ------------------------------------------------------------------------------------
+            # BACKEND --> FRONTEND 
+            elif inp == "BACKEND":
+                address, number, data = broker.backend_receive()
 
-                # Else update device state in the database
+                # Send ACK back
+                broker.backend_send(address, number, "ACK")
+
+                # SYSTEM MESSAGE (only to update the database)
+                if number == "-1":
+
+                    # If device come to experiment add it do database
+                    if data == "SYNC":
+                        if not db.is_dev(address):
+                            db.insert_dev(address, "ONLINE")
+                            broker.frontend_deviceUpdate(address, "ONLINE")
+                            log.info("New device " + address)
+
+                            subscribers += 1
+                            if subscribers == NUMBER_OF_DEVICES:
+                                log.info("All devices ("+ str(NUMBER_OF_DEVICES) +") active")
+                                # TODO: inform frontend about this
+
+                        else:
+                            log.warning("Device %s allready in the experiment" % address)
+                            # TODO send END command to LGTC with stated reason
+
+                    # If device exited the experiment, remove it from the database
+                    elif data == "ERROR":  
+                        db.remove_dev(address)
+                        broker.frontend_deviceUpdate(address, "OFFLINE")
+                        log.warning("Device %s send ERROR message..." % address)
+
+                    # Else update device state in the database
+                    else:
+                        db.update_dev_state(address, data)
+                        broker.frontend_deviceUpdate(address, data)
+                        log.info("New state of device %s: %s" % (address, data))
+
+                # EXPERIMENT COMMAND (response)
                 else:
-                    db.update_dev_state(address, data)
-                    broker.frontend_deviceUpdate(address, data)
-                    log.info("New state of device %s: %s" % (address, data))
+                    # Forward response back to the server
+                    broker.frontend_send(address, number, data)
+                    log.debug("Response [%s] from device %s: %s" % (number, address, data))
 
-            # EXPERIMENT COMMAND (response)
+            # -----------------------------------------------------------------------------------
+            # HEARTBEAT - TODO
             else:
-                # Forward response back to the server
-                broker.frontend_send(address, number, data)
-                log.debug("Response [%s] from device %s: %s" % (number, address, data))
+                # Every 3 seconds send STATE command to all of active devices in the experiment
+                # Update database accordingly
+                if((timer() - hb_time) > 3):
+                    hb_time = timer()
 
-        # -----------------------------------------------------------------------------------
-        # HEARTBEAT - TODO
-        else:
-            # Every 3 seconds send STATE command to all of active devices in the experiment
-            # Update database accordingly
-            if((timer() - hb_time) > 3):
-                hb_time = timer()
+                    #device = TODO: get it from DB
+                    #cmd = [device, "-1", "STATE"]
 
-                #device = TODO: get it from DB
-                #cmd = [device, "-1", "STATE"]
-
-
-
-
-    # ----------------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------------
     # END
+    except KeyboardInterrupt:
+        pass
+    
+    except Exception as e:
+        #logging.error(traceback.format_exc())
+        logging-error(e.__doc__)
+        logging.error(e.message)
+    
+    finally:
 
-    # Inform devices in backend that monitoring is over
-    broker.backend_send("All", "-1", "EXIT")
+        # Inform devices in backend that monitoring is over
+        broker.backend_send("All", "-1", "EXIT")
 
-    # Inform the frontend that experiment has stopped
-    broker.frontend_send("End", "", "")
-    broker.frontend_info("\n ----------------- \n Experiment ended! \n -----------------")
+        # Inform the frontend that experiment has stopped
+        broker.frontend_send("End", "", "")
+        broker.frontend_info("\n Experiment ended! \n -----------------")
 
-    log.info("End of controller main loop...")
+        log.info("End of controller main loop...")
