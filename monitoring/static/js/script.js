@@ -273,19 +273,9 @@ $(document).ready(function(){
     // https://socket.io/docs/v3/client-initialization/
     var socket = io({path: "/controller/socket.io"});
 
-    // Page refreshed - check with broker
-    console.log("Socket status", socket.connected)
-    /*socket.emit("refresh");
-
-    socket.on("after refresh", function(msg){
-        
-    });*/
-
 
     socket.on("after connect", function(msg){
         console.log("Successfully connected to server!");
-
-        console.log(msg.data);
 
         // Check if experiment is already running
         if(msg.data !== "None"){
