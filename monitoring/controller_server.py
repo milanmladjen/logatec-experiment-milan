@@ -144,6 +144,8 @@ def ZMQ_thread(input_q):
 
         if socks.get(zmq_soc) == zmq.POLLIN:
 
+            global EXPERIMENT
+
             device, count, data = zmq_soc.recv_multipart()
 
             # From bytes to string [device, count, data]
@@ -184,7 +186,6 @@ def ZMQ_thread(input_q):
                 radio_type = msg[2]
                 
                 lock.acquire()
-                global EXPERIMENT
                 EXPERIMENT = radio_type
                 lock.release()
 
@@ -195,7 +196,6 @@ def ZMQ_thread(input_q):
                 z_log.info("Experiment has stopped!")
 
                 lock.acquire()
-                global EXPERIMENT
                 EXPERIMENT = "None"
                 lock.release()
 
