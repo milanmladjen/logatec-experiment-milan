@@ -11,11 +11,19 @@
 #include "../../contiki-ng/os/net/routing/routing.h"
 #include "dev/serial-line.h"
 
+// For detecting RPL network (RPL-specific commands)
+#if ROUTING_CONF_RPL_LITE
+#include "net/routing/rpl-lite/rpl.h"
+#elif ROUTING_CONF_RPL_CLASSIC
+#include "net/routing/rpl-classic/rpl.h"
+#endif
+
 /*---------------------------------------------------------------------------*/
 #define SECOND						(1000)
 #define DEFAULT_APP_DUR_IN_SEC		(60 * 60)
 
 uint32_t app_duration = DEFAULT_APP_DUR_IN_SEC;
+uint8_t device_in_rpl_network = 0;
 
 /*---------------------------------------------------------------------------*/
 PROCESS(experiment_process, "Experiment process");
@@ -42,8 +50,13 @@ void
 input_command(char *data){
 	
     char cmd = data[0];
-	char time[8];
+	char arg[8];
 	char *p;
+
+	// Possible commands
+	const char carg1[] = "SET_ROOT";
+	const char carg2[] = "SOMEVAL";
+
     switch(cmd){
 		// SYNC cmd
 		case '@':
@@ -64,15 +77,26 @@ input_command(char *data){
 		// APP DURATION
 		case '&':
 			p = data + 1;
-			strcpy(time, p);
-			app_duration = atoi(time);
+			strcpy(arg, p);
+			app_duration = atoi(arg);
 			printf("Received app duration %ld \n", app_duration);
 			break;
 
+		// COMAND
 		case '*':
 			p = data + 1;
-			printf("Received command %s", p);
-			printf("* Command response");
+			printf("Received command %s \n", p);
+			strcpy(arg, p);
+
+			if(strcmp(arg, carg1) == 0){
+				set_device_as_root();
+			}
+			else if(strcmp(arg, carg2) == 0){
+				printf("* Some value is 10 \n");
+			}
+			else{
+				printf("* Unsupported command: %s \n", p);
+			}
 			break;
 
 		default:
@@ -101,6 +125,12 @@ PROCESS_THREAD(experiment_process, ev, data)
 
 		printf("Hello there %ld!\n", time_counter);
 
+		if((curr_instance.used) && (device_in_rpl_network != 1)){
+			// TODO: What if devices exits network?
+			printf("* joined RPL network \n");
+			device_in_rpl_network = 1;
+		}
+
 		// If elapsed seconds are equal to APP_DURATION, exit process
 		if(time_counter == app_duration) {
 			printf("= \n");	// Send stop command ('=') to LGTC
@@ -123,7 +153,8 @@ void
 set_device_as_root(void){
 	if(!NETSTACK_ROUTING.node_is_root()) {
 		NETSTACK_ROUTING.root_start();
+		printf("* device is now DAG root\n");
 	} else {
-		printf("Node is already a DAG root\n");
+		printf("* device is already a DAG root\n");
 	}
 }

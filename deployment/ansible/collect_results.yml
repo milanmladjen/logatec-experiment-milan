@@ -1,5 +1,5 @@
 ---
-- hosts: 192.168.12.81, 192.168.12.83
+- hosts: 192.168.12.81, 192.168.12.82, 192.168.12.83, 192.168.12.84, 192.168.12.85, 192.168.12.86, 192.168.12.88, 192.168.12.89, 192.168.12.90, 192.168.12.91, 192.168.12.92, 192.168.12.94, 192.168.12.97, 192.168.12.98, 192.168.12.99 #, 192.168.12.100 #192.168.12.87, 192.168.12.93, 192.168.12.95, 192.168.12.96, 192.168.12.100
   remote_user: videk
   tasks:
 
@@ -39,6 +39,6 @@
 # Should we stop controller container or will it stop automatically?
 # It can stop automatically...but how to access log files then? Another Ansible playbook?
 # With another bash script or should I put it in the same one?
-# $ docker stop controller
+# $ docker stop controller  --> docker stop will stop the broker gracefully...docker kill will not
 # $ docker cp controller:/root/logatec-experiment/controller_broker.log .
 # $ sync to out
