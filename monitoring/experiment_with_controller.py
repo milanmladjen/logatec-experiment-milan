@@ -193,12 +193,26 @@ class experiment():
 
                     # If we got response on the command
                     # TODO: check if it is a multiline response
+                    # TODO: check those symbols...use only one or two..you have strcmp 
                     if data[0] == "*":
+                        
                         # Remove first char '*' and last two char '\n'
-                        self.LGTC_cmd_resp(self._command_waiting, data[1:-2])
-                        self._command_waiting = None
-                        self._command_timeout = False
-                        self.log.debug("Got response on cmd " + data[1:-2])
+                        if data[1:-2] == "JOINED RPL NETWORK":
+                            self.LGTC_sys_resp("JOINED_NETWORK")
+
+                        elif data[1:-2] == "SET AS RPL ROOT":
+                            self.LGTC_sys_resp("RPL_ROOT")
+
+                            self.LGTC_cmd_resp(self._command_waiting, "Device is now RPL DAG root!")
+                            self._command_waiting = None
+                            self._command_timeout = False
+                            self.log.debug("Device is now RPL DAG root!")
+
+                        else:
+                            self.LGTC_cmd_resp(self._command_waiting, data[1:-2])
+                            self._command_waiting = None
+                            self._command_timeout = False
+                            self.log.debug("Got response on cmd " + data[1:-2])
                     
                     # If we got stop command
                     elif data[0] == "=":

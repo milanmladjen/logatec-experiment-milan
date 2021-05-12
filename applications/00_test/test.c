@@ -127,7 +127,7 @@ PROCESS_THREAD(experiment_process, ev, data)
 
 		if((curr_instance.used) && (device_in_rpl_network != 1)){
 			// TODO: What if devices exits network?
-			printf("* joined RPL network \n");
+			printf("*JOINED RPL NETWORK\n");
 			device_in_rpl_network = 1;
 		}
 
@@ -153,8 +153,8 @@ void
 set_device_as_root(void){
 	if(!NETSTACK_ROUTING.node_is_root()) {
 		NETSTACK_ROUTING.root_start();
-		printf("* device is now DAG root\n");
+		printf("*SET AS RPL ROOT\n");
 	} else {
-		printf("* device is already a DAG root\n");
+		printf("* Device is already a DAG root\n");
 	}
 }

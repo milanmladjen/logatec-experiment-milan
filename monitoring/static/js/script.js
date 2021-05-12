@@ -37,7 +37,10 @@ class Nodes {
             {state:"TIMEOUT", color:"red"},
             {state:"LGTC_WARNING", color:"orange"},
             {state:"COMPILE_ERROR", color:"pink"},
-            {state:"VESNA_ERROR", color:"purple"}
+            {state:"VESNA_ERROR", color:"purple"},
+
+            {state:"JOINED_NETWORK", color:"olive"},
+            {state:"RPL_ROOT", color:"darkolivegreen"}
         ]
 
         this.testbed_devices = [
