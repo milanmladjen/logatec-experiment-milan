@@ -9,12 +9,20 @@ var experiment_running = false;
 var available_devices = [];
 
 var SYSTEM_COMMANDS = [
-    "START_APP",
-    "STOP_APP",
-    "RESTART_APP",
+    "RESET",
     "FLASH",
     "EXIT",
     "STATE"
+];
+
+var EXPERIMENT_COMMANDS = [
+    "START",
+    "STOP",
+    "RESTART",
+    "LINES",
+    "SEC",
+    "DURATION",
+    "ROOT"
 ];
 
 
@@ -29,18 +37,19 @@ class Nodes {
         // Colors of each state
         this.state_colors = [
             {state:"ONLINE", color:"black"},
+            {state:"OFFLINE", color:"gray"},
             {state:"COMPILING", color:"yellow"},
             {state:"RUNNING", color:"green"},
             {state:"STOPPED", color:"blue"},
             {state:"FINISHED", color:"turquoise"},
 
-            {state:"TIMEOUT", color:"red"},
-            {state:"LGTC_WARNING", color:"orange"},
-            {state:"COMPILE_ERROR", color:"pink"},
-            {state:"VESNA_ERROR", color:"purple"},
-
             {state:"JOINED_NETWORK", color:"olive"},
-            {state:"RPL_ROOT", color:"darkolivegreen"}
+            {state:"RPL_ROOT", color:"darkolivegreen"},
+
+            {state:"TIMEOUT", color:"red"},
+            {state:"COMPILE_ERR", color:"pink"},
+            {state:"VESNA_ERR", color:"purple"},
+            {state:"LGTC_WARNING", color:"orange"}
         ]
 
         this.testbed_devices = [
@@ -389,6 +398,8 @@ $(document).ready(function(){
             nbr = tx_msg_nbr.toString();
         }
 
+        // TODO: check if command is supported
+
         // Check which device is selected from dropdown menu
         var dev = "";
         if($("#select_device option:selected").val() == "None"){
@@ -399,7 +410,7 @@ $(document).ready(function(){
             dev = $("#select_device option:selected").text();
         }
 
-        console.log("Send command [" + nbr + "] to device: " + dev );
+        console.log("Send command [" + nbr + "]:" + cmd + " to device: " + dev );
         
         // Send it to server
         socket.emit("new command", {

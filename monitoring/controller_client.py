@@ -55,33 +55,43 @@ class zmq_client_thread(threading.Thread):
             if not self.in_q.empty():
                 response = self.in_q.get()
                 
-                # If the message is SYSTEM - application controll
+                # If the message is SYSTEM - new state
                 if response[0] == "-1":
                     self.log.debug("New state: " + response[1])
 
-                    if response[1] == "START_APP":
+                    if response[1] == "START":
                         self.LGTC_set_state("RUNNING")
 
-                    elif response[1] == "STOP_APP":
+                    elif response[1] == "STOP":
                         self.LGTC_set_state("STOPPED")
+
+                    elif response[1] == "END":
+                        self.LGTC_set_state("FINISHED")
                     
                     elif response[1] == "COMPILING":
                         self.LGTC_set_state("COMPILING")
+
+                    elif response[1] == "FLASHED":
+                        self.LGTC_set_state("ONLINE")
                     
                     elif response[1] == "SYNCED_WITH_VESNA":
                         self.LGTC_set_state("ONLINE")
-                    
-                    elif response[1] == "FLASHED":
-                        self.LGTC_set_state("ONLINE")
 
-                    elif response[1] == "END_OF_APP":
-                        self.LGTC_set_state("FINISHED")
+                    elif response[1] == "JOINED":
+                        self.LGTC_set_state("JOINED_NETWORK")
+
+                    elif response[1] == "ROOT":
+                        self.LGTC_set_state("RPL_ROOT")
 
                     elif response[1] == "VESNA_TIMEOUT":
                         self.LGTC_set_state("TIMEOUT")
 
+                    elif response[1] == "COMPILE_ERR":
+                        self.LGTC_exit("COMPILE_ERR")
+                        break
+
                     elif response[1] == "VESNA_ERR":
-                        self.LGTC_exit("ERROR")
+                        self.LGTC_exit("VESNA_ERR")
                         break
                     
                     else:
@@ -115,22 +125,8 @@ class zmq_client_thread(threading.Thread):
                             self.log.info("Closing client thread.")
                             break
                             
-                        elif msg == "FLASH":
-                            self.out_q.put([msg_nbr, msg])
-
-                        elif msg == "RESTART_APP":
-                            self.out_q.put([msg_nbr, msg])
-
-                        elif msg == "START_APP":
-                            self.out_q.put([msg_nbr, msg])
-
-                        elif msg == "STOP_APP":
-                            self.out_q.put([msg_nbr, msg])
-                        
                         else:
-                            self.LGTC_set_state("LGTC_WARNING")
-                            self.log.warning("Unsupported SYS command!")
-
+                            self.out_q.put([msg_nbr, msg])
 
                     # EXPERIMENT COMMANDS - experiment command
                     else:
@@ -181,9 +177,9 @@ class zmq_client_thread(threading.Thread):
         self.client.transmit_async(["-1", state])
 
 
-# 
-# This thread is designed for communication with controller script and updating LGTC 
-# states. If experiment uses VESNA device, this thread can compile and flash it. 
+
+# This thread is designed for communication with controller_broker script - forwarding commands
+# and responses & updating LGTC states.
 
 # ----------------------------------------------------------------------------------------
 # POSSIBLE LGTC STATES
@@ -204,26 +200,30 @@ class zmq_client_thread(threading.Thread):
 # SUPPORTED COMMANDS
 # ----------------------------------------------------------------------------------------
 # Incoming commands must be formated as a list with 2 string arguments: message number 
-# and command itself (example: ["66", "STATE"]). Message number is used as a sequence
+# and command itself (example: ["66", "SEC"]). Message number is used as a sequence
 # number, but if it is set to "-1", command represents SYSTEM COMMAND:
 #
 # --> SYSTEM COMMANDS - used for controll over the LGTC monitoring application
 #
-#       * START_APP       - start the experiment application
-#       * STOP_APP        -
-#       * RESTART_APP     - 
-#       * FLASH           - flash VESNA with experiment application
-#       * SYNC_WITH_VESNA - start the serial monitor
-#       * EXIT            - exit monitoring application
 #       * STATE           - return the current state of monitoring application
-#       * SYNC            - used to synchronize LGTC with broker/server
+#       * EXIT            - exit monitoring application
 #       * ACK             - acknowledge packet sent as a response on every message
-#       
+#       * FLASH           - flash VESNA with experiment application
+#       * RESET           - reset VESNA device
+#       * BROKER_DIED     - if broker is not responding, inform serial monitor about it
+#       * SYNC            - used to synchronize LGTC with broker/server
+#
+# System commands are also used to update device state!
+#
 # --> EXPERIMENT COMMANDS - used for controll over the VESNA experiment application
 #
+#       * START           - start the experiment application
+#       * STOP            -
+#       * RESTART         - 
+#       * END             - when VESNA stops the experiment, this cmd is sent to broker
+#       * DURRATION       - return predefined duration of the application
 #       * LINES           - return the number of lines stored in measurement file
 #       * SEC             - return the number of elapsed seconds since the beginning of exp.
 #       TODO:
-#       They should start with the char "*" so VESNA will know?
 #       Depend on Contiki-NG application
-#
+

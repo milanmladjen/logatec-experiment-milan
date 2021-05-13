@@ -49,60 +49,65 @@ PROCESS_THREAD(serial_input_process, ev, data)
 void
 input_command(char *data){
 	
-    char cmd = data[0];
-	char arg[8];
+    char cmd_sign = data[0];
+	char cmd[6];
+	char arg[6];
 	char *p;
 
-	// Possible commands
-	const char carg1[] = "SET_ROOT";
-	const char carg2[] = "SOMEVAL";
+	// Possible commands:
+	// 5 characters reserved for commands, other 5 reserved for arguments
+	const char cmd_1[] = "START";
+	const char cmd_2[] = "STOP";
+	const char cmd_3[] = "ROOT";
+	const char cmd_4[] = "DURAT";
+	const char cmd_5[] = "VAL";
 
-    switch(cmd){
-		// SYNC cmd
+	switch(cmd_sign){
+		// SYNC command
 		case '@':
 			printf("@ \n");
 			break;
 
-		// START cmd	
-		case '>':
-			process_start(&experiment_process, NULL);
-			break;
+		// COMMANDS
+		case '$':
+			// Get command 
+			p = data + 2;
+			memcpy(cmd, p, 5);
+			cmd[5] = '\0';
 
-		// STOP cmd
-		case '=':
-			printf("= Application stopped.\n");
-			process_exit(&experiment_process);
-			break;
+			// Get argument
+			p = data + 7;
+			memcpy(arg, p, 5);
+			arg[5] = '\0';
 
-		// APP DURATION
-		case '&':
-			p = data + 1;
-			strcpy(arg, p);
-			app_duration = atoi(arg);
-			printf("Received app duration %ld \n", app_duration);
-			break;
-
-		// COMAND
-		case '*':
-			p = data + 1;
-			printf("Received command %s \n", p);
-			strcpy(arg, p);
-
-			if(strcmp(arg, carg1) == 0){
+			// $ START
+			if(strcmp(cmd, cmd_1) == 0){
+				process_start(&experiment_process, NULL);
+			}
+			// $ STOP
+			else if(strcmp(cmd, cmd_2) == 0){
+				printf("$ STOP\n");
+				process_exit(&experiment_process);
+			}
+			// $ ROOT
+			else if(strcmp(cmd, cmd_3) == 0){
 				set_device_as_root();
 			}
-			else if(strcmp(arg, carg2) == 0){
-				printf("* Some value is 10 \n");
+			// $ DURRA360
+			else if(strcmp(cmd, cmd_4) == 0){
+				app_duration = atoi(arg);
+				printf("Received app duration %ld \n", app_duration);
+			}
+			// $ VAL
+			else if(strcmp(cmd, cmd_5) == 0){
+				printf("$ Some value is 10 \n");
 			}
 			else{
-				printf("* Unsupported command: %s \n", p);
+				printf("$ Unsupported command: %s \n", p);
 			}
-			break;
 
-		default:
-			printf("Unknown cmd \n");
 			break;
-    }
+	}
 }
 
 /*---------------------------------------------------------------------------*/
@@ -113,8 +118,8 @@ PROCESS_THREAD(experiment_process, ev, data)
 
 	PROCESS_BEGIN();
 
-	// Send start command ('>') back to LGTC so it knows we started the experiment
-	printf("> Application started!\n");
+	// Send ACK back to LGTC so it knows we started the experiment
+	printf("$ START\n");
 
 	// Setup a periodic timer that expires after 1 second
 	etimer_set(&timer, SECOND);
@@ -127,13 +132,13 @@ PROCESS_THREAD(experiment_process, ev, data)
 
 		if((curr_instance.used) && (device_in_rpl_network != 1)){
 			// TODO: What if devices exits network?
-			printf("*JOINED RPL NETWORK\n");
+			printf("$ JOINED\n");
 			device_in_rpl_network = 1;
 		}
 
 		// If elapsed seconds are equal to APP_DURATION, exit process
 		if(time_counter == app_duration) {
-			printf("= \n");	// Send stop command ('=') to LGTC
+			printf("$ END\n");	// Send stop command ('=') to LGTC
 			PROCESS_EXIT();
 		}
 
@@ -153,8 +158,8 @@ void
 set_device_as_root(void){
 	if(!NETSTACK_ROUTING.node_is_root()) {
 		NETSTACK_ROUTING.root_start();
-		printf("*SET AS RPL ROOT\n");
+		printf("$ ROOT\n");
 	} else {
-		printf("* Device is already a DAG root\n");
+		printf("$ Device is already a DAG root\n");
 	}
 }

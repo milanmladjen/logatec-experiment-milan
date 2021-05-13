@@ -132,32 +132,23 @@ class serial_monitor():
         return True
 
 
-    def start_app(self, app_duration):
-        self.log.debug("Starting application")
-        self.write_line(">")
-
-        if not self.wait_response(3, ">"):
-            return False
-
-        self.write_line("&"+app_duration)
-
-        return True
-
-    def stop_app(self):
-        self.log.debug("Stopping application")
-        self.write_line("=")
-
-        if not self.wait_response(3, "="):
-            return False
-    
-        return True
-
-
     def send_command(self, command):
         self.log.debug("Serial send %s command to VESNA" % command)
 
-        # Append '*' before command so VESNA will know
-        self.write_line("*" + command)
+        if len(command) > 5:
+            self.log.warning("Command must be only 5 characters long!")
+        else:
+            self.write_line("$ " + command)
+
+    def send_command_with_arg(self, command, arg):
+        self.log.debug("Serial send %s command with argument %s to VESNA" % (command, arg))
+        
+        if len(command) > 5:
+            self.log.warning("Command must be only 5 characters long!")
+        elif len(command) > 5:
+            self.log.warning("Argument must be only 5 characters long!")
+        else:
+            self.write_line("$ " + command + arg)
 
 
 
