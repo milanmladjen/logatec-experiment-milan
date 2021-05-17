@@ -36,8 +36,8 @@ class Nodes {
 
         // Colors of each state
         this.state_colors = [
-            {state:"ONLINE", color:"black"},
-            {state:"OFFLINE", color:"gray"},
+            {state:"ONLINE", color:"gray"},
+            {state:"OFFLINE", color:"white"},
             {state:"COMPILING", color:"yellow"},
             {state:"RUNNING", color:"green"},
             {state:"STOPPED", color:"blue"},
@@ -48,10 +48,10 @@ class Nodes {
             {state:"VESNA_ERR", color:"purple"},
             {state:"LGTC_WARNING", color:"orange"},
 
-            // Contiki states
-            {state:"JOINED_NETWORK", color:"olive"},
-            {state:"EXITED_NETWORK", color:"olive"},
-            {state:"DAG_ROOT", color:"darkolivegreen"}
+            // Contiki states - color of border line
+            {state:"JOINED_NETWORK", color:"white"},
+            {state:"EXITED_NETWORK", color:"white"},
+            {state:"DAG_ROOT", color:"black"}
         ]
 
         this.testbed_devices = [
@@ -179,16 +179,15 @@ class Nodes {
 
             // Contiki-NG states
             if (state == "DAG_ROOT"){
-                console.log("Device is dag root!")
-                let shadow = "-2px 0 " + col +", 0 2px " + col + ", 2px 0 " + col +", 0 -2px " + col + ";";
-                $("#node_" + loc).css("textShadow", shadow);
+                let border = "-1px 0 " + col +", 0 1px " + col + ", 1px 0 " + col +", 0 -1px " + col;
+                $("#node_" + loc).css("textShadow", border);
             }
             else if(state == "JOINED_NETWORK"){
-                let shadow = "-2px 0 " + col +", 0 2px " + col + ", 2px 0 " + col +", 0 -2px " + col + ";";
-                $("#node_" + loc).css({"text-shadow":shadow});
+                let border = "-1px 0 " + col +", 0 1px " + col + ", 1px 0 " + col +", 0 -1px " + col;
+                $("#node_" + loc).css("textShadow", border);
             }
             else if(state == "EXITED_NETWORK"){
-                $("#node_" + loc).css({"text-shadow":0});
+                $("#node_" + loc).css("textShadow", "none");
             }
 
             else{
