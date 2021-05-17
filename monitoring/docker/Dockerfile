@@ -32,4 +32,6 @@ EXPOSE 5563
 # Start the python script
 CMD ["python3", "monitoring/controller_broker.py"]
 
-# docker run -p 5561:5561 -p 5562:5562 -p 5563:5563 controller
+# Local test:
+# docker build -t controller -f monitoring/docker/Dockerfile .
+# docker run -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM=1 -e RADIO_TYPE=test_type controller
