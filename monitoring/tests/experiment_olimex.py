@@ -234,7 +234,7 @@ class experiment():
                             self.log.debug("Device joined RPL network!")
 
                         elif resp == "EXIT_DAG":
-                            #self.LGTC_send_sys_resp(resp)
+                            self.LGTC_send_sys_resp(resp)
                             self.log.debug("Device exited RPL network!")
 
                         elif resp == "ROOT":

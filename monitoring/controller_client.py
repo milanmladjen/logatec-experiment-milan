@@ -81,11 +81,10 @@ class zmq_client_thread(threading.Thread):
                         self.LGTC_set_state("JOINED_NETWORK")
 
                     elif response[1] == "EXIT_DAG":
-                        #self.LGTC_set_state("")
-                        print("TODO")
+                        self.LGTC_set_state("EXITED_NETWORK")
                         
                     elif response[1] == "ROOT":
-                        self.LGTC_set_state("RPL_ROOT")
+                        self.LGTC_set_state("DAG_ROOT")
 
                     elif response[1] == "VESNA_TIMEOUT":
                         self.LGTC_set_state("TIMEOUT")

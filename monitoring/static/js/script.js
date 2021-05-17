@@ -43,13 +43,15 @@ class Nodes {
             {state:"STOPPED", color:"blue"},
             {state:"FINISHED", color:"turquoise"},
 
-            {state:"JOINED_NETWORK", color:"olive"},
-            {state:"RPL_ROOT", color:"darkolivegreen"},
-
             {state:"TIMEOUT", color:"red"},
             {state:"COMPILE_ERR", color:"pink"},
             {state:"VESNA_ERR", color:"purple"},
-            {state:"LGTC_WARNING", color:"orange"}
+            {state:"LGTC_WARNING", color:"orange"},
+
+            // Contiki states
+            {state:"JOINED_NETWORK", color:"olive"},
+            {state:"EXITED_NETWORK", color:"olive"},
+            {state:"DAG_ROOT", color:"darkolivegreen"}
         ]
 
         this.testbed_devices = [
@@ -170,20 +172,37 @@ class Nodes {
     update_dev(name, state){
         let loc = this._get_dev_loc(name);
         let ip = this._get_dev_ip(name);
+        let col = this._get_state_color(state);
 
         if (loc > 0){
             $("#node_" + loc).css("visibility", "visible");
-            $("#node_" + loc).css("color", this._get_state_color(state));
-        
-            // Update and show tooltip
-            // Had problems with updating HTML template - creating new one from scratch
-            var new_content = "<table><tr><th>Name: </th><td>" + name + 
-            "</td></tr><tr><th>IP: </th><td>" + ip +
-            "</td></tr><tr><th>Location: </th><td>" + loc +
-            "</td></tr><tr><th>Status: </th><td>" + state +
-            "</td></tr></table>";
+
+            // Contiki-NG states
+            if (state == "DAG_ROOT"){
+                let shadow = "-2px 0 " + col +", 0 2px " + col + ", 2px 0 " + col +", 0 -2px " + col + ";"
+                $("#node_" + loc).css({"text-shadow":shadow});
+            }
+            else if(state == "JOINED_NETWORK"){
+                let shadow = "-2px 0 " + col +", 0 2px " + col + ", 2px 0 " + col +", 0 -2px " + col + ";"
+                $("#node_" + loc).css({"text-shadow":shadow});
+            }
+            else if(state == "EXITED_NETWORK"){
+                $("#node_" + loc).css({"text-shadow":0});
+            }
+
+            else{
+                $("#node_" + loc).css("color", col);
             
-            $("#node_" + loc).tooltipster("content", $((new_content)));
+                // Update and show tooltip
+                // Had problems with updating HTML template - creating new one from scratch
+                var new_content = "<table><tr><th>Name: </th><td>" + name + 
+                "</td></tr><tr><th>IP: </th><td>" + ip +
+                "</td></tr><tr><th>Location: </th><td>" + loc +
+                "</td></tr><tr><th>Status: </th><td>" + state +
+                "</td></tr></table>";
+                
+                $("#node_" + loc).tooltipster("content", $((new_content)));
+            }
         }
     }
 
