@@ -177,7 +177,7 @@ class Nodes {
         if (loc > 0){
             $("#node_" + loc).css("visibility", "visible");
 
-            // Contiki-NG states
+            // Contiki-NG network states
             if (state == "DAG_ROOT"){
                 let border = "-1px 0 " + col +", 0 1px " + col + ", 1px 0 " + col +", 0 -1px " + col;
                 $("#node_" + loc).css("textShadow", border);
