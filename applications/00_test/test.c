@@ -20,19 +20,18 @@
 
 /*---------------------------------------------------------------------------*/
 #define SECOND						(1000)
-#define DEFAULT_APP_DUR_IN_SEC		(60 * 60)
+#define DEFAULT_APP_DUR_IN_SEC		(10 * 60)
 
 uint32_t app_duration = DEFAULT_APP_DUR_IN_SEC;
-uint8_t device_in_rpl_network = 0;
 
 /*---------------------------------------------------------------------------*/
 PROCESS(experiment_process, "Experiment process");
 PROCESS(serial_input_process, "Serial input command");
-AUTOSTART_PROCESSES(&serial_input_process);
+PROCESS(check_network_process, "Check network process");
+AUTOSTART_PROCESSES(&serial_input_process, &check_network_process);
 
 /*---------------------------------------------------------------------------*/
 void input_command(char *data);
-void set_device_as_root(void);
 
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(serial_input_process, ev, data)
@@ -91,7 +90,12 @@ input_command(char *data){
 			}
 			// $ ROOT
 			else if(strcmp(cmd, cmd_3) == 0){
-				set_device_as_root();
+				if(!NETSTACK_ROUTING.node_is_root()) {
+					NETSTACK_ROUTING.root_start();
+					printf("$ ROOT\n");
+				} else {
+					printf("$ Device is already a DAG root\n");
+				}
 			}
 			// $ DURRA360
 			else if(strcmp(cmd, cmd_4) == 0){
@@ -108,6 +112,43 @@ input_command(char *data){
 
 			break;
 	}
+}
+
+/*---------------------------------------------------------------------------*/
+// Process to check when device enters the RPL network
+// It takes some time for a device to give up on the DAG network (3min).
+// (cur_instance.used) is still true even when device is allready out of the 
+// network, scanning for new parents. Maybe you can use TSCH MAC WARNING:
+// "[WARN: TSCH      ] leaving the network stats: xxxxx"
+PROCESS_THREAD(check_network_process, ev, data)
+{	
+	static struct etimer net;
+	static uint8_t in_network = 0;
+
+    PROCESS_BEGIN();
+	etimer_set(&net, SECOND);
+
+    while(1){
+		// If device exits the RPL network
+		if(in_network){
+			if(!curr_instance.used){
+				printf("$ EXIT_DAG\n");
+				in_network = 0;
+			}
+		}
+		// If device came to RPL network
+		else if(curr_instance.used){
+			// If device is not the root
+			if(!NETSTACK_ROUTING.node_is_root()){
+				printf("$ JOIN_DAG\n");
+			}
+			in_network = 1;
+		}
+
+		PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&net));
+		etimer_reset(&net);
+    }
+    PROCESS_END();
 }
 
 /*---------------------------------------------------------------------------*/
@@ -130,12 +171,6 @@ PROCESS_THREAD(experiment_process, ev, data)
 
 		printf("Hello there %ld!\n", time_counter);
 
-		if((curr_instance.used) && (device_in_rpl_network != 1)){
-			// TODO: What if devices exits network?
-			printf("$ JOINED\n");
-			device_in_rpl_network = 1;
-		}
-
 		// If elapsed seconds are equal to APP_DURATION, exit process
 		if(time_counter == app_duration) {
 			printf("$ END\n");	// Send stop command ('=') to LGTC
@@ -151,15 +186,4 @@ PROCESS_THREAD(experiment_process, ev, data)
 	}
 
 	PROCESS_END();
-}
-
-/*---------------------------------------------------------------------------*/
-void
-set_device_as_root(void){
-	if(!NETSTACK_ROUTING.node_is_root()) {
-		NETSTACK_ROUTING.root_start();
-		printf("$ ROOT\n");
-	} else {
-		printf("$ Device is already a DAG root\n");
-	}
 }

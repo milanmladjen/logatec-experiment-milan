@@ -64,7 +64,7 @@ try:
     APP_DURATION = int(os.environ['APP_DURATION_MIN'])
 except:
     print("No app duration was defined...going with default 60min")
-    APP_DURATION = 60
+    APP_DURATION = 10
 
 try:
     APP_DIR = int(os.environ['APP_DIR'])
@@ -127,7 +127,9 @@ class experiment():
             return        
 
         # Send app duration to VESNA
-        self.monitor.send_command_with_arg("DURAT", str(APP_DURATION))
+        # TODO: Controll this value with monitor??
+        # Each time application starts, send duration to VESNA...if user wants to change it, he can do it with new command...
+        self.monitor.send_command_with_arg("DURAT", str(APP_DURATION * 60))
 
         elapsed_sec = 0
         timeout_cnt = 0
@@ -201,7 +203,7 @@ class experiment():
                     if data[0] == "$":
 
                         # Remove first 2 char '$ ' and last two char '\n'
-                        resp = data[2:-2]
+                        resp = data[2:-1]
                         
                         if resp == "START":
                             elapsed_sec = 0
@@ -227,9 +229,13 @@ class experiment():
                             if broker_died:
                                 break
                         
-                        elif resp == "JOINED":
+                        elif resp == "JOIN_DAG":
                             self.LGTC_send_sys_resp(resp)
                             self.log.debug("Device joined RPL network!")
+
+                        elif resp == "EXIT_DAG":
+                            #self.LGTC_send_sys_resp(resp)
+                            self.log.debug("Device exited RPL network!")
 
                         elif resp == "ROOT":
                             self.LGTC_send_sys_resp(resp)
@@ -237,8 +243,10 @@ class experiment():
                             self.log.debug("Device is now RPL DAG root!")
 
                         else:
-                            self.LGTC_send_cmd_resp(self._command_waiting, resp)
-                            self.log.debug("Got response on cmd " + resp)
+                            # TODO: If there is no number for ZMQ message, we got error
+                            if(self._command_waiting != None):
+                                self.LGTC_send_cmd_resp(self._command_waiting, resp)
+                                self.log.debug("Got response on cmd " + resp)
                         
                         self._command_waiting = None
                         self._command_timeout = False
@@ -330,7 +338,7 @@ class experiment():
         except KeyboardInterrupt:
             self.log.info("\n Keyboard interrupt!.. Stopping the monitor")
             self.LGTC_app_exit()
-            self.LGTC_sys_resp("END_OF_APP")
+            self.LGTC_send_sys_resp("END")
 
         except serial.SerialException:
             self.log.error("Serial error!.. Stopping the monitor")
@@ -377,7 +385,7 @@ class experiment():
     def LGTC_vesna_connect(self):
         if not self.monitor.connect_to("ttyUSB0"):
             self.f.error("Couldn't connect to VESNA.")
-            self.LGTC_sys_resp("VESNA_ERR")
+            self.LGTC_send_sys_resp("VESNA_ERR")
             self.log.error("Couldn't connect to VESNA.")
             return
         

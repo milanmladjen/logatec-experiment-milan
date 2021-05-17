@@ -77,9 +77,13 @@ class zmq_client_thread(threading.Thread):
                     elif response[1] == "SYNCED_WITH_VESNA":
                         self.LGTC_set_state("ONLINE")
 
-                    elif response[1] == "JOINED":
+                    elif response[1] == "JOIN_DAG":
                         self.LGTC_set_state("JOINED_NETWORK")
 
+                    elif response[1] == "EXIT_DAG":
+                        #self.LGTC_set_state("")
+                        print("TODO")
+                        
                     elif response[1] == "ROOT":
                         self.LGTC_set_state("RPL_ROOT")
 
