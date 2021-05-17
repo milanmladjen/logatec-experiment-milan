@@ -179,11 +179,12 @@ class Nodes {
 
             // Contiki-NG states
             if (state == "DAG_ROOT"){
-                let shadow = "-2px 0 " + col +", 0 2px " + col + ", 2px 0 " + col +", 0 -2px " + col + ";"
-                $("#node_" + loc).css({"text-shadow":shadow});
+                console.log("Device is dag root!")
+                let shadow = "-2px 0 " + col +", 0 2px " + col + ", 2px 0 " + col +", 0 -2px " + col + ";";
+                $("#node_" + loc).css("textShadow", shadow);
             }
             else if(state == "JOINED_NETWORK"){
-                let shadow = "-2px 0 " + col +", 0 2px " + col + ", 2px 0 " + col +", 0 -2px " + col + ";"
+                let shadow = "-2px 0 " + col +", 0 2px " + col + ", 2px 0 " + col +", 0 -2px " + col + ";";
                 $("#node_" + loc).css({"text-shadow":shadow});
             }
             else if(state == "EXITED_NETWORK"){
