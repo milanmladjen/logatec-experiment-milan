@@ -20,6 +20,9 @@ import logging
 # Variable stores active experiment type
 EXPERIMENT = "None"
 
+# IP address of controller container (canged in SMS with start.sh script to 193.2.205.19:5563)
+CONTROLLER_HOSTNAME = "tcp://192.168.2.148:5563"
+
 
 # --------------------------------------------------------------------------------------------
 # INIT
@@ -125,10 +128,7 @@ def ZMQ_thread(input_q):
     context = zmq.Context()
     zmq_soc = context.socket(zmq.DEALER)
     zmq_soc.setsockopt(zmq.IDENTITY, b"flask_process")
-    #zmq_soc.connect("ipc:///tmp/zmq_ipc")      # local test (on PC)
-    #zmq_soc.connect("tcp://192.168.2.191:5563")# local test (Docker)
-    zmq_soc.connect("tcp://192.168.2.148:5563")# local test (WiFi)
-    #zmq_soc.connect("tcp://193.2.205.19:5563") # testbed 
+    zmq_soc.connect(CONTROLLER_HOSTNAME) 
 
     poller = zmq.Poller()
     poller.register(zmq_soc, zmq.POLLIN)
