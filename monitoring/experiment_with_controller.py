@@ -128,7 +128,7 @@ class experiment():
         # Send app duration to VESNA
         # TODO: Controll this value with monitor??
         # Each time application starts, send duration to VESNA...if user wants to change it, he can do it with new command...
-        self.monitor.send_command_with_arg("DURAT", str(APP_DURATION))
+        self.monitor.send_command_with_arg("DURAT", str(APP_DURATION * 60))
 
         elapsed_sec = 0
         timeout_cnt = 0
@@ -174,6 +174,7 @@ class experiment():
                         # Every 3 seconds
                         if elapsed_sec % 3 == 0:
                             if self._command_waiting != None:
+                                self.log.debug("Waiting for response...")
                                 # If _command_timeout allready occurred - response on command was
                                 # not captured for more than 3 seconds. Something went wrong, 
                                 # so stop waiting for it
