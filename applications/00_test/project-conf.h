@@ -21,7 +21,7 @@
 #define RF2XX_CONF_DRIVER_STATS                     (0)
 
 // For TSCH
-#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE          (uint8_t[]){ 11, 15, 20, 26 }   // For testing
+#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE          (uint8_t[]){ 11, 12, 13, 14, 15, 16, 17,  20, 26 }   // For testing
 
 // For CSMA
 #define IEEE802154_CONF_DEFAULT_CHANNEL             (26)
