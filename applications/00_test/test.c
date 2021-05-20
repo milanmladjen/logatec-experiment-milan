@@ -11,6 +11,11 @@
 #include "../../contiki-ng/os/net/routing/routing.h"
 #include "dev/serial-line.h"
 
+// For printing IP address
+#include "net/ipv6/uiplib.h"
+#include "net/ipv6/uip-ds6.h"
+#include "sys/log.h"
+
 // For detecting RPL network (RPL-specific commands)
 #if ROUTING_CONF_RPL_LITE
 #include "net/routing/rpl-lite/rpl.h"
@@ -59,7 +64,8 @@ input_command(char *data){
 	const char cmd_2[] = "STOP";
 	const char cmd_3[] = "ROOT";
 	const char cmd_4[] = "DURAT";
-	const char cmd_5[] = "VAL";
+	const char cmd_5[] = "IP";
+	const char cmd_5[] = "PAREN";
 
 	switch(cmd_sign){
 		// SYNC command
@@ -102,9 +108,34 @@ input_command(char *data){
 				app_duration = atoi(arg);
 				printf("Received app duration %ld \n", app_duration);
 			}
-			// $ VAL
+			// $ IPADR
 			else if(strcmp(cmd, cmd_5) == 0){
-				printf("$ Some value is 10 \n");
+				// Print IP address of the device
+				#if NETSTACK_CONF_WITH_IPV6
+				{
+					uip_ds6_addr_t *lladdr;
+					char buf[UIPLIB_IPV6_MAX_STR_LEN];
+					lladdr = uip_ds6_get_link_local(-1);
+					uiplib_ipaddr_snprint(buf, sizeof(buf), &lladdr->ipaddr);
+
+					printf("$ My IP address is:");
+					printf(buf);
+					printf("\n");
+				}
+				#endif
+			}
+			// $ PAREN(t)
+			else if(strcmp(cmd, cmd_6) == 0){
+				if(!NETSTACK_ROUTING.node_is_root()){
+					uip_ipaddr_t *parent_ipaddr;
+					char buf[UIPLIB_IPV6_MAX_STR_LEN];
+					parent_ipaddr = rpl_parent_get_ipaddr(curr_instance.dag.preferred_parent);
+					uiplib_ipaddr_snprint(buf, sizeof(buf), parent_ipaddr);
+
+					printf("$ My parent is:");
+					printf(buf);
+					printf("\n");
+				}
 			}
 			else{
 				printf("$ Unsupported command: %s \n", p);
@@ -129,8 +160,9 @@ PROCESS_THREAD(check_network_process, ev, data)
 	etimer_set(&net, SECOND);
 
     while(1){
-		// If device exits the RPL network
+		// If device is in the network
 		if(in_network){
+			// If device exits the netowrk
 			if(!curr_instance.used){
 				printf("$ EXIT_DAG\n");
 				in_network = 0;
