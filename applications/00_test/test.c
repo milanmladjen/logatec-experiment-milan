@@ -65,7 +65,7 @@ input_command(char *data){
 	const char cmd_3[] = "ROOT";
 	const char cmd_4[] = "DURAT";
 	const char cmd_5[] = "IP";
-	const char cmd_5[] = "PAREN";
+	const char cmd_6[] = "PAREN";
 
 	switch(cmd_sign){
 		// SYNC command
