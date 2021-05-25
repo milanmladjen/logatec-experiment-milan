@@ -106,4 +106,9 @@ extern bool tsch_cs_process(void);
 #define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
 #define TSCH_LOG_CONF_PER_SLOT                     1
 
+
+#define UART1_CONF_BAUDRATE                         (460800)
+
+//#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE          (uint8_t[]){ 11, 12} 
+
 #endif /* __PROJECT_CONF_H__ */
