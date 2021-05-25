@@ -64,11 +64,11 @@ except:
     APP_DURATION = 10
 
 try:
-    APP_DIR = int(os.environ['APP_DIR'])
+    APP_DIR = os.environ['APP_DIR']
 except:
     print("No application was given...aborting!")
     #sys.exit(1) TODO
-    APP_DIR = "00_test"
+    APP_DIR = "02_acs"
 
 # TODO: change when in container
 APP_PATH = "/root/logatec-experiment/applications/" + APP_DIR
