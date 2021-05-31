@@ -287,6 +287,9 @@ if __name__ == "__main__":
                         broker.frontend_deviceUpdate(address, data)
                         log.info("New state of device %s: %s" % (address, data))
 
+                elif number == "0":
+                    broker.frontend_info(data)
+
                 # EXPERIMENT COMMAND (response)
                 else:
                     # Forward response back to the server

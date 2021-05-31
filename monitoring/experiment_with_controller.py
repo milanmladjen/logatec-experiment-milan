@@ -242,10 +242,13 @@ class experiment():
                         self.log.debug("Device is now RPL DAG root!")
 
                     else:
-                        # TODO: If there is no number for ZMQ message, we got error
-                        if(self._command_waiting != None):
+                        # TODO: If there is no number for ZMQ message, we got info message for monitor
+                        if(self._command_waiting):
                             self.LGTC_send_cmd_resp(self._command_waiting, resp)
                             self.log.debug("Got response on cmd " + resp)
+                        else:
+                            self.LGTC_send_info_resp(resp)
+                            self.log.debug("Got info from VESNA: " + resp)
                     
                     self._command_waiting = None
                     self._command_timeout = False
@@ -344,6 +347,9 @@ class experiment():
     # ------------------------------------------------------------------------------------
     def LGTC_send_sys_resp(self, state):
         self.out_q.put(["-1", state])
+
+    def LGTC_send_info_resp(self, state):
+        self.out_q.put(["0", state])
 
     def LGTC_send_cmd_resp(self, nbr, resp):
         self.out_q.put([nbr, resp])
