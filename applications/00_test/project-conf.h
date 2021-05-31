@@ -17,8 +17,8 @@
 #define UART1_CONF_BAUDRATE                         (460800)
 #define WATCHDOG_CONF_ENABLED                       (0)             // Doesn.t work yet
 
-#define RF2XX_CONF_PACKET_STATS                     (0)
-#define RF2XX_CONF_DRIVER_STATS                     (0)
+#define RF2XX_CONF_PACKET_STATS                     (1)
+#define RF2XX_CONF_DRIVER_STATS                     (1)
 
 // For TSCH
 #define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE          (uint8_t[]){ 11, 12, 13, 14, 15 }   // For testing

@@ -23,6 +23,10 @@
 #include "net/routing/rpl-classic/rpl.h"
 #endif
 
+// Radio driver statistics
+#include "arch/platform/vesna/dev/at86rf2xx/rf2xx.h"
+#include "arch/platform/vesna/dev/at86rf2xx/rf2xx_stats.h"
+
 /*---------------------------------------------------------------------------*/
 #define SECOND						(1000)
 #define DEFAULT_APP_DUR_IN_SEC		(10 * 60)
@@ -93,6 +97,9 @@ input_command(char *data){
 			else if(strcmp(cmd, cmd_2) == 0){
 				printf("$ STOP\n");
 				process_exit(&experiment_process);
+				if(NETSTACK_ROUTING.node_is_root()){
+					NETSTACK_ROUTING.leave_network();
+				}
 			}
 			// $ ROOT
 			else if(strcmp(cmd, cmd_3) == 0){
@@ -199,12 +206,27 @@ PROCESS_THREAD(experiment_process, ev, data)
 
 	time_counter = 0;
 
+	// Empty statistic buffers if they have some values from before
+	RF2XX_STATS_RESET();
+	STATS_clear_packet_stats();
+
 	while(1) {
 
-		printf("Hello there %ld!\n", time_counter);
+		// Every 10 seconds, print packet statistics
+		if((time_counter % 10) == 0){
+			STATS_print_packet_stats();
+
+			if(NETSTACK_ROUTING.node_is_root()){
+				STATS_print_driver_stats();
+			}
+		}
+
 
 		// If elapsed seconds are equal to APP_DURATION, exit process
 		if(time_counter == app_duration) {
+			// Print driver statistics
+			STATS_display_driver_stats();
+
 			printf("$ END\n");	// Send stop command ('=') to LGTC
 			PROCESS_EXIT();
 		}
