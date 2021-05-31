@@ -1,11 +1,11 @@
 # Noise generation with AT86RF231 continuous transmission test mode
 
 This app configures radio in continuous transmission test mode.
-Default setup is:
+Default setup should be, but is not...TODO:
 
 * Freq --> channel 16
-* Power --> max
-* PRBS mode
+* Power --> max (0x0 = max, 0xF = min)
+* PRBS mode 
 * payload --> 0xAA
 
 ## You can configure
