@@ -242,6 +242,7 @@ PROCESS_THREAD(check_network_process, ev, data)
 PROCESS_THREAD(experiment_process, ev, data)
 {
 	static uint32_t time_counter = 0;
+	static struct etimer timer;
 
 	PROCESS_BEGIN();
 
@@ -270,7 +271,7 @@ PROCESS_THREAD(experiment_process, ev, data)
 			PROCESS_YIELD_UNTIL(etimer_expired(&et));
 			etimer_reset(&et);
 		}
-
+	}
 #endif  WITH_PERIODIC_ROUTES_PRINT */
 
 		while(1) {
@@ -301,7 +302,7 @@ PROCESS_THREAD(experiment_process, ev, data)
 		// Second has passed
 		time_counter++;
 	}
-	}
+	
 
   PROCESS_END();
 }
