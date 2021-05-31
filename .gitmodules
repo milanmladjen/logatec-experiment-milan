@@ -1,7 +1,7 @@
 [submodule "contiki-ng"]
 	path = contiki-ng
-	url = https://github.com/9morano/contiki-ng
-	branch = exp/acs
+	url = https://github.com/gcerar/contiki-ng
+	branch = logatec-experiment/acs
 [submodule "vesna-drivers"]
 	path = vesna-drivers
 	url = git@github.com:logatec3/vesna-drivers.git
