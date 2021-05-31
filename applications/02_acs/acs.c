@@ -248,10 +248,10 @@ PROCESS_THREAD(experiment_process, ev, data)
     while(1) {
       /* Used for non-regression testing */
       #if (UIP_MAX_ROUTES != 0)
-        PRINTF("$ Routing entries: %u\n", uip_ds6_route_num_routes());
+        PRINTF("Routing entries: %u\n", uip_ds6_route_num_routes());
       #endif
       #if (UIP_SR_LINK_NUM != 0)
-        PRINTF("$ Routing links: %u\n", uip_sr_num_nodes());
+        PRINTF("Routing links: %u\n", uip_sr_num_nodes());
       #endif
       PROCESS_YIELD_UNTIL(etimer_expired(&et));
       etimer_reset(&et);

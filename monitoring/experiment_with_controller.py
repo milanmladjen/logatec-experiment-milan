@@ -247,7 +247,7 @@ class experiment():
                             self.LGTC_send_cmd_resp(self._command_waiting, resp)
                             self.log.debug("Got response on cmd " + resp)
                         else:
-                            self.LGTC_send_info_resp(resp)
+                            self.LGTC_send_info_resp((resp + "\n"))
                             self.log.debug("Got info from VESNA: " + resp)
                     
                     self._command_waiting = None
