@@ -118,4 +118,8 @@ extern bool tsch_cs_process(void);
 #define NETSTACK_MAX_ROUTE_ENTRIES                  (25)
 #define NBR_TABLE_CONF_MAX_NEIGHBORS                (25)
 
+// Radio driver statistics
+#define RF2XX_CONF_PACKET_STATS                     (1)
+#define RF2XX_CONF_DRIVER_STATS                     (1)
+
 #endif /* __PROJECT_CONF_H__ */

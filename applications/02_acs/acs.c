@@ -66,6 +66,11 @@
 #endif
 
 
+// Radio driver statistics
+#include "arch/platform/vesna/dev/at86rf2xx/rf2xx.h"
+#include "arch/platform/vesna/dev/at86rf2xx/rf2xx_stats.h"
+
+/*---------------------------------------------------------------------------*/
 #define SECOND						(1000)
 #define DEFAULT_APP_DUR_IN_SEC		(10 * 60)
 
@@ -139,6 +144,9 @@ input_command(char *data){
 			else if(strcmp(cmd, cmd_2) == 0){
 				printf("$ STOP\n");
 				process_exit(&experiment_process);
+				if(NETSTACK_ROUTING.node_is_root()){
+					NETSTACK_ROUTING.leave_network();
+				}
 			}
 			// $ ROOT
 			else if(strcmp(cmd, cmd_3) == 0){
@@ -233,31 +241,67 @@ PROCESS_THREAD(check_network_process, ev, data)
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(experiment_process, ev, data)
 {
+	static uint32_t time_counter = 0;
 
-  PROCESS_BEGIN();
+	PROCESS_BEGIN();
 
-  NETSTACK_MAC.on();
+	NETSTACK_MAC.on();
 
-  printf("$ START\n");
+	printf("$ START\n");
 
-#if WITH_PERIODIC_ROUTES_PRINT
-  {
-    static struct etimer et;
-    /* Print out routing tables every minute */
-    etimer_set(&et, CLOCK_SECOND * 60);
-    while(1) {
-      /* Used for non-regression testing */
-      #if (UIP_MAX_ROUTES != 0)
-        PRINTF("Routing entries: %u\n", uip_ds6_route_num_routes());
-      #endif
-      #if (UIP_SR_LINK_NUM != 0)
-        PRINTF("Routing links: %u\n", uip_sr_num_nodes());
-      #endif
-      PROCESS_YIELD_UNTIL(etimer_expired(&et));
-      etimer_reset(&et);
-    }
-  }
-#endif /* WITH_PERIODIC_ROUTES_PRINT */
+	// Empty statistic buffers if they have some values from before
+	RF2XX_STATS_RESET();
+	STATS_clear_packet_stats();
+
+/*#if WITH_PERIODIC_ROUTES_PRINT
+	{
+
+		static struct etimer et;
+		// Print out routing tables every minute 
+		etimer_set(&et, CLOCK_SECOND * 60);
+		while(1) {
+			// Used for non-regression testing 
+			#if (UIP_MAX_ROUTES != 0)
+			PRINTF("Routing entries: %u\n", uip_ds6_route_num_routes());
+			#endif
+			#if (UIP_SR_LINK_NUM != 0)
+			PRINTF("Routing links: %u\n", uip_sr_num_nodes());
+			#endif
+			PROCESS_YIELD_UNTIL(etimer_expired(&et));
+			etimer_reset(&et);
+		}
+
+#endif  WITH_PERIODIC_ROUTES_PRINT */
+
+		while(1) {
+
+		// Every 10 seconds, print packet statistics
+		if((time_counter % 10) == 0){
+			STATS_print_packet_stats();
+
+			if(NETSTACK_ROUTING.node_is_root()){
+				STATS_print_driver_stats();
+			}
+		}
+
+
+		// If elapsed seconds are equal to APP_DURATION, exit process
+		if(time_counter == app_duration) {
+			// Print driver statistics
+			STATS_display_driver_stats();
+
+			printf("$ END\n");	// Send stop command ('=') to LGTC
+			PROCESS_EXIT();
+		}
+
+		// Wait for the periodic timer to expire and then restart the timer
+		PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
+		etimer_reset(&timer);
+
+		// Second has passed
+		time_counter++;
+	}
+	}
 
   PROCESS_END();
 }
