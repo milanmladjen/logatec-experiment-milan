@@ -244,7 +244,6 @@ PROCESS_THREAD(experiment_process, ev, data)
 {
 	static uint32_t time_counter = 0;
 	static struct etimer timer;
-	struct tsch_channel_quality qualities[TSCH_STATS_NUM_CHANNELS];
 
 	PROCESS_BEGIN();
 
