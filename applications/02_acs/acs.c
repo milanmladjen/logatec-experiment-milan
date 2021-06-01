@@ -70,11 +70,24 @@
 #include "arch/platform/vesna/dev/at86rf2xx/rf2xx.h"
 #include "arch/platform/vesna/dev/at86rf2xx/rf2xx_stats.h"
 
+// For channel statistics
+#include "tsch-stats.h"
+
 /*---------------------------------------------------------------------------*/
 #define SECOND						(1000)
 #define DEFAULT_APP_DUR_IN_SEC		(10 * 60)
 
 uint32_t app_duration = DEFAULT_APP_DUR_IN_SEC;
+
+
+// structure for channel qualities
+struct tsch_channel_quality {
+  uint8_t channel;
+  // the higher, the better
+  tsch_stat_t metric;
+
+  uint8_t busy;
+};
 
 /*---------------------------------------------------------------------------*/
 PROCESS(experiment_process, "RPL Node");
@@ -82,9 +95,6 @@ PROCESS(serial_input_process, "Serial input command");
 PROCESS(check_network_process, "Check network process");
 
 AUTOSTART_PROCESSES(&serial_input_process, &check_network_process);
-
-
-
 
 /*---------------------------------------------------------------------------*/
 void input_command(char *data);
@@ -243,6 +253,7 @@ PROCESS_THREAD(experiment_process, ev, data)
 {
 	static uint32_t time_counter = 0;
 	static struct etimer timer;
+	struct tsch_channel_quality qualities[TSCH_STATS_NUM_CHANNELS];
 
 	PROCESS_BEGIN();
 
@@ -256,34 +267,24 @@ PROCESS_THREAD(experiment_process, ev, data)
 
 	etimer_set(&timer, CLOCK_SECOND);
 
-/*#if WITH_PERIODIC_ROUTES_PRINT
-	{
+	while(1) {
 
-		static struct etimer et;
-		// Print out routing tables every minute 
-		etimer_set(&et, CLOCK_SECOND * 60);
-		while(1) {
-			// Used for non-regression testing 
-			#if (UIP_MAX_ROUTES != 0)
-			PRINTF("Routing entries: %u\n", uip_ds6_route_num_routes());
-			#endif
-			#if (UIP_SR_LINK_NUM != 0)
-			PRINTF("Routing links: %u\n", uip_sr_num_nodes());
-			#endif
-			PROCESS_YIELD_UNTIL(etimer_expired(&et));
-			etimer_reset(&et);
-		}
-	}
-#endif  WITH_PERIODIC_ROUTES_PRINT */
-
-		while(1) {
-
-		// Every 10 seconds, print packet statistics
-		if((time_counter % 10) == 0){
+		// Every 5 seconds, print packet statistics
+		if((time_counter % 5) == 0){
 			STATS_print_packet_stats();
 
+			// Only root device will print statistics to the monitor as well
 			if(NETSTACK_ROUTING.node_is_root()){
+				
 				STATS_print_driver_stats();
+
+				// Print channel measurements
+				for(uint8_t i = 0; i < TSCH_STATS_NUM_CHANNELS; ++i) {
+					printf("$ Channel %u quality: %u --> busy %u\n",
+						(i + TSCH_STATS_FIRST_CHANNEL),
+						(tsch_stats.channel_free_ewma[i]),
+						(tsch_stats.channel_free_ewma[i] < TSCH_CS_FREE_THRESHOLD));
+				}
 			}
 		}
 
@@ -293,7 +294,7 @@ PROCESS_THREAD(experiment_process, ev, data)
 			// Print driver statistics
 			STATS_display_driver_stats();
 
-			printf("$ END\n");	// Send stop command ('=') to LGTC
+			printf("$ END\n");
 			PROCESS_EXIT();
 		}
 
