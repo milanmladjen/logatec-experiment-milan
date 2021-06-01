@@ -254,6 +254,8 @@ PROCESS_THREAD(experiment_process, ev, data)
 	RF2XX_STATS_RESET();
 	STATS_clear_packet_stats();
 
+	etimer_set(&timer, CLOCK_SECOND);
+
 /*#if WITH_PERIODIC_ROUTES_PRINT
 	{
 
