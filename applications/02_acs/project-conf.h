@@ -110,8 +110,8 @@ extern bool tsch_cs_process(void);
 #define UART1_CONF_BAUDRATE                         (460800)
 
 
-#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE          (uint8_t[]){ 11, 12, 13, 14, 15} 
-#define TSCH_STATS_CONF_NUM_CHANNELS                5
+#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE          (uint8_t[]){ 11, 12, 13, 14, 15, 16, 17} 
+#define TSCH_STATS_CONF_NUM_CHANNELS                7
 #define TSCH_STATS_CONF_FIRST_CHANNEL               11
 
 // Testbed has 21 devices

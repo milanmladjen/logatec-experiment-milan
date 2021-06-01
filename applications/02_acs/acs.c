@@ -80,15 +80,6 @@
 uint32_t app_duration = DEFAULT_APP_DUR_IN_SEC;
 
 
-// structure for channel qualities
-struct tsch_channel_quality {
-  uint8_t channel;
-  // the higher, the better
-  tsch_stat_t metric;
-
-  uint8_t busy;
-};
-
 /*---------------------------------------------------------------------------*/
 PROCESS(experiment_process, "RPL Node");
 PROCESS(serial_input_process, "Serial input command");
