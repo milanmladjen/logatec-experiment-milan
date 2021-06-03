@@ -97,6 +97,7 @@ input_command(char *data){
 			// $ STOP
 			else if(strcmp(cmd, cmd_2) == 0){
 				printf("$ STOP\n");
+				STATS_display_driver_stats();
 				process_exit(&experiment_process);
 				if(NETSTACK_ROUTING.node_is_root()){
 					NETSTACK_ROUTING.leave_network();
