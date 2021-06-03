@@ -247,7 +247,7 @@ PROCESS_THREAD(experiment_process, ev, data)
 
 	PROCESS_BEGIN();
 
-	NETSTACK_MAC.on();
+	//NETSTACK_MAC.on();
 
 	printf("$ START\n");
 
