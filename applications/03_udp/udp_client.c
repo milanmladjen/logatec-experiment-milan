@@ -27,12 +27,24 @@
 #include "arch/platform/vesna/dev/at86rf2xx/rf2xx.h"
 #include "arch/platform/vesna/dev/at86rf2xx/rf2xx_stats.h"
 
+
+// UDP
+#include "random.h"
+#include "net/netstack.h"
+#include "net/ipv6/simple-udp.h"
+
 /*---------------------------------------------------------------------------*/
 #define SECOND						(1000)
 #define DEFAULT_APP_DUR_IN_SEC		(10 * 60)
 
 uint32_t app_duration = DEFAULT_APP_DUR_IN_SEC;
 
+
+#define WITH_SERVER_REPLY  1
+#define UDP_CLIENT_PORT	8765
+#define UDP_SERVER_PORT	5678
+
+static struct simple_udp_connection udp_conn;
 /*---------------------------------------------------------------------------*/
 PROCESS(experiment_process, "Experiment process");
 PROCESS(serial_input_process, "Serial input command");
@@ -41,6 +53,7 @@ AUTOSTART_PROCESSES(&serial_input_process, &check_network_process);
 
 /*---------------------------------------------------------------------------*/
 void input_command(char *data);
+void printf_ip_address(uip_ipaddr_t *ipaddr);
 
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(serial_input_process, ev, data)
@@ -121,12 +134,9 @@ input_command(char *data){
 				#if NETSTACK_CONF_WITH_IPV6
 				{
 					uip_ds6_addr_t *lladdr;
-					char buf[UIPLIB_IPV6_MAX_STR_LEN];
 					lladdr = uip_ds6_get_link_local(-1);
-					uiplib_ipaddr_snprint(buf, sizeof(buf), &lladdr->ipaddr);
-
-					printf("$ My IP address is:");
-					printf(buf);
+					printf("$ My IP address is: ");
+					printf_ip_address(&lladdr->ipaddr);
 					printf("\n");
 				}
 				#endif
@@ -134,13 +144,8 @@ input_command(char *data){
 			// $ PAREN(t)
 			else if(strcmp(cmd, cmd_6) == 0){
 				if(!NETSTACK_ROUTING.node_is_root()){
-					uip_ipaddr_t *parent_ipaddr;
-					char buf[UIPLIB_IPV6_MAX_STR_LEN];
-					parent_ipaddr = rpl_parent_get_ipaddr(curr_instance.dag.preferred_parent);
-					uiplib_ipaddr_snprint(buf, sizeof(buf), parent_ipaddr);
-
-					printf("$ My parent is:");
-					printf(buf);
+					printf("$ My parent is: ");
+					printf_ip_address(rpl_parent_get_ipaddr(curr_instance.dag.preferred_parent));
 					printf("\n");
 				}
 			}
@@ -150,6 +155,12 @@ input_command(char *data){
 
 			break;
 	}
+}
+
+void printf_ip_address(uip_ipaddr_t *ipaddr){
+	char buf[UIPLIB_IPV6_MAX_STR_LEN];
+	uiplib_ipaddr_snprint(buf, sizeof(buf), ipaddr);
+	printf(buf);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -190,25 +201,52 @@ PROCESS_THREAD(check_network_process, ev, data)
     PROCESS_END();
 }
 
+
+/*---------------------------------------------------------------------------*/
+static void
+udp_rx_callback(struct simple_udp_connection *c,
+         const uip_ipaddr_t *sender_addr,
+         uint16_t sender_port,
+         const uip_ipaddr_t *receiver_addr,
+         uint16_t receiver_port,
+         const uint8_t *data,
+         uint16_t datalen)
+{
+
+	printf("Received response '%.*s' from ", datalen, (char *) data);
+	printf_ip_address(sender_addr);
+	#if LLSEC802154_CONF_ENABLED
+	printf(" LLSEC LV:%d", uipbuf_get_attr(UIPBUF_ATTR_LLSEC_LEVEL));
+	#endif
+	printf("\n");
+}
+
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(experiment_process, ev, data)
 {
 	static struct etimer timer;
 	static uint32_t time_counter = 0;
 
+	static uint32_t send_time = 0;
+	static unsigned count;
+  	static char str[32];
+  	uip_ipaddr_t dest_ipaddr;
+
 	PROCESS_BEGIN();
 
 	// Send ACK back to LGTC so it knows we started the experiment
 	printf("$ START\n");
 
-	// Setup a periodic timer that expires after 1 second
-	etimer_set(&timer, SECOND);
-
-	time_counter = 0;
-
 	// Empty statistic buffers if they have some values from before
 	RF2XX_STATS_RESET();
 	STATS_clear_packet_stats();
+
+	// Initialize UDP connection
+	simple_udp_register(&udp_conn, UDP_CLIENT_PORT, NULL, UDP_SERVER_PORT, udp_rx_callback);
+
+	// Setup a periodic timer that expires after 1 second
+	etimer_set(&timer, SECOND);
+	time_counter = 0;
 
 	while(1) {
 
@@ -218,6 +256,26 @@ PROCESS_THREAD(experiment_process, ev, data)
 
 			if(NETSTACK_ROUTING.node_is_root()){
 				STATS_print_driver_stats();
+			}
+		}
+
+		if(!NETSTACK_ROUTING.node_is_root()){
+			// Send some UDP message to root at random interval (in range from 1 to 16 seconds)
+			if(time_counter == send_time){
+				send_time = time_counter + 1 + (random_rand() % 15);
+				printf("Next message in %ld seconds. \n" , (send_time - time_counter));
+
+				if(NETSTACK_ROUTING.node_is_reachable() && NETSTACK_ROUTING.get_root_ipaddr(&dest_ipaddr)) {
+					/* Send to DAG root */
+					printf("Sending request %u to ", count);
+					printf_ip_address(&dest_ipaddr);
+					printf("\n");
+					snprintf(str, sizeof(str), "hello %d", count);
+					simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
+					count++;
+				} else {
+					printf("Not reachable yet\n");
+				}
 			}
 		}
 

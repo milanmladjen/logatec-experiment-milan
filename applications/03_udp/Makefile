@@ -1,5 +1,5 @@
-PROJECT_SOURCES = udp.c
-CONTIKI_PROJECT = udp
+PROJECT_SOURCES = udp_server.c udp_client.c
+CONTIKI_PROJECT = udp_server udp_client
 
 all: $(CONTIKI_PROJECT)
 
