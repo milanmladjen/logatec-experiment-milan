@@ -89,6 +89,7 @@ AUTOSTART_PROCESSES(&serial_input_process, &check_network_process);
 
 /*---------------------------------------------------------------------------*/
 void input_command(char *data);
+void printf_ip_address(uip_ipaddr_t *ipaddr);
 
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(serial_input_process, ev, data)
@@ -165,41 +166,34 @@ input_command(char *data){
 			}
 			// $ IPADR
 			else if(strcmp(cmd, cmd_5) == 0){
-				// Print IP address of the device
-				#if NETSTACK_CONF_WITH_IPV6
-				{
-					uip_ds6_addr_t *lladdr;
-					char buf[UIPLIB_IPV6_MAX_STR_LEN];
-					lladdr = uip_ds6_get_link_local(-1);
-					uiplib_ipaddr_snprint(buf, sizeof(buf), &lladdr->ipaddr);
-
-					printf("$ My IP address is:");
-					printf(buf);
-					printf("\n");
-				}
-				#endif
+				uip_ds6_addr_t *lladdr;
+				lladdr = uip_ds6_get_link_local(-1);
+				printf("$ My IP address is: ");
+				printf_ip_address(&lladdr->ipaddr);
+				printf("\n");
 			}
 			// $ PAREN(t)
 			else if(strcmp(cmd, cmd_6) == 0){
 				if(!NETSTACK_ROUTING.node_is_root()){
-					uip_ipaddr_t *parent_ipaddr;
-					char buf[UIPLIB_IPV6_MAX_STR_LEN];
-					parent_ipaddr = rpl_parent_get_ipaddr(curr_instance.dag.preferred_parent);
-					uiplib_ipaddr_snprint(buf, sizeof(buf), parent_ipaddr);
-
-					printf("$ My parent is:");
-					printf(buf);
+					printf("$ My parent is: ");
+					printf_ip_address(rpl_parent_get_ipaddr(curr_instance.dag.preferred_parent));
 					printf("\n");
 				}
 			}
 			else{
 				printf("$ Unsupported command: %s \n", p);
 			}
-
+			break;
+		default:
 			break;
 	}
 }
 
+void printf_ip_address(uip_ipaddr_t *ipaddr){
+	char buf[UIPLIB_IPV6_MAX_STR_LEN];
+	uiplib_ipaddr_snprint(buf, sizeof(buf), ipaddr);
+	printf(buf);
+}
 
 /*---------------------------------------------------------------------------*/
 // Process to check when device enters the RPL network
