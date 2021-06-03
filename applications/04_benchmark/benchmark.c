@@ -57,7 +57,6 @@ AUTOSTART_PROCESSES(&serial_input_process, &check_network_process);
 
 /*---------------------------------------------------------------------------*/
 void input_command(char *data);
-void printf_ip_address(uip_ipaddr_t *ipaddr);
 
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(serial_input_process, ev, data)
@@ -141,7 +140,7 @@ input_command(char *data){
 					uip_ds6_addr_t *lladdr;
 					lladdr = uip_ds6_get_link_local(-1);
 					printf("$ My IP address is: ");
-					printf_ip_address(&lladdr->ipaddr);
+					uiplib_ipaddr_print(&lladdr->ipaddr);
 					printf("\n");
 				}
 				#endif
@@ -150,7 +149,7 @@ input_command(char *data){
 			else if(strcmp(cmd, cmd_6) == 0){
 				if(!NETSTACK_ROUTING.node_is_root()){
 					printf("$ My parent is: ");
-					printf_ip_address(rpl_parent_get_ipaddr(curr_instance.dag.preferred_parent));
+					uiplib_ipaddr_print(rpl_parent_get_ipaddr(curr_instance.dag.preferred_parent));
 					printf("\n");
 				}
 			}
@@ -160,14 +159,6 @@ input_command(char *data){
 
 			break;
 	}
-}
-
-
-// TODO -allready a function in uiplib.c
-void printf_ip_address(uip_ipaddr_t *ipaddr){
-	char buf[UIPLIB_IPV6_MAX_STR_LEN];
-	uiplib_ipaddr_snprint(buf, sizeof(buf), ipaddr);
-	printf(buf);
 }
 
 
@@ -188,7 +179,7 @@ udp_rx_callback(struct simple_udp_connection *c,
 	if(NETSTACK_ROUTING.node_is_root()){
 		if(message == 0){
 			printf("New device ");
-			printf_ip_address(sender_addr);
+			uiplib_ipaddr_print(sender_addr);
 			printf("\n");
 
 			//memcpy(&device_addr, sender_addr, sizeof(device_addr));
@@ -201,14 +192,14 @@ udp_rx_callback(struct simple_udp_connection *c,
 		}
 		else{
 			printf("$ Received response %"PRIu32" from ", message);
-			printf_ip_address(sender_addr);
+			uiplib_ipaddr_print(sender_addr);
 			printf("\n");
 		}
 	}
 	// Calback for normal devices
 	else{
 		printf("Received request %"PRIu32" from ", message);
-		printf_ip_address(sender_addr);
+		uiplib_ipaddr_print(sender_addr);
 		printf("\n");
 		printf("Sending response \n");
 		simple_udp_sendto(&udp_conn, &message, sizeof(message), sender_addr);
@@ -312,7 +303,7 @@ PROCESS_THREAD(experiment_process, ev, data)
 
 				if(uiplib_ip6addrconv(buf, &dest_addr)){
 
-					printf_ip_address(&dest_addr);
+					uiplib_ipaddr_print(&dest_addr);
 					printf("\n");
 					count++;
 					simple_udp_sendto(&udp_conn, &count, sizeof(count), &dest_addr);
