@@ -10,7 +10,7 @@
 
 # Select which application to test, duration in minutes
   vars:
-    application: 02_benchmark
+    application: 04_benchmark
     duration: 10
     autostart: false
 
