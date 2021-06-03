@@ -10,8 +10,8 @@
 
 # Select which application to test, duration in minutes
   vars:
-    application: 02_acs
-    duration: 20
+    application: 02_benchmark
+    duration: 10
     autostart: false
 
 # Display experiment abstract in build.log 
