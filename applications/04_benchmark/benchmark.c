@@ -182,9 +182,9 @@ udp_rx_callback(struct simple_udp_connection *c,
          uint16_t datalen)
 {
 	uint32_t message;
-	uint8_t is_response;
 	memcpy(&message, data, sizeof(uint32_t));
 
+	// Calback if device is root of the network
 	if(NETSTACK_ROUTING.node_is_root()){
 		if(message == 0){
 			printf("New device ");
@@ -205,6 +205,7 @@ udp_rx_callback(struct simple_udp_connection *c,
 			printf("\n");
 		}
 	}
+	// Calback for normal devices
 	else{
 		printf("Received request %"PRIu32" from ", message);
 		printf_ip_address(sender_addr);
@@ -305,7 +306,7 @@ PROCESS_THREAD(experiment_process, ev, data)
 			if((time_counter % SEND_INTERVAL) == 0){
 				printf("Sending request to random device: \n");
 
-				const char buf[40];
+				char buf[40];
 				// Get random device from the list
 				memcpy(buf, device_list + ((random_rand() % device_count) * 40), 40);
 
