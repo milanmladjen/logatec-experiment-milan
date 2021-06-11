@@ -43,7 +43,7 @@ uint32_t app_duration = DEFAULT_APP_DUR_IN_SEC;
 uint32_t received_responses = 0;
 
 #define UDP_PORT 8214
-#define SEND_INTERVAL (2)		// In seconds
+#define SEND_INTERVAL (1)		// In seconds
 
 static struct simple_udp_connection udp_conn;
 
