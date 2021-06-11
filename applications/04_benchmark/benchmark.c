@@ -40,6 +40,7 @@
 
 uint32_t app_duration = DEFAULT_APP_DUR_IN_SEC;
 
+uint32_t received_responses = 0;
 
 #define UDP_PORT 8214
 #define SEND_INTERVAL (2)		// In seconds
@@ -194,6 +195,7 @@ udp_rx_callback(struct simple_udp_connection *c,
 			printf("$ Received response %"PRIu32" from ", message);
 			uiplib_ipaddr_print(sender_addr);
 			printf("\n");
+			received_responses++;
 		}
 	}
 	// Calback for normal devices
@@ -264,6 +266,7 @@ PROCESS_THREAD(experiment_process, ev, data)
 
 	// Empty statistic buffers if they have some values from before
 	RF2XX_STATS_RESET();
+	STATS_clear_packet_stats();
 
 	// If device is simple node, register it to the root device
 	if(!NETSTACK_ROUTING.node_is_root()){
@@ -320,11 +323,17 @@ PROCESS_THREAD(experiment_process, ev, data)
 				STATS_print_driver_stats();
 			}
 		}
+
+		// Every 10 seconds, clear packet buffers (printing them causes delay that we dont want)
+		if((time_counter % 10) == 0){
+			STATS_clear_packet_stats();
+		}
 		
 
 		// If elapsed seconds are equal to APP_DURATION, exit process
 		if(time_counter == app_duration) {
 			STATS_display_driver_stats();
+			printf("$ Sent: %ul | received: %ul \n", count, received_responses);
 			printf("$ END\n");	// Send stop command ('=') to LGTC
 			PROCESS_EXIT();
 		}
