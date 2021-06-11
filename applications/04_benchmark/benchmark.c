@@ -42,7 +42,7 @@ uint32_t app_duration = DEFAULT_APP_DUR_IN_SEC;
 
 
 #define UDP_PORT 8214
-#define SEND_INTERVAL (3)		// In seconds
+#define SEND_INTERVAL (2)		// In seconds
 
 static struct simple_udp_connection udp_conn;
 
@@ -264,9 +264,8 @@ PROCESS_THREAD(experiment_process, ev, data)
 
 	// Empty statistic buffers if they have some values from before
 	RF2XX_STATS_RESET();
-	STATS_clear_packet_stats();
 
-	// If device is simple node, register to the root device
+	// If device is simple node, register it to the root device
 	if(!NETSTACK_ROUTING.node_is_root()){
 		while(1){
 			if(NETSTACK_ROUTING.node_is_reachable() && NETSTACK_ROUTING.get_root_ipaddr(&dest_addr)) {
@@ -293,7 +292,10 @@ PROCESS_THREAD(experiment_process, ev, data)
 
 	while(1) {
 
+		// If device is ROOT
 		if(NETSTACK_ROUTING.node_is_root()){
+
+			// Every send interval, send packet to a random device
 			if((time_counter % SEND_INTERVAL) == 0){
 				printf("Sending request to random device: \n");
 
@@ -312,16 +314,13 @@ PROCESS_THREAD(experiment_process, ev, data)
 					printf("$ Got wrong address \n");
 				}
 			}
-		}
 
-		// Every 10 seconds, print packet statistics
-		if((time_counter % 10) == 0){
-			STATS_print_packet_stats();
-
-			if(NETSTACK_ROUTING.node_is_root()){
+			// Every 10 seconds, print packet statistics
+			if((time_counter % 10) == 0){
 				STATS_print_driver_stats();
 			}
 		}
+		
 
 		// If elapsed seconds are equal to APP_DURATION, exit process
 		if(time_counter == app_duration) {
