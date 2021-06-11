@@ -21,8 +21,8 @@
 #define RF2XX_CONF_DRIVER_STATS                     (1)
 
 // For TSCH
-#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE          (uint8_t[]){ 11 }   // For testing
-#define TSCH_STATS_CONF_NUM_CHANNELS                1
+#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE          (uint8_t[]){ 11, 12, 13, 14, 15, 16, 17, 18, 19 }   // For testing
+#define TSCH_STATS_CONF_NUM_CHANNELS                9
 #define TSCH_STATS_CONF_FIRST_CHANNEL               11
 
 #define TSCH_STATS_CONF_ON 1

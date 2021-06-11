@@ -6,8 +6,8 @@
   remote_user: videk
 
   vars:
-    radio_type: TEST_TYPE
-    device_num: 3
+    radio_type: SRDB
+    device_num: 15
 
   tasks: 
   - name: Create directory

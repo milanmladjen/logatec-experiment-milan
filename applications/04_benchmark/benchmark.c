@@ -36,7 +36,7 @@
 
 /*---------------------------------------------------------------------------*/
 #define SECOND						(1000)
-#define DEFAULT_APP_DUR_IN_SEC		(10 * 60)
+#define DEFAULT_APP_DUR_IN_SEC		(20 * 60)
 
 uint32_t app_duration = DEFAULT_APP_DUR_IN_SEC;
 
