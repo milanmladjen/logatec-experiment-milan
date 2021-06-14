@@ -60,7 +60,7 @@ uint32_t received_responses = 0;
 
 
 #define UDP_PORT 8214
-#define SEND_INTERVAL (2)		// In seconds
+#define SEND_INTERVAL (1)		// In seconds
 
 static struct simple_udp_connection udp_conn;
 
@@ -207,6 +207,7 @@ udp_rx_callback(struct simple_udp_connection *c,
 			printf("$ Received response %"PRIu32" from ", message);
 			uiplib_ipaddr_print(sender_addr);
 			printf("\n");
+			received_responses++;
 		}
 	}
 	// Calback for normal devices
