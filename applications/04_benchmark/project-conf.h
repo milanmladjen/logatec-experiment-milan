@@ -31,7 +31,7 @@
 #define IEEE802154_CONF_DEFAULT_CHANNEL             (26)
 
 // Testbed has 21 devices
-#define NETSTACK_MAX_ROUTE_ENTRIES                  (25)
-#define NBR_TABLE_CONF_MAX_NEIGHBORS                (25)
+#define NETSTACK_MAX_ROUTE_ENTRIES                  (21)
+#define NBR_TABLE_CONF_MAX_NEIGHBORS                (21)
 
 #endif /* PROJECT_CONF_H_ */
