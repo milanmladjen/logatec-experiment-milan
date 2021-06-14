@@ -2,7 +2,7 @@
 import zmq 
 import time
 import logging
-import signal, sys
+import signal, sys, os
 
 from timeit import default_timer as timer
 
