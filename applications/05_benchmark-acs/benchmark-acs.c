@@ -332,9 +332,9 @@ PROCESS_THREAD(experiment_process, ev, data)
 			// Every 10 seconds, print packet statistics
 			if((time_counter % 10) == 0){
 				STATS_print_driver_stats();
+				printf("$ Sent: %u | received: %u \n", count, received_responses);
 			}
 		}
-		
 
 		// Every 10 seconds, clear packet buffers (printing them causes delay that we dont want)
 		if((time_counter % 10) == 0){
@@ -345,11 +345,9 @@ PROCESS_THREAD(experiment_process, ev, data)
 		// If elapsed seconds are equal to APP_DURATION, exit process
 		if(time_counter == app_duration) {
 			STATS_display_driver_stats();
-			printf("$ Sent: %ul | received: %ul \n", count, received_responses);
 			printf("$ END\n");	// Send stop command ('=') to LGTC
 			PROCESS_EXIT();
 		}
-
 
 
 		PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
