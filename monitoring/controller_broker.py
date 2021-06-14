@@ -17,13 +17,13 @@ LOG_LEVEL = logging.DEBUG
 LOGGING_FILENAME = "controller_broker.log"
 
 try:
-    NUMBER_OF_DEVICES = int(os.environ["DEV_NUMBER"])
+    NUMBER_OF_DEVICES = int(os.environ["DEVICE_NUM"])
 except:
     print("No device number given...going with default: 21")
     NUMBER_OF_DEVICES = 21
 
 try:
-    RADIO_TYPE = os.environ(["RADIO_TYPE"])
+    RADIO_TYPE = os.environ["RADIO_TYPE"]
 except:
     print("No radio type given...going with default: TEST_TYPE")
     RADIO_TYPE = "TEST_TYPE"
