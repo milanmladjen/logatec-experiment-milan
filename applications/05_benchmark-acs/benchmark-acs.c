@@ -335,6 +335,16 @@ PROCESS_THREAD(experiment_process, ev, data)
 				STATS_print_driver_stats();
 				printf("$ Sent: %u | received: %u \n", count, received_responses);
 			}
+
+			// Every 10 seconds, print channels stats
+			if((time_counter % 11) == 0){
+				for(uint8_t i = 0; i < TSCH_STATS_NUM_CHANNELS; ++i) {
+					printf("$ Channel %u quality: %u --> busy %u\n",
+						(i + TSCH_STATS_FIRST_CHANNEL),
+						(tsch_stats.channel_free_ewma[i]),
+						(tsch_stats.channel_free_ewma[i] < TSCH_CS_FREE_THRESHOLD));
+				}
+			}
 		}
 
 		// Every 10 seconds, clear packet buffers (printing them causes delay that we dont want)
