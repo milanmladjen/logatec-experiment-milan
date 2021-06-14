@@ -136,15 +136,11 @@ input_command(char *data){
 			// $ IPADR
 			else if(strcmp(cmd, cmd_5) == 0){
 				// Print IP address of the device
-				#if NETSTACK_CONF_WITH_IPV6
-				{
-					uip_ds6_addr_t *lladdr;
-					lladdr = uip_ds6_get_link_local(-1);
-					printf("$ My IP address is: ");
-					uiplib_ipaddr_print(&lladdr->ipaddr);
-					printf("\n");
-				}
-				#endif
+				uip_ds6_addr_t *lladdr;
+				lladdr = uip_ds6_get_link_local(-1);
+				printf("$ My IPv6 address is: ");
+				uiplib_ipaddr_print(&lladdr->ipaddr);
+				printf("\n");
 			}
 			// $ PAREN(t)
 			else if(strcmp(cmd, cmd_6) == 0){

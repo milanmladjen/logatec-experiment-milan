@@ -116,11 +116,11 @@ input_command(char *data){
 				app_duration = atoi(arg);
 				printf("Received app duration %ld \n", app_duration);
 			}
-			// $ IPADR
+			// $ IP
 			else if(strcmp(cmd, cmd_5) == 0){
 				uip_ds6_addr_t *lladdr;
 				lladdr = uip_ds6_get_link_local(-1);
-				printf("$ My IP address is: ");
+				printf("$ My IPv6 address is: ");
 				uiplib_ipaddr_print(&lladdr->ipaddr);
 				printf("\n");
 			}
