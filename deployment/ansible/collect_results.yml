@@ -29,11 +29,11 @@
       - "~/deploy/logatec-experiment/results/*.txt"
       - "~/deploy/logatec-experiment/results/*.log"
 
-# TODO: Leave results on devices?
-#  - name: Delete results
-#    file: 
-#      path:  ~/deploy/logatec-experiment/results
-#      state: absent
+# Delete results from device
+  - name: Delete results
+    file: 
+      path:  ~/deploy/logatec-experiment/results
+      state: absent
 
 
 # TODO: 
