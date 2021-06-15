@@ -333,7 +333,7 @@ PROCESS_THREAD(experiment_process, ev, data)
 			// Every 10 seconds, print packet statistics
 			if((time_counter % 10) == 0){
 				STATS_print_driver_stats();
-				printf("$ Sent: %u | received: %u \n", count, received_responses);
+				printf("$ Sent: %lu | received: %lu \n", count, received_responses);
 			}
 
 			// Every 10 seconds, print channels stats

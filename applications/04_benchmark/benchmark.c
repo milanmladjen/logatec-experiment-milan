@@ -27,6 +27,10 @@
 #include "arch/platform/vesna/dev/at86rf2xx/rf2xx.h"
 #include "arch/platform/vesna/dev/at86rf2xx/rf2xx_stats.h"
 
+// For channel statistics
+#include "tsch-stats.h"
+#include "services/tsch-cs/tsch-cs.h"
+#include "net/mac/tsch/tsch.h"
 
 // UDP
 #include "random.h"
@@ -317,7 +321,16 @@ PROCESS_THREAD(experiment_process, ev, data)
 			// Every 10 seconds, print packet statistics
 			if((time_counter % 10) == 0){
 				STATS_print_driver_stats();
-				printf("$ Sent: %u | received: %u \n", count, received_responses);
+				printf("$ Sent: %lu | received: %lu \n", count, received_responses);
+			}
+
+			// Every 10 seconds, print channels stats
+			if((time_counter % 10) == 1){
+				printf("$ In sequence: ");
+				for(uint8_t i = 0; i < tsch_hopping_sequence_length.val; ++i) {
+					printf("%d ", tsch_hopping_sequence[i]);
+				}
+				printf("\n");
 			}
 		}
 
