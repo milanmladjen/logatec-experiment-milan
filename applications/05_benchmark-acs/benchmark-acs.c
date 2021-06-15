@@ -337,13 +337,18 @@ PROCESS_THREAD(experiment_process, ev, data)
 			}
 
 			// Every 10 seconds, print channels stats
-			if((time_counter % 11) == 0){
+			if((time_counter % 10) == 1){
 				for(uint8_t i = 0; i < TSCH_STATS_NUM_CHANNELS; ++i) {
 					printf("$ Channel %u quality: %u --> busy %u\n",
 						(i + TSCH_STATS_FIRST_CHANNEL),
 						(tsch_stats.channel_free_ewma[i]),
 						(tsch_stats.channel_free_ewma[i] < TSCH_CS_FREE_THRESHOLD));
 				}
+				printf("$ In sequence: ");
+				for(uint8_t i = 0; i < tsch_hopping_sequence_length.val; ++i) {
+					printf("%d ", tsch_hopping_sequence[i]);
+				}
+				printf("\n");
 			}
 		}
 
