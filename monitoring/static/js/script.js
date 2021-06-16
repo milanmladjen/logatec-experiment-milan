@@ -8,6 +8,8 @@ var rx_msg_nbr = 0;
 var experiment_running = false;
 var available_devices = [];
 
+var auto_scroll = true;
+
 var SYSTEM_COMMANDS = [
     "RESET",
     "FLASH",
@@ -227,6 +229,7 @@ class Dropdown_menu {
     add_dev(dev){
         // Create new option (value = dd_LGTC66) because id LGTC66 is used elsewhere (TODO: where??)
         this.dd.append($("<option>").val("dd_" + dev).text(dev));
+        this.order();
     }
 
     remove_dev(dev){
@@ -236,6 +239,12 @@ class Dropdown_menu {
     remove_all(){
         this.dd.find("option").not(":first").remove();
         this.dd.append($("<option>").val("All").text("All"));
+    }
+
+    order(){
+        this.dd.html(this.dd.find("option").sort(function(x,y){
+            return $(x).text() > $(y).text() ? 1: -1;
+        }));
     }
 
 }
@@ -341,8 +350,11 @@ $(document).ready(function(){
 
         // Append text into textarea (don't delete old one)
         $("#output_field").val( $("#output_field").val() + formatted_msg);
+
         // Scroll to bottom
-        $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
+        if(auto_scroll){
+            $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
+        }
     });
 
     socket.on("device state update", function(msg){
@@ -457,6 +469,16 @@ $(document).ready(function(){
         socket.emit("testbed update");
 
         // TODO: display tooltip: "Up to date"
+    });
+
+    // Checkbox for auto scroll option
+    $('input:checkbox').change(function(){
+        if ($(this).is(':checked')) {
+            auto_scroll = true;
+        }
+        else{
+            auto_scroll = false;
+        }
     });
 });
 
