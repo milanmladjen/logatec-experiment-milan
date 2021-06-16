@@ -297,7 +297,7 @@ $(document).ready(function(){
     $("#output_field").val("");
 
     // Remove all nodes from tloris
-    //tloris.remove_all();
+    tloris.remove_all();
 
     // Init tooltips on tloris devices
     $(".node").tooltipster();
