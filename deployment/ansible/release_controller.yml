@@ -19,7 +19,7 @@ tasks:
       update: yes
       force: yes
       depth: 1
-      version: develop/grega
+      version: ble-monitor
 
   - name: Build docker file
     command: docker build -t controller -f monitoring/Dockerfile .

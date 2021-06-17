@@ -8,13 +8,23 @@ var rx_msg_nbr = 0;
 var experiment_running = false;
 var available_devices = [];
 
+var auto_scroll = true;
+
 var SYSTEM_COMMANDS = [
-    "START_APP",
-    "STOP_APP",
-    "RESTART_APP",
+    "RESET",
     "FLASH",
     "EXIT",
     "STATE"
+];
+
+var EXPERIMENT_COMMANDS = [
+    "START",
+    "STOP",
+    "RESTART",
+    "LINES",
+    "SEC",
+    "DURATION",
+    "ROOT"
 ];
 
 
@@ -28,16 +38,22 @@ class Nodes {
 
         // Colors of each state
         this.state_colors = [
-            {state:"ONLINE", color:"black"},
+            {state:"ONLINE", color:"gray"},
+            {state:"OFFLINE", color:"white"},
             {state:"COMPILING", color:"yellow"},
             {state:"RUNNING", color:"green"},
             {state:"STOPPED", color:"blue"},
             {state:"FINISHED", color:"turquoise"},
 
             {state:"TIMEOUT", color:"red"},
+            {state:"COMPILE_ERR", color:"pink"},
+            {state:"VESNA_ERR", color:"purple"},
             {state:"LGTC_WARNING", color:"orange"},
-            {state:"COMPILE_ERROR", color:"pink"},
-            {state:"VESNA_ERROR", color:"purple"}
+
+            // Contiki states - color of border line
+            {state:"JOINED_NETWORK", color:"white"},
+            {state:"EXITED_NETWORK", color:"white"},
+            {state:"DAG_ROOT", color:"black"}
         ]
 
         this.testbed_devices = [
@@ -158,20 +174,37 @@ class Nodes {
     update_dev(name, state){
         let loc = this._get_dev_loc(name);
         let ip = this._get_dev_ip(name);
+        let col = this._get_state_color(state);
 
         if (loc > 0){
             $("#node_" + loc).css("visibility", "visible");
-            $("#node_" + loc).css("color", this._get_state_color(state));
-        
-            // Update and show tooltip
-            // Had problems with updating HTML template - creating new one from scratch
-            var new_content = "<table><tr><th>Name: </th><td>" + name + 
-            "</td></tr><tr><th>IP: </th><td>" + ip +
-            "</td></tr><tr><th>Location: </th><td>" + loc +
-            "</td></tr><tr><th>Status: </th><td>" + state +
-            "</td></tr></table>";
+
+            // Contiki-NG network states
+            if (state == "DAG_ROOT"){
+                let border = "-1px 0 " + col +", 0 1px " + col + ", 1px 0 " + col +", 0 -1px " + col;
+                $("#node_" + loc).css("textShadow", border);
+            }
+            else if(state == "JOINED_NETWORK"){
+                let border = "-1px 0 " + col +", 0 1px " + col + ", 1px 0 " + col +", 0 -1px " + col;
+                $("#node_" + loc).css("textShadow", border);
+            }
+            else if(state == "EXITED_NETWORK"){
+                $("#node_" + loc).css("textShadow", "none");
+            }
+
+            else{
+                $("#node_" + loc).css("color", col);
             
-            $("#node_" + loc).tooltipster("content", $((new_content)));
+                // Update and show tooltip
+                // Had problems with updating HTML template - creating new one from scratch
+                var new_content = "<table><tr><th>Name: </th><td>" + name + 
+                "</td></tr><tr><th>IP: </th><td>" + ip +
+                "</td></tr><tr><th>Location: </th><td>" + loc +
+                "</td></tr><tr><th>Status: </th><td>" + state +
+                "</td></tr></table>";
+                
+                $("#node_" + loc).tooltipster("content", $((new_content)));
+            }
         }
     }
 
@@ -196,6 +229,7 @@ class Dropdown_menu {
     add_dev(dev){
         // Create new option (value = dd_LGTC66) because id LGTC66 is used elsewhere (TODO: where??)
         this.dd.append($("<option>").val("dd_" + dev).text(dev));
+        this.order();
     }
 
     remove_dev(dev){
@@ -205,6 +239,12 @@ class Dropdown_menu {
     remove_all(){
         this.dd.find("option").not(":first").remove();
         this.dd.append($("<option>").val("All").text("All"));
+    }
+
+    order(){
+        this.dd.html(this.dd.find("option").sort(function(x,y){
+            return $(x).text() > $(y).text() ? 1: -1;
+        }));
     }
 
 }
@@ -267,19 +307,19 @@ $(document).ready(function(){
     // --------------------------------------------------------------------------------------------------------
 
     // If websocket are on the same domain
-    var socket = io();
+    //var socket = io();
 
     // For different domain, WebSocket server (flask_server.py) must have CORS enabled 
     // https://socket.io/docs/v3/client-initialization/
-    //var socket = io({path: "/controller/socket.io"});
+    var socket = io({path: "/controller/socket.io"});
 
 
     socket.on("after connect", function(msg){
         console.log("Successfully connected to server!");
 
         // Check if experiment is already running
-        if(msg.data !== "False"){
-            console.log("Experiment is already running ["+msg.data +"]");
+        if(msg.data !== "None"){
+            console.log("Experiment is already running ["+ msg.data +"]");
             experiment_started(msg.data);
 
             // Update testbed tloris
@@ -310,8 +350,11 @@ $(document).ready(function(){
 
         // Append text into textarea (don't delete old one)
         $("#output_field").val( $("#output_field").val() + formatted_msg);
+
         // Scroll to bottom
-        $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
+        if(auto_scroll){
+            $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
+        }
     });
 
     socket.on("device state update", function(msg){
@@ -342,7 +385,16 @@ $(document).ready(function(){
             tloris.update_dev(lgtc.address, lgtc.state);
             dropdown.add_dev(lgtc.address);
             available_devices.push(lgtc.address);
-        }                   
+        }
+    });
+
+    socket.on("info", function(msg){
+        console.log("Received info");
+
+        // Append text into textarea (don't delete old one)
+        $("#output_field").val( $("#output_field").val() + msg.data);
+        // Scroll to bottom
+        $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
     });
 
     // --------------------------------------------------------------------------------------------------------
@@ -377,6 +429,8 @@ $(document).ready(function(){
             nbr = tx_msg_nbr.toString();
         }
 
+        // TODO: check if command is supported
+
         // Check which device is selected from dropdown menu
         var dev = "";
         if($("#select_device option:selected").val() == "None"){
@@ -387,7 +441,7 @@ $(document).ready(function(){
             dev = $("#select_device option:selected").text();
         }
 
-        console.log("Send command [" + nbr + "] to device: " + dev );
+        console.log("Send command [" + nbr + "]:" + cmd + " to device: " + dev );
         
         // Send it to server
         socket.emit("new command", {
@@ -415,6 +469,16 @@ $(document).ready(function(){
         socket.emit("testbed update");
 
         // TODO: display tooltip: "Up to date"
+    });
+
+    // Checkbox for auto scroll option
+    $('input:checkbox').change(function(){
+        if ($(this).is(':checked')) {
+            auto_scroll = true;
+        }
+        else{
+            auto_scroll = false;
+        }
     });
 });
 

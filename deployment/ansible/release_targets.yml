@@ -29,7 +29,7 @@
       update: yes
       force: yes
       depth: 1
-      version: BLE
+      version: ble-monitor
 
 # Build...with -f flag so we can later copy logatec-experiment directory into container
 # with Dockerfile command COPY...else we get error "Forbidden path outside the build context"

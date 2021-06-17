@@ -51,7 +51,7 @@
 						<br>
 						<p>Possible device states and its colors:</p>
 						<ul class="device_states">
-							<li><span class="glyphicon glyphicon-map-marker" style="color:black;"></span> ONLINE - Device is online and ready for experiment.</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:gray;"></span> ONLINE - Device is online and ready for experiment.</li>
 							<li><span class="glyphicon glyphicon-map-marker" style="color:yellow;"></span> COMPILING - LGTC is compiling application for VESNA.</li>
 							<li><span class="glyphicon glyphicon-map-marker" style="color:green;"></span> RUNNING - Experiment is running successfully.</li>
 							<li><span class="glyphicon glyphicon-map-marker" style="color:turquoise;"></span> FINISHED - Experiment has come to the end.</li>
@@ -93,7 +93,7 @@
 						<div style="width:fit-content; height:35px;">
 							<!-- form name="input_form" id="input_form" -->
 								Command: 
-								<input type="text" name="input_cmd" id="input_cmd" value="START_APP"/>
+								<input type="text" name="input_cmd" id="input_cmd" value="START"/>
 			
 								<select name="select_device" id="select_device" style="width: 120px;"> <!-- is width necessary? -->
 									<option value = "None" selected>--- Device ---</option>
@@ -109,7 +109,8 @@
 						<br>
 
 						<div class="form-group blue-border-focus">
-							Output:
+							<label class="checkbox-inline pull-right"><input type="checkbox" value="" checked>Auto-scroll</label>
+							<label for="output_field">Output:</label>
 							<textarea class="form-control rounded-0" rows="24" name="output_field" id="output_field" ></textarea>
 						</div>
 

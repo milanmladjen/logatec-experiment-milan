@@ -5,6 +5,7 @@ import sys
 from datetime import datetime as timer
 #from timeit import default_timer as timer #TODO test if better
 
+LOG_LEVEL = logging.DEBUG
 
 class zmq_client():
 
@@ -20,19 +21,22 @@ class zmq_client():
     # ----------------------------------------------------------------------------------------
     def __init__(self, SUBS_HOSTNAME, ROUT_HOSTNAME, deviceID="NoName"):
 
+        self.log = logging.getLogger(__name__)
+        self.log.setLevel(LOG_LEVEL)
+
         context = zmq.Context()
 
         # Get device address
         device_address = deviceID.encode("ascii")
 
         # Connect to subscribe socket (--> publish)
-        logging.debug("Connecting to publish socket...")
+        self.log.debug("Connecting to publish socket...")
         self.subscriber = context.socket(zmq.SUB)
         self.subscriber.connect(SUBS_HOSTNAME)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, b'')  #TODO
 
         # Connect to dealer socket (--> router)
-        logging.debug("Connecting to router socket...")
+        self.log.debug("Connecting to router socket...")
         self.dealer = context.socket(zmq.DEALER)
         self.dealer.identity = device_address
         self.dealer.connect(ROUT_HOSTNAME)
@@ -58,13 +62,13 @@ class zmq_client():
     def transmit(self, msg):
 
         if not isinstance(msg, list):
-            logging.error("transmit: Incorect format of message")
+            self.log.error("transmit: Incorect format of message")
             return False
     
         # Encode the message from string to bytes
         msg = [msg[0].encode(), msg[1].encode()]
         
-        logging.debug("Sending data to broker...")
+        self.log.debug("Sending data to broker...")
         self.dealer.send_multipart(msg)
         
         self.txCnt += 1
@@ -84,7 +88,7 @@ class zmq_client():
 
         # Broker sent another command before sending ACK to our previous message
         if len(self.waitingForAck) > 1:
-            logging.warning("New message sent but broker didn't ack our previous one!")
+            self.log.warning("New message sent but broker didn't ack our previous one!")
             # TODO: stop receiveing messages after 3 already in queue?
 
         self.waitingForAck.append(msg[0]) 
@@ -131,7 +135,7 @@ class zmq_client():
             nbr = p[0].decode()
             data = p[1].decode()
 
-            logging.debug("Subscriber got [%s]: %s" % (nbr, data))
+            self.log.debug("Subscriber got [%s]: %s" % (nbr, data))
 
             return nbr, data
 
@@ -141,7 +145,7 @@ class zmq_client():
             # Decode message from bytes to string
             msg = [nbr.decode(), data.decode()]
 
-            logging.debug("Dealer got [%s]: %s" % (msg[0], msg[1]))
+            self.log.debug("Dealer got [%s]: %s" % (msg[0], msg[1]))
 
             return msg
         else:
@@ -170,7 +174,7 @@ class zmq_client():
             nbr = p[0].decode()
             data = p[1].decode()
 
-            logging.debug("aSubscriber got [%s]: %s" % (nbr, data))
+            self.log.debug("aSubscriber got [%s]: %s" % (nbr, data))
 
             return nbr, data
 
@@ -185,7 +189,7 @@ class zmq_client():
             # If we got acknowledge on transmitted data
             if msg == "ACK":
                 if nbr in self.waitingForAck:
-                    logging.debug("Broker acknowledged our data [" + nbr + "]")
+                    self.log.debug("Broker acknowledged our data [" + nbr + "]")
                     self.nbrRetries = 0
 
                     # Delete messages waiting in queue with number nbr
@@ -196,15 +200,15 @@ class zmq_client():
                             del self.lastSentInfo[i]
                         i += 1
                 else:
-                    logging.warning("Got ACK for msg %s but in queue we have:" % nbr)
-                    logging.warning(self.waitingForAck)
+                    self.log.warning("Got ACK for msg %s but in queue we have:" % nbr)
+                    self.log.warning(self.waitingForAck)
                     self.nbrRetries = 0
 
                 return None, True
 
             # If we received any unicast command
             else:
-                logging.debug("aDealer got [%s]: %s" % (nbr ,msg))
+                self.log.debug("aDealer got [%s]: %s" % (nbr ,msg))
                 return nbr, msg
 
         # If there is an error in calling the function
@@ -222,7 +226,7 @@ class zmq_client():
     def send_retry(self):
 
         if ((timer.now() - self.lastSentTime).total_seconds() > self.ACK_TIMEOUT):
-            logging.warning("3 second have passed and no response from broker.. Resending data!")
+            self.log.warning("3 second have passed and no response from broker.. Resending data!")
 
             # Resend info with lowest number...Example:
             # waitingForAck = [15, 16, 17]
@@ -242,7 +246,7 @@ class zmq_client():
                 self.waitingForAck = []
                 self.lastSentInfo = []
                 self.nbrRetries = 0
-                logging.warning("Broker has died :(")
+                self.log.warning("Broker has died :(")
                 #TODO clean the resources (zmq.close)
         else:
             return
@@ -259,7 +263,7 @@ class zmq_client():
     def wait_ack(self, nbr, timeout):
 
         if not isinstance(nbr, str):
-            logging.error("wait_ack: Input data must be string")
+            self.log.error("wait_ack: Input data must be string")
             return False
 
         startTime = timer.now()
@@ -274,7 +278,7 @@ class zmq_client():
                     if(rec[0] == nbr and rec[1] == "ACK"):
                         return True
                     else:
-                        logging.warning("Received: " + rec[1] + " message but waiting for ACK")
+                        self.log.warning("Received: " + rec[1] + " message but waiting for ACK")
             else:
                 return False
 
