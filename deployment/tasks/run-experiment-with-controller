@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-# Update contiki-ng folder, if there were any changes from the last time we updated docker container
-cd /root/logatec-experiment/contiki-ng
-echo "Pull changes from Contiki-NG repo"
-git pull
+# Enter experiment directory (APP_DIR is enviromental variable)
+cd /root/logatec-experiment/applications/$APP_DIR
+pwd
 
 # Obtain node adresses
 IPADDR=$(hostname -I)
@@ -17,16 +16,14 @@ APP=${APP_DIR:3}
 echo "Testing application $APP on node $IPADDR"
 
 
+# Start BT advertisment
+hciconfig hci0 leadv3
 
-# 
-python ../../monitoring/experiment_with_controller.py IPADDR APP_DIR
+# Start the experiment - with controller - TODO
+python3 $APP + "_with_controller".py ${IPADDR}
 
+# Stop BT  advertisement: 
+hciconfig hci0 noleadv
 
-
-# Move results - TODO
-#cd /root/logatec-experiment/applications/$APP_DIR
-#mv *.txt /root/logatec-experiment/results/
-
-# Put Vesna to reset state so it doesnt interfeer with other networks
-cd /root/logatec-experiment/deployment/tasks
-python reset_vesna.py 0
+# Move results ("node_results.txt") to dedicated folder
+mv *.txt /root/logatec-experiment/results/
