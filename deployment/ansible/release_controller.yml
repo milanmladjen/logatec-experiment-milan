@@ -9,7 +9,7 @@
     radio_type: SRDB
     device_num: 15
 
-tasks: 
+  tasks: 
   - name: Create directory
     file:
       path: ~/deploy/logatec-experiment
