@@ -22,3 +22,6 @@ COPY ./ ./
 
 # Start the deployment
 ENTRYPOINT ["deployment/docker/start.sh"]
+
+# TODO: Uredi ta Dockerfile tako, da bo kompatibilen sz vesna-tools-v2...naprave bodo u bodoče imele samo en image, drugače bo preveč prostora šlo..
+# Ceuga uredi, tudi apt-get del..

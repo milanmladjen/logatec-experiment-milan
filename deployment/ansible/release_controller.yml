@@ -5,6 +5,10 @@
 - hosts: 172.17.0.1
   remote_user: videk
 
+  vars:
+    radio_type: SRDB
+    device_num: 15
+
 tasks: 
   - name: Create directory
     file:
@@ -30,8 +34,8 @@ tasks:
       ignore_errors: yes
       command: "{{ item }}"
       with_items:
-        - docker kill experiment-controller
-        - docker rm experiment-controller
+        - docker kill controller-test
+        - docker rm controller-test
 
   - name: Run docker image
-    command: docker run --name experiment-controller -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 controller 
+    command: docker run --name controller-test -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 controller 

@@ -2,14 +2,14 @@
 # Option: run the script with strategy: free, so all the nodes will run simultaneously but they will not wait for each other 
 
 ---
-- hosts: 192.168.12.81, 192.168.12.83
+- hosts: 192.168.12.51, 192.168.12.52, 192.168.12.53, 192.168.12.54, 192.168.12.55, 192.168.12.56, 192.168.12.66, 192.168.12.67, 192.168.12.69, 192.168.12.70
   strategy: free
   remote_user: videk
 
 # Select which application to test, duration in minutes
   vars:
     application: 00_demo
-    duration: 3
+    duration: 10
 
   tasks:
   - name: Create directory

@@ -1,5 +1,5 @@
 ---
-- hosts: 192.168.12.81, 192.168.12.83
+- hosts: 192.168.12.51, 192.168.12.52, 192.168.12.53, 192.168.12.54, 192.168.12.55, 192.168.12.56, 192.168.12.66, 192.168.12.67, 192.168.12.69, 192.168.12.70
   remote_user: videk
   tasks:
 
@@ -10,12 +10,12 @@
 # (TODO pointless? collect_results is called only when all containers are stopped)
   - name: Stop docker container (target)
     ignore_errors: yes
-    command: docker stop target
+    command: docker stop target_BLE
 
 # Get measurements from container to device
   - name: Copy file from the container
     #command: docker cp controller_BLE:/root/logatec-experiment/deployment/tasks/results/ .
-    command: docker cp target:/root/logatec-experiment/results/ .
+    command: docker cp target_BLE:/root/logatec-experiment/results/ .
     args:
       chdir: ~/deploy/logatec-experiment
 
@@ -28,7 +28,15 @@
       src: "{{ item }}"
       dest: ../../../out/
       mode: pull
-    with_items: "~/deploy/logatec-experiment/results/*.txt"
+    with_items: 
+      - "~/deploy/logatec-experiment/results/*.txt"
+      - "~/deploy/logatec-experiment/results/*.log"
+
+# Delete results from device
+  - name: Delete results
+    file: 
+      path:  ~/deploy/logatec-experiment/results
+      state: absent
 
 # TODO: Leave results on devices?
 #  - name: Delete results
