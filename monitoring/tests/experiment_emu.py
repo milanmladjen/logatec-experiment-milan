@@ -212,14 +212,14 @@ class experiment():
                 # If we got response on the command
                 # TODO: check if it is a multiline response
                 if data[0] == "*":
-                    self.LGTC_send_cmd_resp([self._command_waiting, data[1:]])
+                    self.LGTC_send_cmd_resp(self._command_waiting, data[1:])
                     self._command_waiting = None
                     self._command_timeout = False
                     self.log.debug("Got response on cmd " + data[1:])
                 
                 # If we got stop command
                 elif data[0] == "=":
-                    self.LGTC_send_sys_resp("END_OF_APP")
+                    self.LGTC_state_change("END_OF_APP")
                     self._command_waiting = None
                     self._command_timeout = False
                     self._is_app_running = False
@@ -228,7 +228,7 @@ class experiment():
             # Fake response
             if self._command_waiting != None:
                 fake_data = "*Odgovor na CMD*"
-                self.LGTC_send_cmd_resp([self._command_waiting, fake_data[1:]])
+                self.LGTC_send_cmd_resp(self._command_waiting, fake_data[1:])
                 self._command_waiting = None
                 self._command_timeout = False
                 self.log.debug("Got response " + fake_data[1:])
@@ -295,9 +295,9 @@ class experiment():
                     # Start the app 
                     elif cmd[1] == "START":
                         if self._is_app_running == True:
-                            self.LGTC_send_cmd_resp("0", "App is allready running...")
+                            self.LGTC_send_cmd_resp(cmd[0], "App is allready running...")
                         else:
-                            self.LGTC_send_sys_resp("START")
+                            self.LGTC_state_change("START")
                             self.log.info("Application started!")
                             self._lines_stored = 0
                             self._is_app_running = True
@@ -305,9 +305,9 @@ class experiment():
 
                     elif cmd[1] == "STOP":
                         if self._is_app_running == False:
-                            self.LGTC_send_cmd_resp("0", "No application running...")
+                            self.LGTC_send_cmd_resp(cmd[0], "No application running...")
                         else:
-                            self.LGTC_send_sys_resp("STOP")
+                            self.LGTC_state_change("STOP")
                             self.log.info("Application stopped!")
                             self._is_app_running = False
 
@@ -378,14 +378,14 @@ class experiment():
     def LGTC_vesna_flash(self):
         """
         # Compile the application
-        self.LGTC_send_sys_resp("COMPILING")
+        self.LGTC_state_change("COMPILING")
         self.log.info("Complie the application.")
         procCompile = Popen(["make", APP_NAME, "-j2"], stdout = PIPE, stderr= PIPE, cwd = APP_PATH)
         stdout, stderr = procCompile.communicate()
         self.log.debug(stdout)
         if(stderr):
             self.log.debug(stderr)
-            self.LGTC_send_sys_resp("COMPILE_ERR")
+            self.LGTC_state_change("COMPILE_ERR")
             return False
 
         # Flash the VESNA with app binary
@@ -395,11 +395,11 @@ class experiment():
         self.log.debug(stdout)
         if(stderr):
             self.log.debug(stderr)
-            self.LGTC_send_sys_resp("COMPILE_ERR")
+            self.LGTC_state_change("COMPILE_ERR")
             return False
 
         self.log.info("Successfully flashed VESNA ...")
-        self.LGTC_send_sys_resp("FLASHED")
+        self.LGTC_state_change("FLASHED")
         """
         return True
 

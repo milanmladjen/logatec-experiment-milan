@@ -269,7 +269,7 @@ if __name__ == "__main__":
                             subscribers += 1
                             if subscribers == NUMBER_OF_DEVICES:
                                 log.info("All devices ("+ str(NUMBER_OF_DEVICES) +") active")
-                                broker.frontend_info("Broker", "All devices (" + NUMBER_OF_DEVICES +") available!")
+                                broker.frontend_info("Broker", "All devices (" + str(NUMBER_OF_DEVICES) +") available!")
 
                         else:
                             log.warning("Device %s allready in the experiment" % device)
