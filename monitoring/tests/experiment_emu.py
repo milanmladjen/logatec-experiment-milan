@@ -39,8 +39,8 @@ import controller_client
 # DEFINITIONS
 LOG_LEVEL = logging.DEBUG
 
-ROUTER_HOSTNAME = "tcp://193.2.205.190:5562"
-SUBSCR_HOSTNAME = "tcp://193.2.205.190:5561"
+ROUTER_HOSTNAME = "tcp://193.2.205.204:5562"
+SUBSCR_HOSTNAME = "tcp://193.2.205.204:5561"
 
 SERIAL_TIMEOUT = 2  # In seconds
 
@@ -134,14 +134,14 @@ class experiment():
         """
 
         try:
-            self.LGTC_send_sys_resp("COMPILING")
+            self.LGTC_state_change("COMPILING")
             print("Device is \"compiling\" the code for VESNA...")
             time.sleep(60)
         except KeyboardInterrupt:
             print(" ")
         finally:
             print("Compiled application!")
-            self.LGTC_send_sys_resp("FLASHED")
+            self.LGTC_state_change("FLASHED")
 
         elapsed_sec = 0
         timeout_cnt = 0
