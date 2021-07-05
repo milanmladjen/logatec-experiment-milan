@@ -89,8 +89,8 @@ class zmq_broker():
     # ----------------------------------------------------------------------------------------
     # Read received message from backend socket. 
     #
-    #   @return:    adr - name of the device that sent the message
-    #               nbr - number of received message (-1 means SYSTEM message)
+    #   @return:    nbr - number of received message (-1 means SYSTEM message)
+    #               adr - name of the device that sent the message
     #               data - ...
     # ----------------------------------------------------------------------------------------
     def backend_receive(self):
@@ -98,18 +98,18 @@ class zmq_broker():
 
         adr, nbr, data = self.backend.recv_multipart()
 
-        return adr.decode(), nbr.decode(), data.decode()
+        return nbr.decode(), adr.decode(), data.decode()
 
 
     # ----------------------------------------------------------------------------------------
     # Send a message to a device in backend.
     #
-    #   @params:    adr - name of targeted device
-    #                     if adr is "All" send message to all devices (publish socket)
-    #               nbr - number of sent message (-1 means SYSTEM message)
+    #   @params:    nbr - number of sent message (-1 means SYSTEM message)
+    #               adr - name of targeted device
+    #                     if adr is "All" send message to all devices (publish socket)           
     #               data - ...
     # ----------------------------------------------------------------------------------------
-    def backend_send(self, adr, nbr, data):
+    def backend_send(self, nbr, adr, data):
 
         if adr == "All":
             self.log.debug("Publish message [%s]: %s" % (nbr, data))
@@ -129,31 +129,31 @@ class zmq_broker():
     # Read received message from frontend socket. Used for forwarding commands from F -> B and
     # for sending user commands targeted for broker script (depends on the the adr var)
     #
-    #   @return:    adr - (=tip) name of targeted device OR type of message for broker
-    #               nbr - number of received message
+    #   @return:    nbr - number of received message OR type of message for broker
+    #               adr - name of targeted device 
     #               data - ...
     # ----------------------------------------------------------------------------------------
     def frontend_receive(self):
         self.log.debug("Received from frontend...")
 
         # dummy is the frontend ID
-        dummy, adr, nbr, data = self.frontend.recv_multipart()
+        dummy, nbr, adr, data = self.frontend.recv_multipart()
 
-        return adr.decode(), nbr.decode(), data.decode()
+        return nbr.decode(), adr.decode(), data.decode()
 
     # ----------------------------------------------------------------------------------------
     # Send message to the frontend socket. Used for forwarding responses B -> F and for 
     # sending some experiment commands for server script
     #
-    #   @params:    tip - (=adr) name of device OR type (tip) of message for server
-    #               nbr - number of received message
+    #   @params:    nbr - number of response OR type (tip) of message for server
+    #               adr - name of device that sent response
     #               data - ...
     # ----------------------------------------------------------------------------------------
-    def frontend_send(self, tip, nbr, data):
+    def frontend_send(self, nbr, adr, data):
         self.log.debug("Send to frontend...")
 
         self.frontend.send_multipart(
-            [self.controller_server_id, tip.encode(), nbr.encode(), data.encode()])
+            [self.controller_server_id, nbr.encode(), adr.encode(), data.encode()])
 
     # ----------------------------------------------------------------------------------------
     # Send device state to frontend socket - costum function to inform server about new state.
@@ -164,9 +164,8 @@ class zmq_broker():
     def frontend_deviceUpdate(self, device, state):
         self.log.debug("Send new state of device to frontend...")
 
-        data = str({"address":device, "state":state})
         self.frontend.send_multipart(
-            [self.controller_server_id, b"DeviceUpdate", b"-1", data.encode()])
+            [self.controller_server_id, b"DEVICE_UPDATE", device.encode(), state.encode()])
 
     # ----------------------------------------------------------------------------------------
     # Send some info string to frontend socket - costum function to inform user about smth.
@@ -174,11 +173,11 @@ class zmq_broker():
     #  @params:     info - string which will be displayed to the user console
     #               
     # ----------------------------------------------------------------------------------------
-    def frontend_info(self, info):
+    def frontend_info(self, device, info):
         self.log.debug("Send info to frontend: " + info)
 
         self.frontend.send_multipart(
-            [self.controller_server_id, b"Info", b"", info.encode()])
+            [self.controller_server_id, b"INFO", device.encode(), info.encode()])
 
 
 
@@ -212,13 +211,13 @@ if __name__ == "__main__":
     db = testbed_database.testbed_database("database.db")
 
     # Inform frontend that experiment began
-    broker.frontend_send("Online", "", RADIO_TYPE)
-    broker.frontend_info("New active experiment in the testbed! \n")
+    broker.frontend_send("EXP_START", "Broker", RADIO_TYPE)
+    broker.frontend_info("Broker", "New active experiment in the testbed! \n")
 
     log.info("Starting main loop...")
 
     subscribers = 0
-    hb_time = timer()
+    #hb_time = timer()
 
     # ----------------------------------------------------------------------------------------
     # MAIN LOOP
@@ -230,82 +229,87 @@ if __name__ == "__main__":
             # ------------------------------------------------------------------------------------
             # FRONTEND --> BACKEND
             if inp == "FRONTEND":
-                address, number, data = broker.frontend_receive()
+                msg_type, address, arguments = broker.frontend_receive()
 
                 # UPDATE TESTBED STATE - return state of testbed to server
-                if address == "TestbedUpdate":
+                if msg_type == "TESTBED_UPDATE":
                     log.info("Return testbed state:")
                     log.debug(db.get_tb_state_str)
-                    broker.frontend_send(address, "", str(db.get_tb_state_json()))
+                    broker.frontend_send(msg_type, "Broker", str(db.get_tb_state_json()))
 
                 # FORWARD COMMAND - to LGTC devices
                 else:
                     # Addres must be in database, otherwise it is not active
                     if db.is_dev(address) or (address == "All"):
-                        broker.backend_send(address, number, data)
+                        sqn = msg_type
+                        broker.backend_send(sqn, address, arguments)
                     else:
                         log.warning("Device address is not in DB")
-                        broker.frontend_info("Device " + address + " is not active!")
+                        broker.frontend_info("Broker", "Device " + address + " is not active!")
                         broker.frontend_deviceUpdate(address,"OFFLINE")
 
             # ------------------------------------------------------------------------------------
             # BACKEND --> FRONTEND 
             elif inp == "BACKEND":
-                address, number, data = broker.backend_receive()
+                msg_type, device, data = broker.backend_receive()
 
-                # Send ACK back
-                broker.backend_send(address, number, "ACK")
+                # Send ACK back to backend - argument is message to be acknowledged
+                broker.backend_send("ACK", device, msg_type)
 
-                # SYSTEM MESSAGE (only to update the database)
-                if number == "-1":
-
-                    # If device come to experiment add it do database
+                # SYSTEM MESSAGES
+                if msg_type == "SYS":
+                    
                     if data == "SYNC":
-                        if not db.is_dev(address):
-                            db.insert_dev(address, "ONLINE")
-                            broker.frontend_deviceUpdate(address, "ONLINE")
-                            log.info("New device " + address)
+                        # If device come to experiment add it do database
+                        if not db.is_dev(device):
+                            db.insert_dev(device, "ONLINE")
+                            broker.frontend_deviceUpdate(device, "ONLINE")
+                            log.info("New device " + device)
 
                             subscribers += 1
                             if subscribers == NUMBER_OF_DEVICES:
                                 log.info("All devices ("+ str(NUMBER_OF_DEVICES) +") active")
-                                # TODO: inform frontend about this
+                                broker.frontend_info("Broker", "All devices (" + NUMBER_OF_DEVICES +") available!")
 
                         else:
-                            log.warning("Device %s allready in the experiment" % address)
+                            log.warning("Device %s allready in the experiment" % device)
                             # TODO send END command to LGTC with stated reason
 
-                    # If device exited the experiment, remove it from the database
-                    elif data == "ERROR":  
-                        db.remove_dev(address)
-                        broker.frontend_deviceUpdate(address, "OFFLINE")
+                    elif data == "ERROR":
+                        # Device encountered an error and stopped working
+                        db.remove_dev(device)
+                        broker.frontend_deviceUpdate(device, "OFFLINE")
                         log.warning("Device %s send ERROR message..." % address)
 
-                    # Else update device state in the database
-                    else:
-                        db.update_dev_state(address, data)
-                        broker.frontend_deviceUpdate(address, data)
-                        log.info("New state of device %s: %s" % (address, data))
+                # DEVICE STATE UPDATE
+                elif msg_type == "STATE":
+                    db.update_dev_state(device, data)
+                    broker.frontend_deviceUpdate(device, data)
+                    log.info("New state of device %s: %s" % (device, data))
 
-                elif number == "0":
-                    broker.frontend_info(data)
-
-                # EXPERIMENT COMMAND (response)
+                # DEVICE INFO
+                elif msg_type == "INFO":
+                    broker.frontend_info(device, data)
+                
+                # EXPERIMENT COMMAND RESPONSE
                 else:
                     # Forward response back to the server
-                    broker.frontend_send(address, number, data)
-                    log.debug("Response [%s] from device %s: %s" % (number, address, data))
+                    # msg_type is a command SEQUENCE NUMBER 
+                    broker.frontend_send(msg_type, device, data)
+                    log.debug("Response number [%s] from device %s: %s" % (msg_type, device, data))
+
+
 
             # -----------------------------------------------------------------------------------
             # HEARTBEAT - TODO
-            else:
-                # Every 3 seconds send STATE command to all of active devices in the experiment
-                # Update database accordingly
-                if((timer() - hb_time) > 3):
-                    hb_time = timer()
+            #else:
+            # Every 3 seconds send STATE command to all of active devices in the experiment
+            # Update database accordingly
+            #if((timer() - hb_time) > 3):
+            #hb_time = timer()
 
-                    #device = TODO: get it from DB
-                    #cmd = [device, "-1", "STATE"]
+            #device = TODO: get it from DB
+            #cmd = [device, "-1", "STATE"]
 
     # --------------------------------------------------------------------------------------------
     # END
@@ -314,16 +318,16 @@ if __name__ == "__main__":
     
     except Exception as e:
         #logging.error(traceback.format_exc())
-        logging-error(e.__doc__)
+        logging.error(e.__doc__)
         logging.error(e.message)
     
     finally:
 
         # Inform devices in backend that monitoring is over
-        broker.backend_send("All", "-1", "EXIT")
+        broker.backend_send("SYS", "All", "EXIT")
 
         # Inform the frontend that experiment has stopped
-        broker.frontend_send("End", "", "")
-        broker.frontend_info("\n Experiment ended! \n -----------------")
+        broker.frontend_send("EXP_STOP", "", "")
+        broker.frontend_info("Broker", "\n Experiment ended! \n -----------------")
 
         log.info("End of controller main loop...")

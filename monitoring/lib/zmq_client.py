@@ -149,7 +149,7 @@ class zmq_client():
 
             return msg
         else:
-            loging.error("receive: Unknown instance...check the code")
+            self.log.error("receive: Unknown instance...check the code")
             return None, None
 
 
@@ -171,36 +171,36 @@ class zmq_client():
             packet = self.subscriber.recv()
 
             p = packet.split()
-            nbr = p[0].decode()
+            sqn = p[0].decode()
             data = p[1].decode()
 
-            self.log.debug("aSubscriber got [%s]: %s" % (nbr, data))
+            self.log.debug("aSubscriber got [%s]: %s" % (sqn, data))
 
-            return nbr, data
+            return sqn, data
 
         # If it is a message from router socket
         elif (instance == "DEALER"):
-            nbr, msg = self.dealer.recv_multipart()
+            sqn, msg = self.dealer.recv_multipart()
 
             # Decode the message from bytes to string
-            nbr = nbr.decode()
+            sqn = sqn.decode()
             msg = msg.decode()
 
-            # If we got acknowledge on transmitted data
-            if msg == "ACK":
-                if nbr in self.waitingForAck:
-                    self.log.debug("Broker acknowledged our data [" + nbr + "]")
+            # If we got acknowledge on transmitted data, message stores SQN of acknowledged response
+            if sqn == "ACK":
+                if msg in self.waitingForAck:
+                    self.log.debug("Broker acknowledged our data [" + msg + "]")
                     self.nbrRetries = 0
 
-                    # Delete messages waiting in queue with number nbr
-                    self.waitingForAck.remove(nbr)
+                    # Delete messages waiting in queue with number in msg
+                    self.waitingForAck.remove(msg)
                     i = 0
                     for info in self.lastSentInfo:
-                        if info[0] == nbr:
+                        if info[0] == msg:
                             del self.lastSentInfo[i]
                         i += 1
                 else:
-                    self.log.warning("Got ACK for msg %s but in queue we have:" % nbr)
+                    self.log.warning("Got ACK for msg %s but in queue we have:" % msg)
                     self.log.warning(self.waitingForAck)
                     self.nbrRetries = 0
 
@@ -208,12 +208,12 @@ class zmq_client():
 
             # If we received any unicast command
             else:
-                self.log.debug("aDealer got [%s]: %s" % (nbr ,msg))
-                return nbr, msg
+                self.log.debug("aDealer got [%s]: %s" % (sqn ,msg))
+                return sqn, msg
 
         # If there is an error in calling the function
         else:
-            loging.warning("receive_async: Unknown instance...check the code")
+            self.log.warning("receive_async: Unknown instance...check the code")
             return None, None
 
 
@@ -256,13 +256,13 @@ class zmq_client():
     # Force wait for ACK on given message number - it will block the code and discard all 
     # other received messages.
     # 
-    #   @params:    nbr     - a message number on which we are waiting for ACK...must be in string!
+    #   @params:    sqn     - a message number on which we are waiting for ACK...must be in string!
     #               timeout - time to wait in seconds!
     #   @return:    True when received ACK, False if timeout passes
     # ----------------------------------------------------------------------------------------
-    def wait_ack(self, nbr, timeout):
+    def wait_ack(self, sqn, timeout):
 
-        if not isinstance(nbr, str):
+        if not isinstance(sqn, str):
             self.log.error("wait_ack: Input data must be string")
             return False
 
@@ -273,12 +273,12 @@ class zmq_client():
                 inp = self.check_input(0)
                 if inp:
 
-                    rec = self.receive(inp)     # rec = [nbr, data]
+                    rec = self.receive(inp)     # rec = ["ACK", sqn]
                     # Nbr of transmitted and received msg must be the same
-                    if(rec[0] == nbr and rec[1] == "ACK"):
+                    if(rec[0] == "ACK" and rec[1] == sqn):
                         return True
                     else:
-                        self.log.warning("Received: " + rec[1] + " message but waiting for ACK")
+                        self.log.warning("Received: " + rec[0] + " message but waiting for ACK")
             else:
                 return False
 

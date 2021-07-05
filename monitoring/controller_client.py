@@ -1,6 +1,6 @@
 # TODO:
 # Put zmq_client.py in this file as well?
-
+# V clienta bi lahko dal ukaz UPTIME - da odgovori kolko časa je že on
 
 #!/usr/bin/python3
 import threading
@@ -42,10 +42,10 @@ class zmq_client_thread(threading.Thread):
 
         # Sync with broker with timeout of 10 seconds
         self.log.info("Sync with broker ... ")
-        self.client.transmit(["-1", "SYNC"])
-        if self.client.wait_ack("-1", 10) is False:
+        self.client.transmit(["SYS", "SYNC"])
+        if self.client.wait_ack("SYS", 10) is False:
             self.log.error("Couldn't synchronize with broker...")
-            self.out_q.put(["-1", "BROKER_DIED"])
+            self.out_q.put(["SYS", "BROKER_DIED"])
 
         # ------------------------------------------------------------------------------------
         while self._is_thread_running:
@@ -55,39 +55,39 @@ class zmq_client_thread(threading.Thread):
             if not self.in_q.empty():
                 response = self.in_q.get()
                 
-                # If the message is SYSTEM - new state
-                if response[0] == "-1":
+                # If the message is STATE - new state
+                if response[0] == "STATE":
                     self.log.debug("New state: " + response[1])
 
                     if response[1] == "START":
-                        self.LGTC_set_state("RUNNING")
+                        self.LGTC_sendState("RUNNING")
 
                     elif response[1] == "STOP":
-                        self.LGTC_set_state("STOPPED")
+                        self.LGTC_sendState("STOPPED")
 
                     elif response[1] == "END":
-                        self.LGTC_set_state("FINISHED")
+                        self.LGTC_sendState("FINISHED")
                     
                     elif response[1] == "COMPILING":
-                        self.LGTC_set_state("COMPILING")
+                        self.LGTC_sendState("COMPILING")
 
                     elif response[1] == "FLASHED":
-                        self.LGTC_set_state("ONLINE")
+                        self.LGTC_sendState("ONLINE")
                     
                     elif response[1] == "SYNCED_WITH_VESNA":
-                        self.LGTC_set_state("ONLINE")
+                        self.LGTC_sendState("ONLINE")
 
                     elif response[1] == "JOIN_DAG":
-                        self.LGTC_set_state("JOINED_NETWORK")
+                        self.LGTC_sendState("JOINED_NETWORK")
 
                     elif response[1] == "EXIT_DAG":
-                        self.LGTC_set_state("EXITED_NETWORK")
+                        self.LGTC_sendState("EXITED_NETWORK")
                         
                     elif response[1] == "ROOT":
-                        self.LGTC_set_state("DAG_ROOT")
+                        self.LGTC_sendState("DAG_ROOT")
 
                     elif response[1] == "VESNA_TIMEOUT":
-                        self.LGTC_set_state("TIMEOUT")
+                        self.LGTC_sendState("TIMEOUT")
 
                     elif response[1] == "COMPILE_ERR":
                         self.LGTC_exit("COMPILE_ERR")
@@ -98,7 +98,7 @@ class zmq_client_thread(threading.Thread):
                         break
                     
                     else:
-                        self.LGTC_set_state("LGTC_WARNING")
+                        self.LGTC_sendState("LGTC_WARNING")
                         self.log.warning("+--> Unsupported state!")                    
                 
                 # If the message is CMD - experiment response
@@ -116,25 +116,23 @@ class zmq_client_thread(threading.Thread):
                 if msg_nbr:
 
                     self.log.debug("Received command from broker: [" + msg_nbr + "] " + msg)
-                    # SYSTEM COMMANDS - application controll
-                    if msg_nbr == "-1":
+                    
+                    # SYSTEM COMMANDS
+                    if msg_nbr == "SYS":
 
-                        if msg == "STATE":
-                            self.client.transmit_async(["-1", self.LGTC_get_state()])
-
-                        elif msg == "EXIT":
-                            self.LGTC_set_state("OFFLINE")
+                        if msg == "EXIT":
+                            self.LGTC_sendState("OFFLINE")
                             self.out_q.put([msg_nbr, msg])
                             self.log.info("Closing client thread.")
                             break
-                            
-                        else:
-                            self.out_q.put([msg_nbr, msg])
+                    
+                    # STATE COMMAND
+                    elif msg_nbr == "STATE":
+                        self.LGTC_sendState(self.LGTC_getState())
 
-                    # EXPERIMENT COMMANDS - experiment command
+                    # EXPERIMENT COMMAND
                     else:
                         self.out_q.put([msg_nbr, msg])
-
 
             # --------------------------------------------------------------------------------
             # If there is still some message that didn't receive ACK back from server, re send it
@@ -162,7 +160,7 @@ class zmq_client_thread(threading.Thread):
 
     # Use in case of fatal errors in experiment app
     def LGTC_exit(self, reason):
-        self.client.transmit(["-1", reason])
+        self.client.transmit(["STATE", reason])
         if self.client.wait_ack("-1", 3):
             return True
         else:
@@ -170,14 +168,14 @@ class zmq_client_thread(threading.Thread):
             return False
 
     # Get global variable
-    def LGTC_get_state(self):
+    def LGTC_getState(self):
         return self.__LGTC_STATE
 
     # Set global variable
-    def LGTC_set_state(self, state):
+    def LGTC_sendState(self, state):
         self.__LGTC_STATE = state
         # Send new state to the server (WARNING: async method used...)
-        self.client.transmit_async(["-1", state])
+        self.client.transmit_async(["STATE", state])
 
 
 

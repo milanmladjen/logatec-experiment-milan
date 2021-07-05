@@ -106,7 +106,7 @@ def SIO_received_command(cmd):
     f_log.info("Client sent: ")
     f_log.debug(cmd)
 
-    message_to_send = [cmd["device"].encode(), cmd["count"].encode(), cmd["data"].encode()] # From dict to byte array
+    message_to_send = [cmd["sequence"].encode(), cmd["device"].encode(), cmd["data"].encode()] # From dict to byte array
     ZMQ_queue.put({"type":"command", "data":message_to_send})
 
 @socketio.on("testbed update")
@@ -146,41 +146,38 @@ def ZMQ_thread(input_q):
 
             global EXPERIMENT
 
-            device, count, data = zmq_soc.recv_multipart()
+            sequence, device, data = zmq_soc.recv_multipart()
 
             # From bytes to string [device, count, data]
-            msg = [device.decode(), count.decode(), data.decode()]
+            msg = [sequence.decode(), device.decode(), data.decode()]
 
             # Received new device state
-            if msg[0] == "DeviceUpdate":
+            if msg[0] == "DEVICE_UPDATE":
                 z_log.info("Received new device state from brokers database!")
 
-                # From string to dict
-                json = ast.literal_eval(msg[2])
-
-                update = {
-                        "device" : "Update",
-                        "count" : msg[1],
-                        "data" : json
+                message = {
+                        "sequence" : "Update",
+                        "device" : msg[1],
+                        "data" : msg[2]
                     }
-                socketio.emit("device state update", update, broadcast=True)
+                socketio.emit("device state update", message, broadcast=True)
 
             # Received whole testbed device state
-            elif msg[0] == "TestbedUpdate":
+            elif msg[0] == "TESTBED_UPDATE":
                 z_log.info("Received testbed state from brokers database!")
 
                 # From string to list of dicts
                 json_data = ast.literal_eval(msg[2])
 
-                state = {
-                    "device" : "Update",
-                    "count" : msg[1],
+                message = {
+                    "sequence" : "Update",
+                    "device" : msg[1],
                     "data" : json_data
                 }
-                socketio.emit("testbed state update", state, broadcast=True)
+                socketio.emit("testbed state update", message, broadcast=True)
 
             # Sync between broker and flask server in the beginning
-            elif msg[0] == "Online":
+            elif msg[0] == "EXP_START":
                 z_log.info("Experiment has started!")
 
                 radio_type = msg[2]
@@ -192,7 +189,7 @@ def ZMQ_thread(input_q):
                 socketio.emit("experiment started", {"data":radio_type}, broadcast=True)
 
             # When broker exits, inform the user
-            elif msg[0] == "End":
+            elif msg[0] == "EXP_STOP":
                 z_log.info("Experiment has stopped!")
 
                 lock.acquire()
@@ -201,18 +198,24 @@ def ZMQ_thread(input_q):
 
                 socketio.emit("experiment stopped", {}, broadcast=True)
 
-            elif msg[0] == "Info":
-                z_log.info("Received info from broker!")
+            elif msg[0] == "INFO":
+                z_log.info("Received info from device " + msg[1])
 
-                socketio.emit("info", {"data":msg[2]}, broadcast=True)
+                message = {
+                    "sequence" : "info",
+                    "device" : msg[1],
+                    "data" : msg[2]
+                }
+
+                socketio.emit("info", message, broadcast=True)
 
             # Received command response
             else:
                 z_log.info("Received message from broker!")
     
                 response = {
-                    "device" : msg[0],
-                    "count" : msg[1],
+                    "sequence" : msg[0],
+                    "device" : msg[1],
                     "data" : msg[2]
                 }
 
@@ -226,7 +229,7 @@ def ZMQ_thread(input_q):
             if msg["type"] == "system":
 
                 if msg["data"] == "update testbed":
-                    zmq_soc.send_multipart([b"TestbedUpdate", b"", b""])
+                    zmq_soc.send_multipart([b"TESTBED_UPDATE", b"", b""])
 
             elif msg["type"] == "command":
                 zmq_soc.send_multipart(msg["data"])

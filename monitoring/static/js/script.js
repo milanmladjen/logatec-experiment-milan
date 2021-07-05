@@ -13,8 +13,7 @@ var auto_scroll = true;
 var SYSTEM_COMMANDS = [
     "RESET",
     "FLASH",
-    "EXIT",
-    "STATE"
+    "EXIT"
 ];
 
 var EXPERIMENT_COMMANDS = [
@@ -344,9 +343,9 @@ $(document).ready(function(){
     });
 
     socket.on("command response", function(msg){
-        console.log("Received response [" + msg.count +"] from device: " + msg.device +" :" + msg.data);
+        console.log("Received response (" + msg.sequence +") from device: " + msg.device +" :" + msg.data);
 
-        var formatted_msg = "[" + msg.count + "] " + msg.device + ":" + msg.data + "\n";
+        var formatted_msg = "[" + msg.device + "]: (" + msg.sequence + ") " + msg.data + "\n";
 
         // Append text into textarea (don't delete old one)
         $("#output_field").val( $("#output_field").val() + formatted_msg);
@@ -357,18 +356,33 @@ $(document).ready(function(){
         }
     });
 
+    socket.on("info", function(msg){
+        console.log("Received info");
+
+        var formatted_msg = "[" + msg.device + "]: " + msg.data + "\n";
+
+        // Append text into textarea (don't delete old one)
+        $("#output_field").val( $("#output_field").val() + formatted_msg);
+
+        // Scroll to bottom
+        if(auto_scroll){
+            $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
+        }
+    });
+
+
     socket.on("device state update", function(msg){
         
         // If this address appears for the first time
-        var lgtc = msg.data;
-        if (available_devices.indexOf(lgtc.address) < 0){
+        var lgtc = msg.device;
+        if (available_devices.indexOf(lgtc) < 0){
             console.log("Nev available device in testbed");
-            available_devices.push(lgtc.address);
-            dropdown.add_dev(lgtc.address);
+            available_devices.push(lgtc);
+            dropdown.add_dev(lgtc);
         }
 
         // Update state of the device in the tloris
-        tloris.update_dev(lgtc.address, lgtc.state);
+        tloris.update_dev(lgtc, msg.data);
 
     });
 
@@ -386,15 +400,6 @@ $(document).ready(function(){
             dropdown.add_dev(lgtc.address);
             available_devices.push(lgtc.address);
         }
-    });
-
-    socket.on("info", function(msg){
-        console.log("Received info");
-
-        // Append text into textarea (don't delete old one)
-        $("#output_field").val( $("#output_field").val() + msg.data);
-        // Scroll to bottom
-        $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
     });
 
     // --------------------------------------------------------------------------------------------------------
@@ -418,15 +423,18 @@ $(document).ready(function(){
             return false;
         }
         
-        // Get the cmd and obtain its number
-        var nbr;
+        // Get the cmd and obtain its sequence number
+        var sqn;
         var cmd = $("#input_cmd").val();
         if (SYSTEM_COMMANDS.includes(cmd)){
-            nbr = "-1";
+            sqn = "SYS";
+        }
+        else if(cmd == "STATE"){
+            sqn = "STATE";
         }
         else {
             tx_msg_nbr += 1;
-            nbr = tx_msg_nbr.toString();
+            sqn = tx_msg_nbr.toString();
         }
 
         // TODO: check if command is supported
@@ -441,12 +449,12 @@ $(document).ready(function(){
             dev = $("#select_device option:selected").text();
         }
 
-        console.log("Send command [" + nbr + "]:" + cmd + " to device: " + dev );
+        console.log("Send command (" + sqn + ") :" + cmd + " to device: " + dev );
         
         // Send it to server
         socket.emit("new command", {
+            sequence: sqn,
             device: dev,
-            count: nbr,
             data: cmd
         });
         return true;

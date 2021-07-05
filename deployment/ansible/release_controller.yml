@@ -39,3 +39,6 @@
 
   - name: Run docker image
     command: docker run --name controller-test -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM={{device_num}} -e RADIO_TYPE={{radio_type}} controller 
+
+
+    # TODO: rename container into testbed_controller

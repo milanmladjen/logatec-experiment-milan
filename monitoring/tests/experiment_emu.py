@@ -174,7 +174,7 @@ class experiment():
 
                         if timeout_cnt > 5:
                             self.f.warning("VESNA did not respond for more than a minute")
-                            self.LGTC_send_sys_resp("VESNA_TIMEOUT")
+                            self.LGTC_state_change("VESNA_TIMEOUT")
                             self.log.error("VESNA did not respond for more than a minute")
                             timeout_cnt = 0
                             self._is_app_running = False
@@ -191,7 +191,7 @@ class experiment():
                             # so stop waiting for it
                             if self._command_timeout:
                                 self.f.warning("Command timeout occurred!")
-                                self.LGTC_send_cmd_resp(self._command_waiting, "Failed to get response ...")
+                                self.LGTC_state_change(self._command_waiting, "Failed to get response ...")
                                 self.log.warning("No response on command for more than 3 seconds!")
                                 self._command_timeout = False
                                 self._command_waiting = None
@@ -250,7 +250,7 @@ class experiment():
                 cmd = self.LGTC_rec_cmd()
 
                 # SYSTEM COMMANDS
-                if cmd[0] == "-1":
+                if cmd[0] == "SYS":
 
                     if cmd[1] == "FLASH":
                         if not self.LGTC_vesna_flash():
@@ -331,18 +331,17 @@ class experiment():
     # ------------------------------------------------------------------------------------
     # CLASS FUNCTIONS
     # ------------------------------------------------------------------------------------
-    def LGTC_send_sys_resp(self, state):
-        self.out_q.put(["-1", state])
-
-    def LGTC_send_info_resp(self, state):
-        self.out_q.put(["0", state])
+    def LGTC_send_info_resp(self, resp):
+        self.out_q.put(["INFO", resp])
 
     def LGTC_send_cmd_resp(self, nbr, resp):
         self.out_q.put([nbr, resp])
 
+    def LGTC_state_change(self, state):
+        self.out_q.put(["STATE", state])
+
     def LGTC_rec_cmd(self):
         return self.in_q.get()
-
 
     def LGTC_app_exit(self):
         """self.monitor.stop_app()"""
@@ -355,7 +354,7 @@ class experiment():
         """
         if not self.monitor.connect_to("ttyS2"):
             self.f.error("Couldn't connect to VESNA.")
-            self.LGTC_send_sys_resp("VESNA_ERR")
+            self.LGTC_state_change("VESNA_ERR")
             self.log.error("Couldn't connect to VESNA.")
             return
         """
@@ -367,11 +366,11 @@ class experiment():
         """
         if not self.monitor.sync_with_vesna():
             self.f.error("Couldn't sync with VESNA.")
-            self.LGTC_send_sys_resp("VESNA_ERR")
+            self.LGTC_state_change("VESNA_ERR")
             self.log.error("Couldn't sync with VESNA.")
             return False
         """
-        self.LGTC_send_sys_resp("SYNCED_WITH_VESNA")
+        self.LGTC_state_change("SYNCED_WITH_VESNA")
         self.log.info("Synced with VESNA over serial ...")
         return True
 
