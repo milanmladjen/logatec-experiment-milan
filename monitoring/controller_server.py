@@ -21,7 +21,7 @@ import logging
 EXPERIMENT = "None"
 
 # IP address of controller container (canged in SMS with start.sh script to 193.2.205.19:5563)
-CONTROLLER_HOSTNAME = "tcp://192.168.2.148:5563"
+CONTROLLER_HOSTNAME = "tcp://193.2.205.2048:5563"
 
 
 # --------------------------------------------------------------------------------------------
