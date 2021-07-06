@@ -119,23 +119,23 @@ class zmq_client_thread(threading.Thread):
             # If there is some incoming commad from the controller broker
             inp = self.client.check_input(0)
             if inp:
-                msg_nbr, msg = self.client.receive_async(inp)
+                sqn, msg = self.client.receive_async(inp)
 
                 # If the message is not ACK
-                if msg_nbr:
+                if sqn:
 
-                    self.log.debug("Received command from broker: [" + msg_nbr + "] " + msg)
+                    self.log.debug("Received command from broker: [" + sqn + "] " + msg)
 
                     # STATE COMMAND
                     # Return the state of the node
-                    if msg_nbr == "STATE":
+                    if sqn == "STATE":
                         self.updateState(self.getState())
                     
                     # SYSTEM COMMANDS
                     # Forward them to the experiment app
-                    elif msg_nbr == "SYS":
+                    elif sqn == "SYS":
 
-                        self.queuePut(msg_nbr, msg)
+                        self.queuePut(sqn, msg)
 
                         # EXIT - close the client thread
                         if msg == "EXIT":
@@ -150,22 +150,22 @@ class zmq_client_thread(threading.Thread):
 
                         if msg == "START":
                             if self._is_app_running == True:
-                                self.sendCmdResp(msg_nbr, "App is allready running...")
+                                self.sendCmdResp(sqn, "App is allready running...")
                                 forward_cmd = False
                         
                         if msg == "STOP":
                             if self._is_app_running == False:
-                                self.sendCmdResp(msg_nbr, "No application running...")
+                                self.sendCmdResp(sqn, "No application running...")
                                 forward_cmd = False
 
                         if msg == "RESTART":
                             self.queuePut("SYS", "RESET")
-                            self.queuePut([msg_nbr, "START"])
+                            self.queuePut(sqn, "START")
                             forward_cmd = False
 
                         if forward_cmd:
                             self.log.debug("Forwarding it to the experiment thread")
-                            self.queuePut(msg_nbr, msg)
+                            self.queuePut(sqn, msg)
 
             # --------------------------------------------------------------------------------
             # If there is still some message that didn't receive ACK back from server, re send it
@@ -248,6 +248,34 @@ class zmq_client_thread(threading.Thread):
 # --> VESNA_ERROR   - Problems with UART communication
 #
 #
+# ----------------------------------------------------------------------------------------
+# SUPPORTED COMMANDS
+# ----------------------------------------------------------------------------------------
+# Incoming commands must be formated as a list with 2 string arguments: message type 
+# and command itself (example: ["SYS", "EXIT"]). 
+# Message type distinguish between 4 types of possible incoming commands
+#
+# SYS --> SYSTEM COMMAND - used for controll over the experiment application
+#
+#       * EXIT      - exit experiment application
+#       * RESET     - reset the device (if possible)
+#       * FLASH     - flash the device (if possible)
+#
+# SQN --> EXPERIMENT COMMAND - if type of message is a number, that is an experiment command
+#                              and type of message represents command sequence number
+#
+#       * START     - start the application loop
+#       * STOP      - stop the application loop
+#       * LINES     - return the number of done measurements
+#       * SEC       - return the number of elapsed seconds
+#       * DURATION  - return the duration of the app
+
+# Outgoing responses mas also be formated as a list with 2 string arguments: message type
+# and response (example: ["12", "Lines stored: 5"]). Client thread will do the state filtering.
+# Message types are the same as before, but you can also use INFO type - message from the
+# experiment application without sequence number (example: ["INFO", "Device joined network!"])
+
+
 # ----------------------------------------------------------------------------------------
 # SUPPORTED COMMANDS
 # ----------------------------------------------------------------------------------------

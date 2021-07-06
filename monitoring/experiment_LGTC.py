@@ -258,28 +258,26 @@ if __name__ == "__main__":
 # ----------------------------------------------------------------------------------------
 # SUPPORTED COMMANDS
 # ----------------------------------------------------------------------------------------
-# Incoming commands must be formated as a list with 2 string arguments: message number 
-# and command itself (example: ["66", "STATE"]). Message number is used as a sequence
-# number, but if it is set to "-1", command represents SYSTEM COMMAND:
+# Incoming commands must be formated as a list with 2 string arguments: message type 
+# and command itself (example: ["SYS", "EXIT"]). 
+# Message type distinguish between 2 types of possible incoming commands
 #
-# --> SYSTEM COMMANDS - used for controll over the LGTC monitoring application
+# SYS --> SYSTEM COMMAND - used for controll over the experiment application
 #
-#       * START_APP       - start the experiment application
-#       * STOP_APP        -
-#       * RESTART_APP     - 
-#       * FLASH           - flash VESNA with experiment application
-#       * SYNC_WITH_VESNA - start the serial monitor
-#       * EXIT            - exit monitoring application
-#       
-#       * STATE           - return the current state of monitoring application
-#       * SYNC            - used to synchronize LGTC with broker/server
-#       * ACK             - acknowledge packet sent as a response on every message
-#       
-# --> EXPERIMENT COMMANDS - used for controll over the VESNA experiment application
+#       * EXIT      - exit experiment application
+#       * RESET     - reset the device (if possible)
+#       * FLASH     - flash the device (if possible)
 #
-#       * LINES           - return the number of lines stored in measurement file
-#       * SEC             - return the number of elapsed seconds since the beginning of exp.
-#       TODO:
-#       They should start with the char "*" so VESNA will know?
-#       Depend on Contiki-NG application
+# SQN --> EXPERIMENT COMMAND - if type of message is a number, that is an experiment command
+#                              and type of message represents command sequence number
 #
+#       * START     - start the application loop
+#       * STOP      - stop the application loop
+#       * LINES     - return the number of done measurements
+#       * SEC       - return the number of elapsed seconds
+#       * DURATION  - return the duration of the app
+
+# Outgoing responses mas also be formated as a list with 2 string arguments: message type
+# and response (example: ["12", "Lines stored: 5"]). Client thread will do the state filtering.
+# Message types are the same as before, but you can also use INFO type - message from the
+# experiment application without sequence number (example: ["INFO", "Device joined network!"])
