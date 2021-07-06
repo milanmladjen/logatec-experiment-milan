@@ -65,19 +65,16 @@ class zmq_client_thread(threading.Thread):
                     self.updateState("RUNNING")
                     self._is_app_running = True
                     self.log.debug("Application started!")
-                    self.queuePut("SYS", "APP_STARTED")
 
                 elif response == "STOP":
                     self.updateState("STOPPED")
                     self._is_app_running = False
                     self.log.debug("Application stopped!")
-                    self.queuePut("SYS", "APP_STOPPED")
 
                 elif response == "END":
                     self.updateState("FINISHED")
                     self._is_app_running = False
                     self.log.info("End of application!")
-                    self.queuePut("SYS", "APP_STOPPED")
 
                     if self._controller_died:
                         self.stop()

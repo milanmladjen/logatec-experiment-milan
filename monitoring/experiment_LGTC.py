@@ -102,6 +102,7 @@ class experiment():
         # Experiment vars
         self._is_app_running = False
         self._lines_stored = 0
+        self._elapsed_sec = 0
 
 
 
@@ -110,17 +111,29 @@ class experiment():
         self.log.info("Starting experiment application!")
 
         # Init everything
+        loop_time = timer()
 
         while(True):
 
             # -------------------------------------------------------------------------------
-            # Do the measurement
+            # If START command received, do the measurement
+            # Main application loop...
             if(self._is_app_running):
-                
-                self._lines_stored += 1
-                print("Measurement no." + self._lines_stored)
 
-                if(self._lines_stored == 10):
+                # Count seconds
+                if ((timer() - loop_time) > 1):
+                    self._elapsed_sec += (timer() - loop_time)
+                    loop_time = timer()
+                    #self.log.debug("Elapsed seconds: " + str(self._elapsed_sec))
+
+                if self._elapsed_sec % 5 == 0:
+                    self._lines_stored += 1
+                    self.f.store_line("Measurement no." + self._lines_stored)
+                    self.queuePut("INFO", "measurement done")
+                    
+
+                # If app duration come to the end, finish app
+                if(self._elapsed_sec == (APP_DURATION * 60)):
                     self._is_app_running = False
                     self.queuePut("INFO", "END")
 
@@ -135,14 +148,12 @@ class experiment():
                 # Act upon system command
                 if sqn == "SYS":
 
-                    if cmd == "EXIT":
-                        self.stop()
-                        break
-
-                    elif cmd == "RESET":
+                    if cmd == "RESET":
                         print("Reset all variables")
 
-                    #TODO tuki ti pridejo še ukazi APP_STARTED in APP_STOPPED...reši tu pr VESNI drgači
+                    elif cmd == "EXIT":
+                        self.stop()
+                        break
 
                     else:
                         self.log.warning("Unsupported SYS command " + cmd)
@@ -155,6 +166,9 @@ class experiment():
                     self.log.info("Got command [" + sqn + "]: " + cmd)
 
                     if cmd == "START":
+                        self._elapsed_sec = 0
+                        loop_time = timer()
+                        self._lines_stored = 0
                         self._is_app_running = True
                         self.queuePut(sqn, cmd)
 
@@ -162,11 +176,25 @@ class experiment():
                         self._is_app_running = False
                         self.queuePut(sqn, cmd)
 
-                    if cmd == "LINES":
+                    elif cmd == "LINES":
                         resp = "Lines stored: " + str(self._lines_stored)
                         self.queuePut(sqn, resp)
                         self.f.store_lgtc_line(resp)
 
+                    # Return number of seconds since the beginning of app
+                    elif cmd == "SEC":
+                        resp = "Seconds passed: " + str(round(self._elapsed_sec, 1)) + "s"
+                        self.queuePut(sqn, resp)
+                        self.f.store_lgtc_line(resp)
+
+                    # Return the predefined application duration
+                    elif cmd == "DURATION":
+                        resp = "Defined duration: " + str(APP_DURATION) + "min"
+                        self.queuePut(sqn, resp)
+                        self.f.store_lgtc_line(resp)
+
+                    else:
+                        self.queuePut(sqn, "Unsupported command - you can add it yourself!")
 
     
 

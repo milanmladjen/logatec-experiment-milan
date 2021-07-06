@@ -107,6 +107,7 @@ class experiment():
         self._command_waiting = None
         self._command_timeout = False
         self._lines_stored = 0
+        self._elapsed_sec = 0
 
 
 
@@ -131,7 +132,6 @@ class experiment():
         # Each time application starts, send duration to VESNA...if user wants to change it, he can do it with new command...
         self.monitor.send_command_with_arg("DURAT", str(APP_DURATION * 60))
 
-        elapsed_sec = 0
         timeout_cnt = 0
         loop_time = timer()
 
@@ -146,12 +146,12 @@ class experiment():
 
                 # Count seconds
                 if ((timer() - loop_time) > 1):
-                    elapsed_sec += (timer() - loop_time)
+                    self._elapsed_sec += (timer() - loop_time)
                     loop_time = timer()
-                    #self.log.debug("Elapsed seconds: " + str(elapsed_sec))
+                    #self.log.debug("Elapsed seconds: " + str(self._elapsed_sec))
 
                     # Every 10 seconds
-                    if elapsed_sec % 10 == 0:
+                    if self._elapsed_sec % 10 == 0:
                         
                         # Check if serial_monitor received something
                         if not self.monitor.serial_avaliable:
@@ -171,7 +171,7 @@ class experiment():
                         self.monitor.serial_avaliable = False
 
                     # Every 3 seconds
-                    if elapsed_sec % 3 == 0:
+                    if self._elapsed_sec % 3 == 0:
                         if self._command_waiting != None:
                             self.log.debug("Waiting for response...")
                             # If _command_timeout allready occurred - response on command was
@@ -241,15 +241,6 @@ class experiment():
                         self.stop()
                         break
 
-                    # We need var state "_is_app_running" for timeout detection
-                    elif cmd == "APP_STARTED":
-                        elapsed_sec = 0
-                        self._lines_stored = 0
-                        self._is_app_running = True
-
-                    elif cmd == "APP_STOPPED":
-                        self._is_app_running = False
-
                     else:
                         self.log.warning("Unsupported SYS command " + cmd)
 
@@ -258,30 +249,43 @@ class experiment():
                 # Check if there is a command on which we can respond here,
                 # otherwise forward it to VESNA 
                 else:
+                    forward_cmd = True
 
                     self.f.store_lgtc_line("Got command [" + sqn + "]: " + cmd)
                     self.log.info("Got command [" + sqn + "]: " + cmd)
 
+                    if cmd == "START":
+                        self._elapsed_sec = 0
+                        loop_time = timer()
+                        self._lines_stored = 0
+                        self._is_app_running = True
+
+                    elif cmd == "STOP":
+                        self._is_app_running = False
+
                     # Return number of lines read
-                    if cmd == "LINES":
+                    elif cmd == "LINES":
                         resp = "Lines stored: " + str(self._lines_stored)
                         self.queuePut(sqn, resp)
                         self.f.store_lgtc_line(resp)
+                        forward_cmd = False
 
                     # Return number of seconds since the beginning of app
                     elif cmd == "SEC":
-                        resp = "Seconds passed: " + str(round(elapsed_sec, 1)) + "s"
+                        resp = "Seconds passed: " + str(round(self._elapsed_sec, 1)) + "s"
                         self.queuePut(sqn, resp)
                         self.f.store_lgtc_line(resp)
+                        forward_cmd = False
 
                     # Return the predefined application duration
                     elif cmd == "DURATION":
                         resp = "Defined duration: " + str(APP_DURATION) + "min"
                         self.queuePut(sqn, resp)
                         self.f.store_lgtc_line(resp)
+                        forward_cmd = False
 
                     # Forward command to VESNA
-                    else:
+                    if forward_cmd:
                         self.monitor.send_command(cmd)
                         self._command_waiting = sqn
     
