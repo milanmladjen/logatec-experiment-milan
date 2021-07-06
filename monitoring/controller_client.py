@@ -44,75 +44,29 @@ class zmq_client_thread(threading.Thread):
 
         # Sync with broker with timeout of 10 seconds
         self.log.info("Sync with broker ... ")
-        self.client.transmit(["SYS", "SYNC"])
-        if self.client.wait_ack("SYS", 10) is False:
+        self.client.transmit(["SYNC", "SYNC"])
+        if self.client.wait_ack("SYNC", 10) is False:
             self.log.error("Couldn't synchronize with broker...")
-            self._controller_died = True
+            self.queuePut("0", "CONTROLLER_DIED")
 
         # ------------------------------------------------------------------------------------
         while self._is_thread_running:
 
             # --------------------------------------------------------------------------------
             # If there is a message from experiment thread
-            # Filter out the information and act accordingly
             if not self.in_q.empty():
-
-                self.log.debug("Received response from apk thread [" + response[0] + "]: " + response[1])
 
                 sequence, response = self.in_q.get()
 
-                if response == "START":
-                    self.updateState("RUNNING")
-                    self._is_app_running = True
-                    self.log.debug("Application started!")
+                self.log.debug("Received response from apk thread [" + sequence + "]: " + response)
 
-                elif response == "STOP":
-                    self.updateState("STOPPED")
-                    self._is_app_running = False
-                    self.log.debug("Application stopped!")
+                if sequence == "STATE":
+                    self.updateState(response)
 
-                elif response == "END":
-                    self.updateState("FINISHED")
-                    self._is_app_running = False
-                    self.log.info("End of application!")
+                elif sequence == "INFO":
+                    self.sendInfoResp(response)
 
-                    if self._controller_died:
-                        self.stop()
-                        self.queuePut("SYS", "EXIT")
-                        break
-                
-                elif response == "COMPILING":
-                    self.updateState("COMPILING")
-
-                elif response == "FLASHED":
-                    self.updateState("ONLINE")
-                
-                elif response == "SYNCED_WITH_VESNA":
-                    self.updateState("ONLINE")
-
-                elif response == "JOIN_DAG":
-                    self.updateState("JOINED_NETWORK")
-
-                elif response == "EXIT_DAG":
-                    self.updateState("EXITED_NETWORK")
-                    
-                elif response == "ROOT":
-                    self.updateState("DAG_ROOT")
-                    self.sendCmdResp(sequence, "Device is now RPL DAG root!")
-
-                elif response == "VESNA_TIMEOUT":
-                    self.updateState("TIMEOUT")
-
-                elif response == "COMPILE_ERR":
-                    self.exit("COMPILE_ERR")
-                    break
-
-                elif response == "VESNA_ERR":
-                    self.exit("VESNA_ERR")
-                    break              
-                
                 else:
-                    self.log.debug("Forwarding it to the controller...")
                     self.sendCmdResp(sequence, response)
             
             # --------------------------------------------------------------------------------
@@ -121,7 +75,7 @@ class zmq_client_thread(threading.Thread):
             if inp:
                 sqn, msg = self.client.receive_async(inp)
 
-                # If the message is not ACK
+                # if not ACK
                 if sqn:
 
                     self.log.debug("Received command from broker: [" + sqn + "] " + msg)
@@ -130,11 +84,10 @@ class zmq_client_thread(threading.Thread):
                     # Return the state of the node
                     if sqn == "STATE":
                         self.updateState(self.getState())
-                    
-                    # SYSTEM COMMANDS
-                    # Forward them to the experiment app
-                    elif sqn == "SYS":
 
+                    # EXPERIMENT COMMAND
+                    else:
+                        # Forward it to the experiment
                         self.queuePut(sqn, msg)
 
                         # EXIT - close the client thread
@@ -142,30 +95,6 @@ class zmq_client_thread(threading.Thread):
                             self.updateState("OFFLINE")
                             self.log.info("Closing client thread.")
                             break
-
-                    # EXPERIMENT COMMAND
-                    # Forward them to the experiment app
-                    else:
-                        forward_cmd = True
-
-                        if msg == "START":
-                            if self._is_app_running == True:
-                                self.sendCmdResp(sqn, "App is allready running...")
-                                forward_cmd = False
-                        
-                        if msg == "STOP":
-                            if self._is_app_running == False:
-                                self.sendCmdResp(sqn, "No application running...")
-                                forward_cmd = False
-
-                        if msg == "RESTART":
-                            self.queuePut("SYS", "RESET")
-                            self.queuePut(sqn, "START")
-                            forward_cmd = False
-
-                        if forward_cmd:
-                            self.log.debug("Forwarding it to the experiment thread")
-                            self.queuePut(sqn, msg)
 
             # --------------------------------------------------------------------------------
             # If there is still some message that didn't receive ACK back from server, re send it
@@ -205,33 +134,30 @@ class zmq_client_thread(threading.Thread):
         tmp = self.in_q.get()
         return tmp[0], tmp[1]
 
-    # Get global variable
-    def getState(self):
-        return self.__LGTC_STATE
-
-    # Set global variable and
-    # Send new state to the server (WARNING: async method used...)
-    def updateState(self, state):
-        self.__LGTC_STATE = state
-        self.client.transmit_async(["STATE", state])
-
     # Send info to the server (WARNING: async method used...)
     def sendInfoResp(self, info):
         self.client.transmit_async(["INFO", info])
-
-    # Send system message to the server (WARNING: async method used...)
-    def sendSysResp(self, sys):
-        self.client.transmit_async(["SYS", sys])
 
     # Send respond to the server (WARNING: async method used...)
     def sendCmdResp(self, sqn, resp):
         self.client.transmit_async([sqn, resp])
 
+    # Set global variable and
+    # Send new state to the server (WARNING: async method used...)
+    def updateState(self, state):
+        self.__LGTC_STATE = state
+        # TODO check if state is possible, else set state LGTC_WARNING
+        self.client.transmit_async(["STATE", state])
+
+    # Get global variable
+    def getState(self):
+        return self.__LGTC_STATE
+
 
 
 
 # This thread is designed for communication with controller_broker script - forwarding commands
-# and responses & updating LGTC states.
+# and responses & updating LGTC state.
 
 # ----------------------------------------------------------------------------------------
 # POSSIBLE LGTC STATES
@@ -244,66 +170,20 @@ class zmq_client_thread(threading.Thread):
 #
 # --> TIMEOUT       - VESNA is not responding for more than a minute
 # --> LGTC_WARNING  - Warning sign that something was not as expected
-# --> COMPILE_ERROR - Experiment application could not be compiled
-# --> VESNA_ERROR   - Problems with UART communication
+# --> COMPILE_ERR - Experiment application could not be compiled
+# --> VESNA_ERR   - Problems with UART communication
 #
 #
 # ----------------------------------------------------------------------------------------
 # SUPPORTED COMMANDS
 # ----------------------------------------------------------------------------------------
-# Incoming commands must be formated as a list with 2 string arguments: message type 
-# and command itself (example: ["SYS", "EXIT"]). 
-# Message type distinguish between 4 types of possible incoming commands
+# Messages in the monitoring systems (between controller and node!) are formed as a list 
+# with 2 arguments: message_type and command itself (example: ["11", "START"]). First 
+# argument distinguish between 4 possible packet types:
 #
-# SYS --> SYSTEM COMMAND - used for controll over the experiment application
-#
-#       * EXIT      - exit experiment application
-#       * RESET     - reset the device (if possible)
-#       * FLASH     - flash the device (if possible)
-#
-# SQN --> EXPERIMENT COMMAND - if type of message is a number, that is an experiment command
-#                              and type of message represents command sequence number
-#
-#       * START     - start the application loop
-#       * STOP      - stop the application loop
-#       * LINES     - return the number of done measurements
-#       * SEC       - return the number of elapsed seconds
-#       * DURATION  - return the duration of the app
+# INFO
+# STATE
+# SQN
+# ACK
 
-# Outgoing responses mas also be formated as a list with 2 string arguments: message type
-# and response (example: ["12", "Lines stored: 5"]). Client thread will do the state filtering.
-# Message types are the same as before, but you can also use INFO type - message from the
-# experiment application without sequence number (example: ["INFO", "Device joined network!"])
-
-
-# ----------------------------------------------------------------------------------------
-# SUPPORTED COMMANDS
-# ----------------------------------------------------------------------------------------
-# Incoming commands must be formated as a list with 2 string arguments: message number 
-# and command itself (example: ["66", "SEC"]). Message number is used as a sequence
-# number, but if it is set to "-1", command represents SYSTEM COMMAND:
-#
-# --> SYSTEM COMMANDS - used for controll over the LGTC monitoring application
-#
-#       * STATE           - return the current state of monitoring application
-#       * EXIT            - exit monitoring application
-#       * ACK             - acknowledge packet sent as a response on every message
-#       * FLASH           - flash VESNA with experiment application
-#       * RESET           - reset VESNA device
-#       * BROKER_DIED     - if broker is not responding, inform serial monitor about it
-#       * SYNC            - used to synchronize LGTC with broker/server
-#
-# System commands are also used to update device state!
-#
-# --> EXPERIMENT COMMANDS - used for controll over the VESNA experiment application
-#
-#       * START           - start the experiment application
-#       * STOP            -
-#       * RESTART         - 
-#       * END             - when VESNA stops the experiment, this cmd is sent to broker
-#       * DURRATION       - return predefined duration of the application
-#       * LINES           - return the number of lines stored in measurement file
-#       * SEC             - return the number of elapsed seconds since the beginning of exp.
-#       TODO:
-#       Depend on Contiki-NG application
 

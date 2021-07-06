@@ -97,6 +97,7 @@ class experiment():
         # controller_client.py - link multithread input output queue
         self.in_q = input_q
         self.out_q = output_q
+        self._controller_died = False
 
         # file_logger.py - prepare measurements file
         self.f.prepare_file(filename, lgtcname)
@@ -161,7 +162,7 @@ class experiment():
 
                         if timeout_cnt > 5:
                             self.f.warning("VESNA did not respond for more than a minute")
-                            self.queuePut("STATE","VESNA_TIMEOUT")
+                            self.queuePutState("TIMEOUT")
                             self.log.error("VESNA did not respond for more than a minute")
                             timeout_cnt = 0
                             self._is_app_running = False
@@ -179,8 +180,8 @@ class experiment():
                             # so stop waiting for it
                             if self._command_timeout:
                                 self.f.warning("Command timeout occurred!")
-                                self.queuePut(self._command_waiting, "Failed to get response ...")
-                                self.queuePut("STATE", "VESNA_TIMEOUT")
+                                self.queuePutResp(self._command_waiting, "Failed to get response ...")
+                                self.queuePutState("TIMEOUT")
                                 self.log.warning("No response on command for more than 3 seconds!")
                                 self._command_timeout = False
                                 self._command_waiting = None
@@ -204,12 +205,45 @@ class experiment():
                     # Remove first 2 char '$ ' and last two char '\n'
                     resp = data[2:-1]
 
+                    if resp == "START":
+                        self._elapsed_sec = 0
+                        loop_time = timer()
+                        self._lines_stored = 0
+                        self._is_app_running = True
+                        self.queuePutState("RUNNING")
+                        self.log.debug("Application started!")
+
+                    elif resp == "STOP":
+                        self._is_app_running = False
+                        self.queuePutState("STOPPED")
+
+                    elif resp == "END":
+                        self._is_app_running = False
+                        self.queuePutState("FINISHED")
+
+                        if self._controller_died:
+                            break
+
+                    elif resp == "JOIN_DAG":
+                        self.queuePutState("JOINED_NETWORK")
+                        self.log.debug("Device joined RPL network!")
+
+                    elif resp == "EXIT_DAG":
+                        self.queuePutState("EXITED_NETWORK")
+                        self.log.debug("Device exited RPL network!")
+
+                    elif resp == "ROOT":
+                        self.queuePutState("DAG_ROOT")
+                        self.queuePutResp(self._command_waiting, "Device is now RPL DAG root!")
+                        self.log.debug("Device is now RPL DAG root!")
+
+
                     # If there is no SQN waiting for response, we got INFO message from VESNA for monitor
-                    if(self._command_waiting):
-                        self.queuePut(self._command_waiting, resp)
+                    elif(self._command_waiting):
+                        self.queuePutResp(self._command_waiting, resp)
                         self.log.debug("Got response on cmd from VESNA: " + resp)
                     else:
-                        self.queuePut("INFO", resp)
+                        self.queuePutInfo(resp)
                         self.log.debug("Got info from VESNA: " + resp)
 
                     self._command_waiting = None
@@ -225,69 +259,69 @@ class experiment():
 
                 sqn, cmd = self.queueGet()
 
-                # SYSTEM COMMANDS
-                # Act upon system command
-                if sqn == "SYS":
+                forward_cmd = True
 
-                    if cmd == "FLASH":
-                        if not self.VESNA_flash():
-                            break
+                self.f.store_lgtc_line("Got command [" + sqn + "]: " + cmd)
+                self.log.info("Got command [" + sqn + "]: " + cmd)
 
-                    elif cmd == "RESET":
-                        self.VESNA_reset()
+                if cmd == "FLASH":
+                    forward_cmd = False
+                    if not self.VESNA_flash():
                         break
 
-                    elif cmd == "EXIT":
-                        self.stop()
+                elif cmd == "RESET":
+                    forward_cmd = False
+                    if not self.VESNA_reset():
                         break
 
-                    else:
-                        self.log.warning("Unsupported SYS command " + cmd)
+                elif cmd == "RESTART":
+                    forward_cmd = False
+                    if not self.VESNA_reset():
+                        break
 
+                elif cmd == "EXIT":
+                    self.stop()
+                    break
 
-                # EXPERIMENT COMMANDS
-                # Check if there is a command on which we can respond here,
-                # otherwise forward it to VESNA 
-                else:
-                    forward_cmd = True
+                elif cmd == "CONTROLLER_DIED":
+                    forward_cmd = False
+                    self._controller_died = True
 
-                    self.f.store_lgtc_line("Got command [" + sqn + "]: " + cmd)
-                    self.log.info("Got command [" + sqn + "]: " + cmd)
-
-                    if cmd == "START":
-                        self._elapsed_sec = 0
-                        loop_time = timer()
-                        self._lines_stored = 0
-                        self._is_app_running = True
-
-                    elif cmd == "STOP":
-                        self._is_app_running = False
-
-                    # Return number of lines read
-                    elif cmd == "LINES":
-                        resp = "Lines stored: " + str(self._lines_stored)
-                        self.queuePut(sqn, resp)
-                        self.f.store_lgtc_line(resp)
+                elif cmd == "START":
+                    if self._is_app_running == True:
+                        self.queuePutResp(sqn, "App is allready running...")
                         forward_cmd = False
 
-                    # Return number of seconds since the beginning of app
-                    elif cmd == "SEC":
-                        resp = "Seconds passed: " + str(round(self._elapsed_sec, 1)) + "s"
-                        self.queuePut(sqn, resp)
-                        self.f.store_lgtc_line(resp)
+                elif cmd == "STOP":
+                    if self._is_app_running == False:
+                        self.queuePutResp(sqn, "No application running ...")
                         forward_cmd = False
 
-                    # Return the predefined application duration
-                    elif cmd == "DURATION":
-                        resp = "Defined duration: " + str(APP_DURATION) + "min"
-                        self.queuePut(sqn, resp)
-                        self.f.store_lgtc_line(resp)
-                        forward_cmd = False
+                # Return number of lines read
+                elif cmd == "LINES":
+                    forward_cmd = False
+                    resp = "Lines stored: " + str(self._lines_stored)
+                    self.queuePutResp(sqn, resp)
+                    self.f.store_lgtc_line(resp)
 
-                    # Forward command to VESNA
-                    if forward_cmd:
-                        self.monitor.send_command(cmd)
-                        self._command_waiting = sqn
+                # Return number of seconds since the beginning of app
+                elif cmd == "SEC":
+                    forward_cmd = False
+                    resp = "Seconds passed: " + str(round(self._elapsed_sec, 1)) + "s"
+                    self.queuePutResp(sqn, resp)
+                    self.f.store_lgtc_line(resp)
+
+                # Return the predefined application duration
+                elif cmd == "DURATION":
+                    forward_cmd = False
+                    resp = "Defined duration: " + str(APP_DURATION) + "min"
+                    self.queuePutResp(sqn, resp)
+                    self.f.store_lgtc_line(resp)
+
+                # Forward command to VESNA
+                if forward_cmd:
+                    self.monitor.send_command(cmd)
+                    self._command_waiting = sqn
     
 
     def clean(self):
@@ -299,8 +333,14 @@ class experiment():
         self.f.store_lgtc_line("Application exit!")
         self.log.info("Application exit!")
 
-    def queuePut(self, sqn, resp):
+    def queuePutResp(self, sqn, resp):
         self.out_q.put([sqn, resp])
+
+    def queuePutState(self, state):
+        self.out_q.put(["STATE", state])
+
+    def queuePutInfo(self, info):
+        self.out_q.put(["INFO", info])
 
     def queueGet(self):
         tmp = self.in_q.get()
@@ -317,9 +357,9 @@ class experiment():
     def VESNA_connect(self):
         if not self.monitor.connect_to("ttyS2"):
             self.f.error("Couldn't connect to VESNA.")
-            self.queuePut("STATE", "VESNA_ERR")
+            self.queuePutState("VESNA_ERR")
             self.log.error("Couldn't connect to VESNA.")
-            return
+            return False
         
         self.log.info("Successfully connected to VESNA serial port!")
         return True
@@ -328,18 +368,18 @@ class experiment():
     def VESNA_sync(self):
         if not self.monitor.sync_with_vesna():
             self.f.error("Couldn't sync with VESNA.")
-            self.queuePut("STATE","VESNA_ERR")
+            self.queuePutState("VESNA_ERR")
             self.log.error("Couldn't sync with VESNA.")
             return False
 
-        self.queuePut("STATE","SYNCED_WITH_VESNA")
+        self.queuePutState("ONLINE")
         self.log.info("Synced with VESNA over serial ...")
         return True
 
     # Compile the C app and VESNA with its binary
     def VESNA_flash(self):
         # Compile the application
-        self.queuePut("STATE","COMPILING")
+        self.queuePutState("COMPILING")
         self.log.info("Complie the application.")
         #procDistclean = Popen(["make", "distclean"])
         with Popen(["make", APP_NAME, "-j2"], stdout = PIPE, bufsize=1, universal_newlines=True, cwd = APP_PATH) as p:
@@ -347,7 +387,7 @@ class experiment():
                 self.log.debug(line)    #TODO maybe use print(line, end="")
         if p.returncode:
             self.log.error("Command " + str(p.args) + " returned non-zero exit status " + str(p.returncode))
-            self.queuePut("STATE","COMPILE_ERR")
+            self.queuePutState("COMPILE_ERR")
             return False
 
         # Flash the VESNA with app binary
@@ -357,11 +397,11 @@ class experiment():
                 self.log.debug(line)
         if p.returncode:
             self.log.error("Command " + str(p.args) + " returned non-zero exit status " + str(p.returncode))
-            self.queuePut("STATE","COMPILE_ERR")
+            self.queuePutState("COMPILE_ERR")
             return False
 
         self.log.info("Successfully flashed VESNA ...")
-        self.queuePut("STATE","FLASHED")
+        self.queuePutState("ONLINE")
         return True
 
     # Make a hardware reset on VESNA
@@ -376,7 +416,8 @@ class experiment():
         os.system('echo 0 > /sys/class/gpio/gpio66/value')
         os.system('echo 1 > /sys/class/gpio/gpio66/value')
 
-        self.queuePut("INFO", "Device reset complete!")
+        self.queuePutInfo("Device reset complete!")
+        return True
 
 
 
@@ -420,29 +461,45 @@ if __name__ == "__main__":
 
 
 
+# This script acts as a main thread while zmq_client is another thread to communicate with
+# controller entity. Threads communicate with Queue (FIFO buffer).
+# This script controls the VESNA platform and communicates with it. It is responsible to
+# execute commands | forward commands .
+
 # ----------------------------------------------------------------------------------------
 # SUPPORTED COMMANDS
 # ----------------------------------------------------------------------------------------
-# Incoming commands must be formated as a list with 2 string arguments: message type 
-# and command itself (example: ["SYS", "EXIT"]). 
-# Message type distinguish between 2 types of possible incoming commands
+# Messages in the monitoring systems (between controller and node!) are formed as a list 
+# with 2 arguments: message_type and command itself (example: ["11", "START"]). First 
+# argument is important for other scripts...for incoming commands in this script it 
+# represents command sequence number (SQN), so experiment will know, which response from 
+# VESNA will corespond on which given command. 
 #
-# SYS --> SYSTEM COMMAND - used for controll over the experiment application
+# List of (currently) supported commands is given below:
 #
 #       * EXIT      - exit experiment application
 #       * RESET     - reset the device (if possible)
-#       * FLASH     - flash the device (if possible)
-#
-# SQN --> EXPERIMENT COMMAND - if type of message is a number, that is an experiment command
-#                              and type of message represents command sequence number
-#
+#       * FLASH     - flash the device (if possible)#
 #       * START     - start the application loop
 #       * STOP      - stop the application loop
+#       * RESTART
 #       * LINES     - return the number of done measurements
 #       * SEC       - return the number of elapsed seconds
 #       * DURATION  - return the duration of the app
+#       * CONTROLLER_DIED - indicates that client thread lost communication
+#
+#       Other supported commands differ on Contiki-NG application
+#
+# List of currently supported responses is given below:
+#       * END
+#       * JOIN_DAG
+#       * EXIT_DAG
+#       * ROOT
+#
+#
+# Script may response in 3 ways - they are distinguished with message_type argument.
+#
+# INFO - means an update in the experiment (without any given command) - displayed in output window
+# STATE - application / node changed its state - change displayed in monitor window
+# SQN - a number which represents response sequence number
 
-# Outgoing responses mas also be formated as a list with 2 string arguments: message type
-# and response (example: ["12", "Lines stored: 5"]). Client thread will do the state filtering.
-# Message types are the same as before, but you can also use INFO type - message from the
-# experiment application without sequence number (example: ["INFO", "Device joined network!"])

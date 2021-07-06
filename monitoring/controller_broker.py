@@ -257,29 +257,29 @@ if __name__ == "__main__":
                 broker.backend_send("ACK", device, msg_type)
 
                 # SYSTEM MESSAGES
-                if msg_type == "SYS":
-                    
-                    if data == "SYNC":
-                        # If device come to experiment add it do database
-                        if not db.is_dev(device):
-                            db.insert_dev(device, "ONLINE")
-                            broker.frontend_deviceUpdate(device, "ONLINE")
-                            log.info("New device " + device)
+                if msg_type == "SYNC":
 
-                            subscribers += 1
-                            if subscribers == NUMBER_OF_DEVICES:
-                                log.info("All devices ("+ str(NUMBER_OF_DEVICES) +") active")
-                                broker.frontend_info("Broker", "All devices (" + str(NUMBER_OF_DEVICES) +") available!")
+                    # If device come to experiment add it do database
+                    if not db.is_dev(device):
+                        db.insert_dev(device, "ONLINE")
+                        broker.frontend_deviceUpdate(device, "ONLINE")
+                        log.info("New device " + device)
 
-                        else:
-                            log.warning("Device %s allready in the experiment" % device)
-                            # TODO send END command to LGTC with stated reason
+                        subscribers += 1
+                        if subscribers == NUMBER_OF_DEVICES:
+                            log.info("All devices ("+ str(NUMBER_OF_DEVICES) +") active")
+                            broker.frontend_info("Broker", "All devices (" + str(NUMBER_OF_DEVICES) +") available!")
 
-                    elif data == "ERROR":
-                        # Device encountered an error and stopped working
-                        db.remove_dev(device)
-                        broker.frontend_deviceUpdate(device, "OFFLINE")
-                        log.warning("Device %s send ERROR message..." % address)
+                    else:
+                        log.warning("Device %s allready in the experiment" % device)
+                        # TODO send END command to LGTC with stated reason
+
+                # TODO - tega ne uporablja client nikjer
+                elif msg_type == "ERROR":
+                    # Device encountered an error and stopped working
+                    db.remove_dev(device)
+                    broker.frontend_deviceUpdate(device, "OFFLINE")
+                    log.warning("Device %s send ERROR message..." % address)
 
                 # DEVICE STATE UPDATE
                 elif msg_type == "STATE":
