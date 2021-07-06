@@ -10,6 +10,7 @@
 #   * serial_monitor.py serves communication with VESNA via UART connection.
 #   * file_logger.py stores all the measurements of the experiment.
 # ----------------------------------------------------------------------------------------
+# TODO: what to do with commands that have arguments? (example at sending DURAT)
 
 from queue import Queue
 import sys
@@ -109,20 +110,20 @@ class experiment():
 
 
 
-    def run(self):
+    def runApp(self):
 
         self.log.info("Starting experiment main thread!")
 
         # Connect to VESNA serial port
-        if not self.LGTC_vesna_connect():
+        if not self.VESNA_connect():
             return
 
         # Flash VESNA with application
-        if not self.LGTC_vesna_flash():
+        if not self.VESNA_flash():
             return        
 
         # Sync with experiment application
-        if not self.LGTC_vesna_sync():
+        if not self.VESNA_sync():
             return
 
         # Send app duration to VESNA
@@ -133,7 +134,6 @@ class experiment():
         elapsed_sec = 0
         timeout_cnt = 0
         loop_time = timer()
-        broker_died = False
 
         while(True):
 
@@ -161,7 +161,7 @@ class experiment():
 
                         if timeout_cnt > 5:
                             self.f.warning("VESNA did not respond for more than a minute")
-                            self.LGTC_state_change("VESNA_TIMEOUT")
+                            self.queuePut("STATE","VESNA_TIMEOUT")
                             self.log.error("VESNA did not respond for more than a minute")
                             timeout_cnt = 0
                             self._is_app_running = False
@@ -179,8 +179,8 @@ class experiment():
                             # so stop waiting for it
                             if self._command_timeout:
                                 self.f.warning("Command timeout occurred!")
-                                self.LGTC_send_cmd_resp(self._command_waiting, "Failed to get response ...")
-                                self.LGTC_state_change("VESNA_TIMEOUT")
+                                self.queuePut(self._command_waiting, "Failed to get response ...")
+                                self.queuePut("STATE", "VESNA_TIMEOUT")
                                 self.log.warning("No response on command for more than 3 seconds!")
                                 self._command_timeout = False
                                 self._command_waiting = None
@@ -190,7 +190,7 @@ class experiment():
             # -------------------------------------------------------------------------------
             # SERIAL MONITOR - READ UART
             # Read and store everything that comes on Serial connection
-            # If line is a response, forward it to controller
+            # If line is a response, forward it to zmq thread for processing
             if self.monitor.input_waiting():
                 data = self.monitor.read_line()
 
@@ -203,55 +203,18 @@ class experiment():
 
                     # Remove first 2 char '$ ' and last two char '\n'
                     resp = data[2:-1]
-                    
-                    if resp == "START":
-                        elapsed_sec = 0
-                        self._lines_stored = 0
-                        self._is_app_running = True
-                        self.LGTC_state_change(resp)
-                        self.log.debug("Application started!")
-                        self.f.store_lgtc_line("Application started!")
 
-                    elif resp == "STOP":
-                        self._is_app_running = False
-                        self.LGTC_state_change(resp)
-                        self.log.debug("Application stopped!")
-                        self.f.store_lgtc_line("Application stopped!")
-
-                    elif resp == "END":
-                        self._is_app_running = False
-                        self.LGTC_state_change(resp)
-                        self.log.info("End of application!")
-                        self.f.store_lgtc_line("End of application!")
-
-                        # If broker died during experiment, exit after end of experiment
-                        if broker_died:
-                            break
-                    
-                    elif resp == "JOIN_DAG":
-                        self.LGTC_state_change(resp)
-                        self.log.debug("Device joined RPL network!")
-
-                    elif resp == "EXIT_DAG":
-                        self.LGTC_state_change(resp)
-                        self.log.debug("Device exited RPL network!")
-
-                    elif resp == "ROOT":
-                        self.LGTC_state_change(resp)
-                        self.LGTC_send_cmd_resp(self._command_waiting, "Device is now RPL DAG root!")
-                        self.log.debug("Device is now RPL DAG root!")
-
+                    # If there is no SQN waiting for response, we got INFO message from VESNA for monitor
+                    if(self._command_waiting):
+                        self.queuePut(self._command_waiting, resp)
+                        self.log.debug("Got response on cmd from VESNA: " + resp)
                     else:
-                        # If there is no SQN waiting for response, we got INFO message from VESNA for monitor
-                        if(self._command_waiting):
-                            self.LGTC_send_cmd_resp(self._command_waiting, resp)
-                            self.log.debug("Got response on cmd " + resp)
-                        else:
-                            self.LGTC_send_info_resp((resp + "\n"))
-                            self.log.debug("Got info from VESNA: " + resp)
-                    
+                        self.queuePut("INFO", resp)
+                        self.log.debug("Got info from VESNA: " + resp)
+
                     self._command_waiting = None
                     self._command_timeout = False
+
 
             # -------------------------------------------------------------------------------
             # CONTROLLER CLIENT - GET COMMANDS
@@ -260,117 +223,97 @@ class experiment():
             # and there is new command in queue, forward it to VESNA
             elif (not self.in_q.empty() and self._command_waiting == None):
 
-                cmd = self.LGTC_rec_cmd()
+                sqn, cmd = self.queueGet()
 
                 # SYSTEM COMMANDS
-                if cmd[0] == "SYS":
+                # Act upon system command
+                if sqn == "SYS":
 
-                    if cmd[1] == "FLASH":
-                        if not self.LGTC_vesna_flash():
+                    if cmd == "FLASH":
+                        if not self.VESNA_flash():
                             break
 
-                    elif cmd[1] == "RESET":
-                        self.LGTC_vesna_reset()
+                    elif cmd == "RESET":
+                        self.VESNA_reset()
                         break
 
-                    elif cmd[1] == "EXIT":
-                        self.LGTC_app_exit()
+                    elif cmd == "EXIT":
+                        self.stop()
                         break
 
-                    elif cmd[1] == "BROKER_DIED":
-                        broker_died = True
+                    # We need var state "_is_app_running" for timeout detection
+                    elif cmd == "APP_STARTED":
+                        elapsed_sec = 0
+                        self._lines_stored = 0
+                        self._is_app_running = True
+
+                    elif cmd == "APP_STOPPED":
+                        self._is_app_running = False
+
+                    else:
+                        self.log.warning("Unsupported SYS command " + cmd)
+
 
                 # EXPERIMENT COMMANDS
+                # Check if there is a command on which we can respond here,
+                # otherwise forward it to VESNA 
                 else:
 
-                    self.f.store_lgtc_line("Got command [" + cmd[0] + "]: " + cmd[1])
-                    self.log.info("Got command [" + cmd[0] + "]: " + cmd[1])
+                    self.f.store_lgtc_line("Got command [" + sqn + "]: " + cmd)
+                    self.log.info("Got command [" + sqn + "]: " + cmd)
 
                     # Return number of lines read
-                    if cmd[1] == "LINES":
+                    if cmd == "LINES":
                         resp = "Lines stored: " + str(self._lines_stored)
-                        self.LGTC_send_cmd_resp(cmd[0], resp)
+                        self.queuePut(sqn, resp)
                         self.f.store_lgtc_line(resp)
 
                     # Return number of seconds since the beginning of app
-                    elif cmd[1] == "SEC":
+                    elif cmd == "SEC":
                         resp = "Seconds passed: " + str(round(elapsed_sec, 1)) + "s"
-                        self.LGTC_send_cmd_resp(cmd[0], resp)
+                        self.queuePut(sqn, resp)
                         self.f.store_lgtc_line(resp)
 
                     # Return the predefined application duration
-                    elif cmd[1] == "DURATION":
+                    elif cmd == "DURATION":
                         resp = "Defined duration: " + str(APP_DURATION) + "min"
-                        self.LGTC_send_cmd_resp(cmd[0], resp)
+                        self.queuePut(sqn, resp)
                         self.f.store_lgtc_line(resp)
 
-
-
-                    # Start the app
-                    elif cmd[1] == "START":
-                        if self._is_app_running == True:
-                            self.LGTC_send_cmd_resp(cmd[0], "App is allready running...")
-                        else:
-                            self.monitor.send_command(cmd[1])
-                            self._command_waiting = cmd[0]
-
-                    # Stop the app
-                    elif cmd[1] == "STOP":
-                        if self._is_app_running == False:
-                            self.LGTC_send_cmd_resp(cmd[0], "No application running...")
-                        else:
-                            self.monitor.send_command(cmd[1])
-                            self._command_waiting = cmd[0]
-
-                    # Restart application
-                    elif cmd[1] == "RESTART":
-                        self.LGTC_vesna_reset()
-                        #time.sleep(1)
-                        #self.LGTC_vesna_sync()
-                        self.monitor.send_command("START")
-                        self._command_waiting = cmd[0]
-
                     # Forward command to VESNA
-                    # TODO: what to do with commands that have arguments?
                     else:
-                        self.monitor.send_command(cmd[1])
-                        self._command_waiting = cmd[0]
+                        self.monitor.send_command(cmd)
+                        self._command_waiting = sqn
     
 
     def clean(self):
         self.monitor.close()
         self.f.close()
-      
 
-    # ------------------------------------------------------------------------------------
-    # CLASS FUNCTIONS
-    # ------------------------------------------------------------------------------------
-    def LGTC_send_info_resp(self, resp):
-        self.out_q.put(["INFO", resp])
-
-    def LGTC_send_cmd_resp(self, nbr, resp):
-        self.out_q.put([nbr, resp])
-
-    def LGTC_state_change(self, state):
-        self.out_q.put(["STATE", state])
-
-    def LGTC_rec_cmd(self):
-        return self.in_q.get()
-
-
-
-
-    def LGTC_app_exit(self):
+    def stop(self):
         self.monitor.send_command("STOP")
         self.f.store_lgtc_line("Application exit!")
         self.log.info("Application exit!")
 
+    def queuePut(self, sqn, resp):
+        self.out_q.put([sqn, resp])
 
-    # Connect to VESNA serial port
-    def LGTC_vesna_connect(self):
+    def queueGet(self):
+        tmp = self.in_q.get()
+        return tmp[0], tmp[1]
+
+
+
+
+
+    # ----------------------------------------------------------------------------------------
+    # VESNA CONTROLL
+    # -------------------------------------------------------------------------------------
+        # Connect to VESNA serial port
+    def VESNA_connect(self):
         if not self.monitor.connect_to("ttyS2"):
             self.f.error("Couldn't connect to VESNA.")
-            self.LGTC_state_change("VESNA_ERR")
+            self.queuePut("STATE", "VESNA_ERR")
             self.log.error("Couldn't connect to VESNA.")
             return
         
@@ -378,21 +321,21 @@ class experiment():
         return True
 
     # Sync with application 
-    def LGTC_vesna_sync(self):
+    def VESNA_sync(self):
         if not self.monitor.sync_with_vesna():
             self.f.error("Couldn't sync with VESNA.")
-            self.LGTC_state_change("VESNA_ERR")
+            self.queuePut("STATE","VESNA_ERR")
             self.log.error("Couldn't sync with VESNA.")
             return False
 
-        self.LGTC_state_change("SYNCED_WITH_VESNA")
+        self.queuePut("STATE","SYNCED_WITH_VESNA")
         self.log.info("Synced with VESNA over serial ...")
         return True
 
     # Compile the C app and VESNA with its binary
-    def LGTC_vesna_flash(self):
+    def VESNA_flash(self):
         # Compile the application
-        self.LGTC_state_change("COMPILING")
+        self.queuePut("STATE","COMPILING")
         self.log.info("Complie the application.")
         #procDistclean = Popen(["make", "distclean"])
         with Popen(["make", APP_NAME, "-j2"], stdout = PIPE, bufsize=1, universal_newlines=True, cwd = APP_PATH) as p:
@@ -400,7 +343,7 @@ class experiment():
                 self.log.debug(line)    #TODO maybe use print(line, end="")
         if p.returncode:
             self.log.error("Command " + str(p.args) + " returned non-zero exit status " + str(p.returncode))
-            self.LGTC_state_change("COMPILE_ERR")
+            self.queuePut("STATE","COMPILE_ERR")
             return False
 
         # Flash the VESNA with app binary
@@ -410,15 +353,15 @@ class experiment():
                 self.log.debug(line)
         if p.returncode:
             self.log.error("Command " + str(p.args) + " returned non-zero exit status " + str(p.returncode))
-            self.LGTC_state_change("COMPILE_ERR")
+            self.queuePut("STATE","COMPILE_ERR")
             return False
 
         self.log.info("Successfully flashed VESNA ...")
-        self.LGTC_state_change("FLASHED")
+        self.queuePut("STATE","FLASHED")
         return True
 
     # Make a hardware reset on VESNA
-    def LGTC_vesna_reset(self):
+    def VESNA_reset(self):
         self.log.info("VESNA hardware reset.")
         try:
             os.system('echo 66 > /sys/class/gpio/export')
@@ -429,7 +372,7 @@ class experiment():
         os.system('echo 0 > /sys/class/gpio/gpio66/value')
         os.system('echo 1 > /sys/class/gpio/gpio66/value')
 
-        self.LGTC_send_info_resp("Device reset complete!")
+        self.queuePut("INFO", "Device reset complete!")
 
 
 
@@ -445,18 +388,18 @@ if __name__ == "__main__":
     logging.info("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME + "!")
 
     # Create 2 queue for communication between threads
-    # LGTC -> VESNA
-    L_V_QUEUE = Queue()
-    # VESNA -> LGTC
-    V_L_QUEUE = Queue()
+    # Client -> VESNA
+    C_V_QUEUE = Queue()
+    # VESNA -> Clinet
+    V_C_QUEUE = Queue()
 
     # Start client thread (communication with controller)
-    client_thread = controller_client.zmq_client_thread(V_L_QUEUE, L_V_QUEUE, LGTC_NAME, SUBSCR_HOSTNAME, ROUTER_HOSTNAME)
+    client_thread = controller_client.zmq_client_thread(V_C_QUEUE, C_V_QUEUE, LGTC_NAME, SUBSCR_HOSTNAME, ROUTER_HOSTNAME)
     client_thread.start()
 
     # Start main thread (experiment with serial monitor)
-    main_thread = experiment(L_V_QUEUE, V_L_QUEUE, RESULTS_FILENAME, LGTC_NAME)
-    main_thread.run()
+    main_thread = experiment(C_V_QUEUE, V_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
+    main_thread.runApp()
     main_thread.clean()
 
     logging.info("Main thread stopped, trying to stop client thread.")

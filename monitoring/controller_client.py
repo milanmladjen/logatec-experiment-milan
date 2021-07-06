@@ -24,6 +24,8 @@ class zmq_client_thread(threading.Thread):
 
         threading.Thread.__init__(self)
         self._is_thread_running = True
+        self._controller_died = False
+        self._is_app_running = False
 
         self.in_q = input_q
         self.out_q = output_q
@@ -45,66 +47,76 @@ class zmq_client_thread(threading.Thread):
         self.client.transmit(["SYS", "SYNC"])
         if self.client.wait_ack("SYS", 10) is False:
             self.log.error("Couldn't synchronize with broker...")
-            self.out_q.put(["SYS", "BROKER_DIED"])
+            self._controller_died = True
 
         # ------------------------------------------------------------------------------------
         while self._is_thread_running:
 
-            # If there is a message from VESNA
             # --------------------------------------------------------------------------------
+            # If there is a message from experiment thread
+            # Filter out the information and act accordingly
             if not self.in_q.empty():
-                response = self.in_q.get()
-                
-                # If the message is STATE - new state
-                if response[0] == "STATE":
-                    self.log.debug("New state: " + response[1])
 
-                    if response[1] == "START":
-                        self.LGTC_sendState("RUNNING")
+                self.log.debug("Received response from apk thread [" + response[0] + "]: " + response[1])
 
-                    elif response[1] == "STOP":
-                        self.LGTC_sendState("STOPPED")
+                sequence, response = self.in_q.get()
 
-                    elif response[1] == "END":
-                        self.LGTC_sendState("FINISHED")
-                    
-                    elif response[1] == "COMPILING":
-                        self.LGTC_sendState("COMPILING")
+                if response == "START":
+                    self.updateState("RUNNING")
+                    self._is_app_running = True
+                    self.log.debug("Application started!")
+                    self.queuePut("SYS", "APP_STARTED")
 
-                    elif response[1] == "FLASHED":
-                        self.LGTC_sendState("ONLINE")
-                    
-                    elif response[1] == "SYNCED_WITH_VESNA":
-                        self.LGTC_sendState("ONLINE")
+                elif response == "STOP":
+                    self.updateState("STOPPED")
+                    self._is_app_running = False
+                    self.log.debug("Application stopped!")
+                    self.queuePut("SYS", "APP_STOPPED")
 
-                    elif response[1] == "JOIN_DAG":
-                        self.LGTC_sendState("JOINED_NETWORK")
+                elif response == "END":
+                    self.updateState("FINISHED")
+                    self._is_app_running = False
+                    self.log.info("End of application!")
+                    self.queuePut("SYS", "APP_STOPPED")
 
-                    elif response[1] == "EXIT_DAG":
-                        self.LGTC_sendState("EXITED_NETWORK")
-                        
-                    elif response[1] == "ROOT":
-                        self.LGTC_sendState("DAG_ROOT")
-
-                    elif response[1] == "VESNA_TIMEOUT":
-                        self.LGTC_sendState("TIMEOUT")
-
-                    elif response[1] == "COMPILE_ERR":
-                        self.LGTC_exit("COMPILE_ERR")
+                    if self._controller_died:
+                        self.stop()
+                        self.queuePut("SYS", "EXIT")
                         break
-
-                    elif response[1] == "VESNA_ERR":
-                        self.LGTC_exit("VESNA_ERR")
-                        break
-                    
-                    else:
-                        self.LGTC_sendState("LGTC_WARNING")
-                        self.log.warning("+--> Unsupported state!")                    
                 
-                # If the message is CMD - experiment response
+                elif response == "COMPILING":
+                    self.updateState("COMPILING")
+
+                elif response == "FLASHED":
+                    self.updateState("ONLINE")
+                
+                elif response == "SYNCED_WITH_VESNA":
+                    self.updateState("ONLINE")
+
+                elif response == "JOIN_DAG":
+                    self.updateState("JOINED_NETWORK")
+
+                elif response == "EXIT_DAG":
+                    self.updateState("EXITED_NETWORK")
+                    
+                elif response == "ROOT":
+                    self.updateState("DAG_ROOT")
+                    self.sendCmdResp(sequence, "Device is now RPL DAG root!")
+
+                elif response == "VESNA_TIMEOUT":
+                    self.updateState("TIMEOUT")
+
+                elif response == "COMPILE_ERR":
+                    self.exit("COMPILE_ERR")
+                    break
+
+                elif response == "VESNA_ERR":
+                    self.exit("VESNA_ERR")
+                    break              
+                
                 else:
-                    self.log.debug("Forwarding cmd response to broker...")
-                    self.client.transmit_async(response)
+                    self.log.debug("Forwarding it to the controller...")
+                    self.sendCmdResp(sequence, response)
             
             # --------------------------------------------------------------------------------
             # If there is some incoming commad from the controller broker
@@ -116,29 +128,53 @@ class zmq_client_thread(threading.Thread):
                 if msg_nbr:
 
                     self.log.debug("Received command from broker: [" + msg_nbr + "] " + msg)
+
+                    # STATE COMMAND
+                    # Return the state of the node
+                    if msg_nbr == "STATE":
+                        self.updateState(self.getState())
                     
                     # SYSTEM COMMANDS
-                    if msg_nbr == "SYS":
+                    # Forward them to the experiment app
+                    elif msg_nbr == "SYS":
 
+                        self.queuePut(msg_nbr, msg)
+
+                        # EXIT - close the client thread
                         if msg == "EXIT":
-                            self.LGTC_sendState("OFFLINE")
-                            self.out_q.put([msg_nbr, msg])
+                            self.updateState("OFFLINE")
                             self.log.info("Closing client thread.")
                             break
-                    
-                    # STATE COMMAND
-                    elif msg_nbr == "STATE":
-                        self.LGTC_sendState(self.LGTC_getState())
 
                     # EXPERIMENT COMMAND
+                    # Forward them to the experiment app
                     else:
-                        self.out_q.put([msg_nbr, msg])
+                        forward_cmd = True
+
+                        if msg == "START":
+                            if self._is_app_running == True:
+                                self.sendCmdResp(msg_nbr, "App is allready running...")
+                                forward_cmd = False
+                        
+                        if msg == "STOP":
+                            if self._is_app_running == False:
+                                self.sendCmdResp(msg_nbr, "No application running...")
+                                forward_cmd = False
+
+                        if msg == "RESTART":
+                            self.queuePut("SYS", "RESET")
+                            self.queuePut([msg_nbr, "START"])
+                            forward_cmd = False
+
+                        if forward_cmd:
+                            self.log.debug("Forwarding it to the experiment thread")
+                            self.queuePut(msg_nbr, msg)
 
             # --------------------------------------------------------------------------------
             # If there is still some message that didn't receive ACK back from server, re send it
             elif (len(self.client.waitingForAck) != 0):
                 self.client.send_retry()
-                #TODO self.out_q.put(["-1", "BROKER_DIED"])
+                #TODO self.queuePut(["-1", "BROKER_DIED"])
 
         # ------------------------------------------------------------------------------------
         self.log.debug("Exiting client thread")
@@ -151,15 +187,9 @@ class zmq_client_thread(threading.Thread):
     def stop(self):
         self._is_thread_running = False
 
-    
-
-
-    # ----------------------------------------------------------------------------------------
-    # OTHER FUNCTIONS
-    # ----------------------------------------------------------------------------------------
 
     # Use in case of fatal errors in experiment app
-    def LGTC_exit(self, reason):
+    def exit(self, reason):
         self.client.transmit(["STATE", reason])
         if self.client.wait_ack("-1", 3):
             return True
@@ -167,15 +197,39 @@ class zmq_client_thread(threading.Thread):
             self.log.warning("No ACK from server while exiting...force exit.")
             return False
 
+    # ----------------------------------------------------------------------------------------
+    # OTHER FUNCTIONS
+    # ----------------------------------------------------------------------------------------
+
+    def queuePut(self, sqn, cmd):
+        self.out_q.put([sqn, cmd])
+
+    def queueGet(self):
+        tmp = self.in_q.get()
+        return tmp[0], tmp[1]
+
     # Get global variable
-    def LGTC_getState(self):
+    def getState(self):
         return self.__LGTC_STATE
 
-    # Set global variable
-    def LGTC_sendState(self, state):
+    # Set global variable and
+    # Send new state to the server (WARNING: async method used...)
+    def updateState(self, state):
         self.__LGTC_STATE = state
-        # Send new state to the server (WARNING: async method used...)
         self.client.transmit_async(["STATE", state])
+
+    # Send info to the server (WARNING: async method used...)
+    def sendInfoResp(self, info):
+        self.client.transmit_async(["INFO", info])
+
+    # Send system message to the server (WARNING: async method used...)
+    def sendSysResp(self, sys):
+        self.client.transmit_async(["SYS", sys])
+
+    # Send respond to the server (WARNING: async method used...)
+    def sendCmdResp(self, sqn, resp):
+        self.client.transmit_async([sqn, resp])
+
 
 
 
