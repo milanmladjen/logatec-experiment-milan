@@ -30,7 +30,7 @@ EXPOSE 5562
 EXPOSE 5563
 
 # Start the python script
-CMD ["python3", "monitoring/controller_broker.py"]
+CMD ["python3", "monitoring/ECMS_controller.py"]
 
 # Local test:
 # docker build -t controller -f monitoring/docker/Dockerfile .

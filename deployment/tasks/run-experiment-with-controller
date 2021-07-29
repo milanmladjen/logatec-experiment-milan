@@ -17,9 +17,9 @@ APP=${APP_DIR:3}
 echo "Testing application $APP on node $IPADDR"
 
 
-# Start the Serial Monitor with controller running in the background
+# Start the Serial Monitor with ECMS_client
 cd /root/logatec-experiment/monitoring/
-python3 experiment_with_controller.py $IPADDR 
+python3 experiment_VESNA.py $IPADDR 
 
 # Move results and logs
 mv *.txt /root/logatec-experiment/results/

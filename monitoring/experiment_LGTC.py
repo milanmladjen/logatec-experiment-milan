@@ -1,283 +1,189 @@
+# TODO:
+# Put zmq_client.py in this file as well?
+# V clienta bi lahko dal ukaz UPTIME - da odgovori kolko časa je že on
+
 #!/usr/bin/python3
-
-# ----------------------------------------------------------------------------------------
-# Example of experiment with LGTC device. Application is made out of 2 threads:
-#   * main for experiment controll
-#   * client thread for communication with the controller.
-#
-# Modules used:
-#   * controller_client.py communicates with controller server.
-#   * file_logger.py stores all the measurements of the experiment.
-# ----------------------------------------------------------------------------------------
-
-
+import threading
 from queue import Queue
+
 import sys
 import os
 import logging
 import time
-from timeit import default_timer as timer
-from subprocess import Popen, PIPE
 
-from lib import file_logger
+from lib import zmq_client
 
-import controller_client
-
-
-
-# ----------------------------------------------------------------------------------------
-# EXPERIMENT DEFINITIONS AND CONFIGURATION
-# ----------------------------------------------------------------------------------------
-
-# DEFINITIONS
 LOG_LEVEL = logging.DEBUG
 
-#ROUTER_HOSTNAME = "tcp://192.168.2.191:5562"
-#SUBSCR_HOSTNAME = "tcp://192.168.2.191:5561"
-ROUTER_HOSTNAME = "tcp://193.2.205.19:5562"
-SUBSCR_HOSTNAME = "tcp://193.2.205.19:5561"
+class zmq_client_thread(threading.Thread):
 
-SERIAL_TIMEOUT = 2  # In seconds
+    # ----------------------------------------------------------------------------------------
+    # INIT
+    # ----------------------------------------------------------------------------------------
+    def __init__(self, input_q, output_q, lgtc_id, subscriber, router):
 
-RESULTS_FILENAME = "node_results"
-LOGGING_FILENAME = "logger"
+        threading.Thread.__init__(self)
+        self._is_thread_running = True
+        self._controller_died = False
+        self._is_app_running = False
 
-# ENVIRONMENTAL VARIABLES
-# Device id should be given as argument at start of the script
-try:
-    LGTC_ID = sys.argv[1]
-    LGTC_ID = LGTC_ID.replace(" ", "")
-except:
-    print("No device name was given...going with default")
-    LGTC_ID = "xy"
+        self.in_q = input_q
+        self.out_q = output_q
 
-LGTC_NAME = "LGTC" + LGTC_ID
-RESULTS_FILENAME += ("_" + LGTC_ID + ".txt")
-LOGGING_FILENAME += ("_" + LGTC_ID + ".log")
-
-# Application name and duration should be defined as variable while running container
-try:
-    APP_DURATION = int(os.environ['APP_DURATION_MIN'])
-except:
-    print("No app duration was defined...going with default 60min")
-    APP_DURATION = 10
-
-try:
-    APP_DIR = os.environ['APP_DIR']
-except:
-    print("No application was given...aborting!")
-    #sys.exit(1) TODO
-    APP_DIR = "02_acs"
-
-# TODO: change when in container
-APP_PATH = "/root/logatec-experiment/applications/" + APP_DIR
-#APP_PATH = "/home/logatec/magistrska/logatec-experiment/applications/" + APP_DIR
-APP_NAME = APP_DIR[3:]
-
-
-
-
-
-# ----------------------------------------------------------------------------------------
-# EXPERIMENT APPLICATION
-# ----------------------------------------------------------------------------------------
-class experiment():
-
-    def __init__(self, input_q, output_q, filename, lgtcname):
+        self.client = zmq_client.zmq_client(subscriber, router, lgtc_id)
+        self.__LGTC_STATE = "OFFLINE"
 
         self.log = logging.getLogger(__name__)
         self.log.setLevel(LOG_LEVEL)
 
-        # Init lib
-        self.f = file_logger.file_logger()
 
-        # controller_client.py - link multithread input output queue
-        self.in_q = input_q
-        self.out_q = output_q
+    # ----------------------------------------------------------------------------------------
+    # MAIN
+    # ----------------------------------------------------------------------------------------
+    def run(self):
 
-        # file_logger.py - prepare measurements file
-        self.f.prepare_file(filename, lgtcname)
-        self.f.open_file()  
+        # Sync with broker with timeout of 10 seconds
+        self.log.info("Sync with broker ... ")
+        self.client.transmit(["SYNC", "SYNC"])
+        if self.client.wait_ack("SYNC", 10) is False:
+            self.log.error("Couldn't synchronize with broker...")
+            self.queuePut("0", "CONTROLLER_DIED")
 
-        # Experiment vars
-        self._is_app_running = False
-        self._lines_stored = 0
-        self._elapsed_sec = 0
+        # ------------------------------------------------------------------------------------
+        while self._is_thread_running:
 
-
-
-    def runApp(self):
-
-        self.log.info("Starting experiment application!")
-
-        # Init everything
-        loop_time = timer()
-
-        while(True):
-
-            # -------------------------------------------------------------------------------
-            # If START command received, do the measurement
-            # Main application loop...
-            if(self._is_app_running):
-
-                # Count seconds
-                if ((timer() - loop_time) > 1):
-                    self._elapsed_sec += (timer() - loop_time)
-                    loop_time = timer()
-                    #self.log.debug("Elapsed seconds: " + str(self._elapsed_sec))
-
-                if self._elapsed_sec % 5 == 0:
-                    self._lines_stored += 1
-                    self.f.store_line("Measurement no." + self._lines_stored)
-                    self.queuePut("INFO", "measurement done")
-                    
-
-                # If app duration come to the end, finish app
-                if(self._elapsed_sec == (APP_DURATION * 60)):
-                    self._is_app_running = False
-                    self.queuePut("INFO", "END")
-
-            # -------------------------------------------------------------------------------
-            # CONTROLLER CLIENT - GET COMMANDS
-            # Check for incoming commands
+            # --------------------------------------------------------------------------------
+            # If there is a message from experiment thread
             if not self.in_q.empty():
 
-                sqn, cmd = self.queueGet()
+                sequence, response = self.in_q.get()
 
-                # SYSTEM COMMANDS
-                # Act upon system command
-                if sqn == "SYS":
+                self.log.debug("Received response from apk thread [" + sequence + "]: " + response)
 
-                    if cmd == "RESET":
-                        print("Reset all variables")
+                if sequence == "STATE":
+                    self.updateState(response)
 
-                    elif cmd == "EXIT":
-                        self.stop()
-                        break
+                elif sequence == "INFO":
+                    self.sendInfoResp(response)
 
-                    else:
-                        self.log.warning("Unsupported SYS command " + cmd)
-
-
-                # EXPERIMENT COMMANDS
                 else:
+                    self.sendCmdResp(sequence, response)
+            
+            # --------------------------------------------------------------------------------
+            # If there is some incoming commad from the controller broker
+            inp = self.client.check_input(0)
+            if inp:
+                sqn, msg = self.client.receive_async(inp)
 
-                    self.f.store_lgtc_line("Got command [" + sqn + "]: " + cmd)
-                    self.log.info("Got command [" + sqn + "]: " + cmd)
+                # if not ACK
+                if sqn:
 
-                    if cmd == "START":
-                        self._elapsed_sec = 0
-                        loop_time = timer()
-                        self._lines_stored = 0
-                        self._is_app_running = True
-                        self.queuePut(sqn, cmd)
+                    self.log.debug("Received command from broker: [" + sqn + "] " + msg)
 
-                    elif cmd == "STOP":
-                        self._is_app_running = False
-                        self.queuePut(sqn, cmd)
+                    # STATE COMMAND
+                    # Return the state of the node
+                    if sqn == "STATE":
+                        self.updateState(self.getState())
 
-                    elif cmd == "LINES":
-                        resp = "Lines stored: " + str(self._lines_stored)
-                        self.queuePut(sqn, resp)
-                        self.f.store_lgtc_line(resp)
-
-                    # Return number of seconds since the beginning of app
-                    elif cmd == "SEC":
-                        resp = "Seconds passed: " + str(round(self._elapsed_sec, 1)) + "s"
-                        self.queuePut(sqn, resp)
-                        self.f.store_lgtc_line(resp)
-
-                    # Return the predefined application duration
-                    elif cmd == "DURATION":
-                        resp = "Defined duration: " + str(APP_DURATION) + "min"
-                        self.queuePut(sqn, resp)
-                        self.f.store_lgtc_line(resp)
-
+                    # EXPERIMENT COMMAND
                     else:
-                        self.queuePut(sqn, "Unsupported command - you can add it yourself!")
+                        # Forward it to the experiment
+                        self.queuePut(sqn, msg)
 
-    
+                        # EXIT - close the client thread
+                        if msg == "EXIT":
+                            self.updateState("OFFLINE")
+                            self.log.info("Closing client thread.")
+                            break
 
-    def clean(self):
-        self.f.close()
+            # --------------------------------------------------------------------------------
+            # If there is still some message that didn't receive ACK back from server, re send it
+            elif (len(self.client.waitingForAck) != 0):
+                self.client.send_retry()
+                #TODO self.queuePut(["-1", "BROKER_DIED"])
 
+        # ------------------------------------------------------------------------------------
+        self.log.debug("Exiting client thread")
+        #self.client.close()
+
+
+    # ----------------------------------------------------------------------------------------
+    # END
+    # ----------------------------------------------------------------------------------------
     def stop(self):
-        self.f.store_lgtc_line("Application exit!")
-        self.log.info("Application exit!")
+        self._is_thread_running = False
 
-    def queuePut(self, sqn, resp):
-        self.out_q.put([sqn, resp])
+
+    # Use in case of fatal errors in experiment app
+    def exit(self, reason):
+        self.client.transmit(["STATE", reason])
+        if self.client.wait_ack("-1", 3):
+            return True
+        else:
+            self.log.warning("No ACK from server while exiting...force exit.")
+            return False
+
+    # ----------------------------------------------------------------------------------------
+    # OTHER FUNCTIONS
+    # ----------------------------------------------------------------------------------------
+
+    def queuePut(self, sqn, cmd):
+        self.out_q.put([sqn, cmd])
 
     def queueGet(self):
         tmp = self.in_q.get()
         return tmp[0], tmp[1]
 
+    # Send info to the server (WARNING: async method used...)
+    def sendInfoResp(self, info):
+        self.client.transmit_async(["INFO", info])
+
+    # Send respond to the server (WARNING: async method used...)
+    def sendCmdResp(self, sqn, resp):
+        self.client.transmit_async([sqn, resp])
+
+    # Set global variable and
+    # Send new state to the server (WARNING: async method used...)
+    def updateState(self, state):
+        self.__LGTC_STATE = state
+        # TODO check if state is possible, else set state LGTC_WARNING
+        self.client.transmit_async(["STATE", state])
+
+    # Get global variable
+    def getState(self):
+        return self.__LGTC_STATE
 
 
+
+
+# This thread is designed for communication with controller_broker script - forwarding commands
+# and responses & updating LGTC state.
 
 # ----------------------------------------------------------------------------------------
-# MAIN
+# POSSIBLE LGTC STATES
 # ----------------------------------------------------------------------------------------
-if __name__ == "__main__":
-
-    # Config logging module format for all scripts. Log level is defined in each submodule with var LOG_LEVEL.
-    logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
-    #logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
-
-    logging.info("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME + "!")
-
-    # Create 2 queue for communication between threads
-    # Client -> LGTC
-    C_L_QUEUE = Queue()
-    # LGTC -> Client
-    L_C_QUEUE = Queue()
-
-    # Start client thread (communication with controller)
-    client_thread = controller_client.zmq_client_thread(L_C_QUEUE, C_L_QUEUE, LGTC_NAME, SUBSCR_HOSTNAME, ROUTER_HOSTNAME)
-    client_thread.start()
-
-    # Init main application thread 
-    app_thread = experiment(C_L_QUEUE, L_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
-    app_thread.runApp()
-    app_thread.clean()
-
-    logging.info("Main thread stopped, trying to stop client thread.")
-
-    # Wait for a second so client can finish its transmission
-    time.sleep(1)
-
-    # Notify zmq client thread to exit its operation and join until quit
-    client_thread.stop()
-    client_thread.join()
-
-    logging.info("Exit!")
-
-
-
-
+# --> ONLINE        - LGTC is online and ready
+# --> COMPILING     - LGTC is compiling the experiment application
+# --> RUNNING       - Experiment application is running
+# --> STOPPED       - User successfully stopped the experiment app
+# --> FINISHED      - Experiment application came to the end
+#
+# --> TIMEOUT       - VESNA is not responding for more than a minute
+# --> LGTC_WARNING  - Warning sign that something was not as expected
+# --> COMPILE_ERR - Experiment application could not be compiled
+# --> VESNA_ERR   - Problems with UART communication
+#
+#
 # ----------------------------------------------------------------------------------------
 # SUPPORTED COMMANDS
 # ----------------------------------------------------------------------------------------
-# Incoming commands must be formated as a list with 2 string arguments: message type 
-# and command itself (example: ["SYS", "EXIT"]). 
-# Message type distinguish between 2 types of possible incoming commands
+# Messages in the monitoring systems (between controller and node!) are formed as a list 
+# with 2 arguments: message_type and command itself (example: ["11", "START"]). First 
+# argument distinguish between 4 possible packet types:
 #
-# SYS --> SYSTEM COMMAND - used for controll over the experiment application
-#
-#       * EXIT      - exit experiment application
-#       * RESET     - reset the device (if possible)
-#       * FLASH     - flash the device (if possible)
-#
-# SQN --> EXPERIMENT COMMAND - if type of message is a number, that is an experiment command
-#                              and type of message represents command sequence number
-#
-#       * START     - start the application loop
-#       * STOP      - stop the application loop
-#       * LINES     - return the number of done measurements
-#       * SEC       - return the number of elapsed seconds
-#       * DURATION  - return the duration of the app
+# INFO
+# STATE
+# SQN
+# ACK
 
-# Outgoing responses mas also be formated as a list with 2 string arguments: message type
-# and response (example: ["12", "Lines stored: 5"]). Client thread will do the state filtering.
-# Message types are the same as before, but you can also use INFO type - message from the
-# experiment application without sequence number (example: ["INFO", "Device joined network!"])
+
