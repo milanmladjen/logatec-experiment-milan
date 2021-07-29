@@ -14,7 +14,7 @@ from lib import testbed_database
 # --------------------------------------------------------------------------------------------
 
 LOG_LEVEL = logging.DEBUG
-LOGGING_FILENAME = "controller_broker.log"
+LOGGING_FILENAME = "ECMS_controller.log"
 
 try:
     NUMBER_OF_DEVICES = int(os.environ["DEVICE_NUM"])
@@ -150,7 +150,7 @@ class zmq_broker():
     #               data - ...
     # ----------------------------------------------------------------------------------------
     def frontend_send(self, nbr, adr, data):
-        self.log.debug("Send to frontend...")
+        self.log.debug("Send to frontend: [" + nbr +"|" + adr + "|" + data +"]")
 
         self.frontend.send_multipart(
             [self.controller_server_id, nbr.encode(), adr.encode(), data.encode()])
@@ -211,8 +211,8 @@ if __name__ == "__main__":
     db = testbed_database.testbed_database("database.db")
 
     # Inform frontend that experiment began
-    broker.frontend_send("EXP_START", "Broker", RADIO_TYPE)
-    broker.frontend_info("Broker", "New active experiment in the testbed! \n")
+    broker.frontend_send("EXP_START", "Controller", RADIO_TYPE)
+    broker.frontend_info("Controller", "New active experiment in the testbed! \n")
 
     log.info("Starting main loop...")
 

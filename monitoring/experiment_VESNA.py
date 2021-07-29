@@ -99,22 +99,22 @@ class ECMS_client():
                         self._is_app_running = False
                         self.updateState("STOPPED")
                     
-                    elif resp == "END":
+                    elif response == "END":
                         self._is_app_running = False
                         self.updateState("FINISHED")
 
                         if self._controller_died:
                             break
 
-                    elif resp == "JOIN_DAG":
+                    elif response == "JOIN_DAG":
                         self.updateState("JOINED_NETWORK")
                         self.log.debug("Device joined RPL network!")
 
-                    elif resp == "EXIT_DAG":
+                    elif response == "EXIT_DAG":
                         self.updateState("EXITED_NETWORK")
                         self.log.debug("Device exited RPL network!")
 
-                    elif resp == "ROOT":
+                    elif response == "ROOT":
                         self.updateState("DAG_ROOT")
                         self.sendCmdResp(sequence, "Device is now RPL DAG root!")
                     
@@ -371,15 +371,15 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------------
 
     # Start serial monitor thread (communication with VESNA)
-    monitor_thread = serial_monitor_thread.serial_monitor_thread(C_M_QUEUE, M_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
-    monitor_thread.run()
+    monitor_thread = serial_monitor_thread.serial_monitor_thread(C_M_QUEUE, M_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, APP_NAME, APP_PATH)
+    monitor_thread.start()
 
     # ------------------------------------------------------------------------------------
     # MAIN THREAD (ZMQ CLINET)
     # ------------------------------------------------------------------------------------
 
     # Start main thread - zmq client (communication with controller)
-    main_thread = ECMS_client(M_C_QUEUE, C_M_QUEUE, RESULTS_FILENAME, LGTC_NAME)
+    main_thread = ECMS_client(M_C_QUEUE, C_M_QUEUE, LGTC_NAME, SUBSCR_HOSTNAME, ROUTER_HOSTNAME)
     main_thread.run()
 
 

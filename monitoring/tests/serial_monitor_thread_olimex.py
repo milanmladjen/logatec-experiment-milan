@@ -10,8 +10,14 @@ import time
 from timeit import default_timer as timer
 from subprocess import Popen, PIPE
 
-import serial_monitor
-import file_logger
+
+# Workaround to import files from parent dir
+cdir = os.path.dirname(os.path.realpath(__file__))
+pdir = os.path.dirname(cdir)
+sys.path.append(pdir)
+
+from lib import serial_monitor
+from lib import file_logger
 
 
 # DEFINITIONS
@@ -213,7 +219,7 @@ class serial_monitor_thread(threading.Thread):
     # -------------------------------------------------------------------------------------
     # Connect to VESNA serial port
     def VESNA_connect(self):
-        if not self.monitor.connect_to("ttyS2"):
+        if not self.monitor.connect_to("ttyUSB0"):
             self.f.error("Couldn't connect to VESNA.")
             self.queuePutState("VESNA_ERR")
             self.log.error("Couldn't connect to VESNA.")
@@ -240,7 +246,7 @@ class serial_monitor_thread(threading.Thread):
         self.queuePutState("COMPILING")
         self.log.info("Complie the application.")
         #procDistclean = Popen(["make", "distclean"])
-        with Popen(["make", self.app_name, "-j2"], stdout = PIPE, bufsize=1, universal_newlines=True, cwd = self.app_path) as p:
+        with Popen(["make", self.app_name, "-j9"], stdout = PIPE, bufsize=1, universal_newlines=True, cwd = self.app_path) as p:
             for line in p.stdout:
                 self.log.debug(line)    #TODO maybe use print(line, end="")
         if p.returncode:
@@ -250,7 +256,7 @@ class serial_monitor_thread(threading.Thread):
 
         # Flash the VESNA with app binary
         self.log.info("Flash the app to VESNA .. ")
-        with Popen(["make", self.app_name + ".logatec3"], stdout = PIPE, bufsize=1, universal_newlines=True, cwd = self.app_path) as p:
+        with Popen(["make", self.app_name + ".olimex"], stdout = PIPE, bufsize=1, universal_newlines=True, cwd = self.app_path) as p:
             for line in p.stdout:
                 self.log.debug(line)
         if p.returncode:
