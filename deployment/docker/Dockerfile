@@ -6,12 +6,16 @@ RUN set -ex \
     && apt-get update --fix-missing \
     && apt-get install -y 	nano \
                        		python3-pip \
+							bluetooth \
+							bluez \
+							bluez-tools \
+							libglib2.0-dev \
 	&& apt-get clean -y
 
 # Install Python3 libs
 RUN set -ex \
 	&& pip3 install 	pyzmq \
-						pyserial
+						bluepy
 
 # Prepare folder for experiment files
 RUN mkdir logatec-experiment
@@ -20,9 +24,6 @@ WORKDIR /root/logatec-experiment
 
 # Prepare folder for results
 RUN mkdir results/
-
-# Pull the changes inside a container!
-RUN git clone --single-branch --branch logatec-experiment/acs https://github.com/gcerar/contiki-ng.git
 
 # Copy the logatec-experiment directory into container (without files in .dockerignore)
 COPY ./ ./

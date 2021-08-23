@@ -6,7 +6,7 @@
   remote_user: videk
 
   vars:
-    radio_type: SRDB
+    radio_type: BLE
     device_num: 15
 
   tasks: 
@@ -23,7 +23,7 @@
       update: yes
       force: yes
       depth: 1
-      version: develop/grega
+      version: experiment/BLE
 
   - name: Build docker file
     command: docker build -t controller -f monitoring/docker/Dockerfile .
@@ -34,11 +34,11 @@
     ignore_errors: yes
     command: "{{ item }}"
     with_items:
-      - docker kill controller-test
-      - docker rm controller-test
+      - docker kill controller-ble
+      - docker rm controller-ble
 
   - name: Run docker image
-    command: docker run --name controller-test -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM={{device_num}} -e RADIO_TYPE={{radio_type}} controller 
+    command: docker run --name controller-ble -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM={{device_num}} -e RADIO_TYPE={{radio_type}} controller 
 
 
     # TODO: rename container into testbed_controller

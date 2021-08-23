@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-# Update contiki-ng folder, if there were any changes from the last time we updated docker container
-cd /root/logatec-experiment/contiki-ng
-echo "Pull changes from Contiki-NG repo"
-git pull
-
 # Obtain node adresses
 IPADDR=$(hostname -I)
 # Get only our network address
@@ -13,18 +8,14 @@ IPADDR=${IPADDR#*"192.168.12."}
 IPADDR=${IPADDR:0:3}
 
 # Remove first 3 characters from APP_DIR string to get the app name
-APP=${APP_DIR:3}
-echo "Testing application $APP on node $IPADDR"
+echo "Testing application on node $IPADDR"
 
 
 # Start the Serial Monitor with ECMS_client
 cd /root/logatec-experiment/monitoring/
-python3 experiment_VESNA.py $IPADDR 
+python3 experiment_LGTC.py $IPADDR 
 
 # Move results and logs
 mv *.txt /root/logatec-experiment/results/
 mv *.log /root/logatec-experiment/results/
 
-# Put Vesna to reset state so it doesnt interfeer with other networks
-cd /root/logatec-experiment/deployment/tasks
-python3 reset_vesna.py 0

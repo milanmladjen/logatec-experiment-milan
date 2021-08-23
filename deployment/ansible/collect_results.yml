@@ -7,11 +7,11 @@
 # (TODO pointless? collect_results is called only when all containers are stopped)
   - name: Stop docker container (target)
     ignore_errors: yes
-    command: docker stop target
+    command: docker stop target_ble
 
 # Get measurements from container to device
   - name: Copy file from the container
-    command: docker cp target:/root/logatec-experiment/results/ .
+    command: docker cp target_ble:/root/logatec-experiment/results/ .
     args:
       chdir: ~/deploy/logatec-experiment
 
