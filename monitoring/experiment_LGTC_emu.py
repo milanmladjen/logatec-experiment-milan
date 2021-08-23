@@ -3,7 +3,6 @@
 # V clienta bi lahko dal ukaz UPTIME - da odgovori kolko časa je že on
 
 #!/usr/bin/python3
-from monitoring.experiment_LGTC import RESULTS_FILENAME
 import threading
 from queue import Queue
 
@@ -12,15 +11,15 @@ import os
 import logging
 import time
 
-from lib import zmq_client
+#from lib import zmq_client
 
 import BLE_experiment
 
 
 # DEFINITIONS
 LOG_LEVEL = logging.DEBUG
-
-
+RESULTS_FILENAME = "node_results"
+LOGGING_FILENAME = "logger"
 
 # ----------------------------------------------------------------------------------------
 # MAIN
@@ -33,7 +32,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------------
 
     # Config logging module format for all scripts. Log level is defined in each submodule with var LOG_LEVEL.
-    logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
+    logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename="logger")
     #logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
 
     #logging.info("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME + "!")
@@ -48,11 +47,14 @@ if __name__ == "__main__":
     LGTC_NAME = "solata"
     RESULTS_FILENAME = "TEST.txt"
     
-    experiment_thread = BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
+    print("Creating experiment thread")
+    experiment_thread = BLE_experiment.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
 
-    experiment_thread.start()
+    print("Starting thread...")
+    experiment_thread.run()
+
     experiment_thread.join()
-
+    print("Cleaned up...")
     logging.info("Dejanski konec")
 
 

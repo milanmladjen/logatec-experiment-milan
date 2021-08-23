@@ -114,6 +114,7 @@ class ECMS_client():
                             experiment_thread.start()
 
                         elif msg == "STOP":
+                            print("Stop")
                             experiment_thread.stop()
 
                         else:
