@@ -51,8 +51,7 @@ if __name__ == "__main__":
     experiment_thread = BLE_experiment.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
 
     print("Starting thread...")
-    experiment_thread.run()
-
+    experiment_thread.start()
     experiment_thread.join()
     print("Cleaned up...")
     logging.info("Dejanski konec")
