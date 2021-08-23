@@ -110,11 +110,11 @@ class ECMS_client():
                             break
 
                         elif msg == "START":
-                            print("Start")
+                            print("Start experiment thread")
                             experiment_thread.start()
 
                         elif msg == "STOP":
-                            print("Stop")
+                            print("Stop experiment thread")
                             experiment_thread.stop()
 
                         else:
@@ -271,12 +271,6 @@ if __name__ == "__main__":
     experiment_thread.join()
 
     logging.info("Dejanski konec")
-
-
-
-
-
-
 
 
 # This thread is designed for communication with controller_broker script - forwarding commands
