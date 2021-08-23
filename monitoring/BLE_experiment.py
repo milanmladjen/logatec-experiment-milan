@@ -41,7 +41,7 @@ class BLE_experiment(threading.Thread):
                 if cmd == "LINES":
                     resp = "Število vrstic je xy"
                     self.queuePutResp(sqn, resp)
-        self.stop()
+            self.stop()
 
     def stop(self):
         self._is_thread_running = False
