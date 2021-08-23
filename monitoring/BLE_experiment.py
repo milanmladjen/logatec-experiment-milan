@@ -74,8 +74,8 @@ class ScanDelegate(DefaultDelegate):
 
         if isNewDev:
             print("Discovered device", dev.addr, dev.rssi)
-            #file.write("[" + str(datetime.now().time())+"]: ")
-            #file.write("N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
+            self.file.write("[" + str(datetime.now().time())+"]: ")
+            self.file.write("N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
         #elif isNewData:
             #print(dev.addr, dev.rssi, dev.updateCount, dev.getValueText(10), "Received new data")
             #file.write("[" + str(datetime.now().time())+"]: ")
