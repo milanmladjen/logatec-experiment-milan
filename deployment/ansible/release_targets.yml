@@ -39,7 +39,7 @@
       update: yes
       force: yes
       depth: 1
-      version: experiment/BLE
+      version: experiment/BLE-advertise
 
 
 # Build...with -f flag so we can copy 'logatec-experiment' directory into container
