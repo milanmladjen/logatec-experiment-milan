@@ -8,6 +8,7 @@ from datetime import datetime
 from bluepy.btle import Scanner, DefaultDelegate, Peripheral
 import argparse
 import os
+import subprocess
 import sys
 import time
 class BLE_experiment(threading.Thread):
@@ -19,8 +20,6 @@ class BLE_experiment(threading.Thread):
         self.in_q = input_q
         self.out_q = output_q
 
-        self.scr = Scanner().withDelegate(ScanDelegate())
-
     def run(self):
         print("Starting experiment thread...")
         self.queuePutState("RUNNING")
@@ -28,8 +27,25 @@ class BLE_experiment(threading.Thread):
 
         while self._is_thread_running:
             print("Running...")
-            # Scan BLE interface
-            self.scr.scan(timeout=600, passive=True) 
+            # Stop scanning BLE
+            print("Disabling scanning...")
+            subprocess.call(["hciconfig", "hci0", "noscan"])
+            subprocess.call(["hcitool", "cmd", "0x03", "0x0003"]) #reset command
+
+            #Advertising parameters
+            #reset cmd hcitool cmd 0x03 0x0003
+            #interval = 200ms -> time = n * 0.625ms -> n = 320 = 0x0140
+            #hcitool -i hci0 cmd 0x08 0x0006 40 01 40 01 00 00 00 00 00 00 00 00 00 07 00 
+            print("Setting parameters...")
+            subprocess.call(["hcitool", "-i", "hci0", "cmd", "0x08", "0x0006", "40", "01", "40", "01", "00", "00", "00", "00", "00", "00", "00", "00", "00", "07", "00"])
+
+            #Start advertising 
+            print("Starting advertising...")
+            subprocess.call(["hcitool", "-i", "hci0", "cmd", "0x08", "0x00a", "0x01"])
+            print("Advertising")
+            time.sleep(60)
+            print("Stopping advertising...")
+            subprocess.call(["hcitool", "-i", "hci0", "cmd", "0x08", "0x00a", "0x00"])
 
             # -------------------------------------------------------------------------------
             # CONTROLLER CLIENT - GET COMMANDS
@@ -63,35 +79,3 @@ class BLE_experiment(threading.Thread):
     def queueGet(self):
         tmp = self.in_q.get()
         return tmp[0], tmp[1]
-
-class ScanDelegate(DefaultDelegate):
-    def __init__(self):
-        DefaultDelegate.__init__(self)
-        self.file = open("neki.txt", mode="w", encoding = "ASCII")
-
-
-    def handleDiscovery(self, dev, isNewDev, isNewData):
-
-        if isNewDev:
-            print("Discovered device", dev.addr, dev.rssi)
-            self.file.write("[" + str(datetime.now().time())+"]: ")
-            self.file.write("N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
-        #elif isNewData:
-            #print(dev.addr, dev.rssi, dev.updateCount, dev.getValueText(10), "Received new data")
-            #file.write("[" + str(datetime.now().time())+"]: ")
-            #file.write("D " + str(dev.addr) + " RSSI" + str(dev.rssi) + " CNT" + str(dev.updateCount) + "\n")
-        else:
-            #print(dev.addr, dev.rssi, dev.updateCount, dev.getValueText(10), "Update rssi")
-            #file.write("[" + str(time.time())+"]: ")
-            #file.write("R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI" + str(dev.rssi) + "\n")
-        #per = Peripheral(dev.addr)
-        #print(per.getServices())
-        # this is how you get other info (advertising name, TX power... but LGTC isn't advertising much 
-            if(dev.getValueText(9) == "OnePlus Nordic"):
-                self.file.write("[" + str(int(time.time()))+"]: ")
-                self.file.write("R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI " + str(dev.rssi) + "\n")
-                print("RSSI of phone: ", dev.rssi)
-                #for i in range(255):
-                #	
-                #	if(dev.getValueText(i)):
-                #		print("  ", i, dev.getValueText(i))
