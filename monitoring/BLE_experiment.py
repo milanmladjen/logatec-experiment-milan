@@ -29,7 +29,7 @@ class BLE_experiment(threading.Thread):
         while self._is_thread_running:
             print("Running...")
             # Scan BLE interface
-            self.scr.scan(timeout=300, passive=True) 
+            self.scr.scan(timeout=600, passive=True) 
 
             # -------------------------------------------------------------------------------
             # CONTROLLER CLIENT - GET COMMANDS
