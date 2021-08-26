@@ -292,6 +292,8 @@ $(document).ready(function(){
     var tloris = new Nodes();
     var dropdown = new Dropdown_menu();
 
+    var roundtrip_startTime, roundtrip_endTime;
+
     // Delete old output logs
     $("#output_field").val("");
 
@@ -345,7 +347,18 @@ $(document).ready(function(){
     socket.on("command response", function(msg){
         console.log("Received response (" + msg.sequence +") from device: " + msg.device +" :" + msg.data);
 
-        var formatted_msg = "[" + msg.device + "]: (" + msg.sequence + ") " + msg.data + "\n";
+        var formatted_msg;
+
+        // When user sends command ROUNDTRIP, timer will start.
+        // When devices respond with the same message, time will be calculated and displayed
+        if(msg.data == "ROUNDTRIP"){
+            roundtrip_endTime = new Date();
+            var diff = roundtrip_endTime - roundtrip_startTime;
+            formatted_msg = "[" + msg.device + "]: (" + msg.sequence + ") Command round trip = " + diff + " ms\n";
+        }
+        else{
+            formatted_msg = "[" + msg.device + "]: (" + msg.sequence + ") " + msg.data + "\n";
+        }
 
         // Append text into textarea (don't delete old one)
         $("#output_field").val( $("#output_field").val() + formatted_msg);
@@ -354,6 +367,7 @@ $(document).ready(function(){
         if(auto_scroll){
             $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
         }
+        
     });
 
     socket.on("info", function(msg){
@@ -429,6 +443,7 @@ $(document).ready(function(){
         if (SYSTEM_COMMANDS.includes(cmd)){
             sqn = "SYS";
         }
+        // TODO: What is the command then? This is obsolete - user wont ask for the state
         else if(cmd == "STATE"){
             sqn = "STATE";
         }
@@ -438,6 +453,11 @@ $(document).ready(function(){
         }
 
         // TODO: check if command is supported
+
+        // ROUND TRIP time measurement start
+        if(cmd == "ROUNDTRIP"){
+            roundtrip_startTime = new Date();
+        }
 
         // Check which device is selected from dropdown menu
         var dev = "";

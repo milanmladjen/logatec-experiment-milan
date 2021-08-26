@@ -132,10 +132,14 @@ class ECMS_client():
                 if sqn:
 
                     self.log.debug("Received command from broker: [" + sqn + "] " + cmd)
+                    
+                    # Evaluation 
+                    if sqn == "ROUNDTRIP":
+                        self.sendCmdResp(sqn, "ROUNDTRIP")
 
                     # STATE COMMAND
                     # Return the state of the node
-                    if sqn == "STATE":
+                    elif sqn == "STATE":
                         self.updateState(self.getState())
 
                     # EXPERIMENT COMMAND
