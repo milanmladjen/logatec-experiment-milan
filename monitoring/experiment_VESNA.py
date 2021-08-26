@@ -133,19 +133,18 @@ class ECMS_client():
 
                     self.log.debug("Received command from broker: [" + sqn + "] " + cmd)
                     
-                    # Evaluation 
-                    if sqn == "ROUNDTRIP":
-                        self.sendCmdResp(sqn, "ROUNDTRIP")
-
                     # STATE COMMAND
                     # Return the state of the node
-                    elif sqn == "STATE":
+                    if sqn == "STATE":
                         self.updateState(self.getState())
 
                     # EXPERIMENT COMMAND
                     else:
+                        # Evaluation 
+                        if sqn == "ROUNDTRIP":
+                            self.sendCmdResp(sqn, "ROUNDTRIP")
 
-                        if cmd == "EXIT":
+                        elif cmd == "EXIT":
                             self.updateState("OFFLINE")
                             self.log.info("Closing client thread.")
                             break
