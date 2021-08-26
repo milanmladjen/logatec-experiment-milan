@@ -469,7 +469,7 @@ $(document).ready(function(){
             dev = $("#select_device option:selected").text();
         }
 
-        console.log("Send command (" + sqn + ") :" + cmd + " to device: " + dev );
+        console.log("Send command (" + sqn + "): " + cmd + " to device: " + dev );
         
         // Send it to server
         socket.emit("new command", {

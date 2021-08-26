@@ -156,6 +156,8 @@ class serial_monitor_thread(threading.Thread):
                         self.queuePutResp(self._command_waiting, resp)
                         self.log.debug("Got response on cmd from VESNA: " + resp)
                     else:
+                        # TODO: if there is command waiting but VESNA responds with info, SQN is lost - 
+                        # Fix this with another character for info (@-sync, $-cmd, &-info for example)
                         self.queuePutInfo(resp)
                         self.log.debug("Got info from VESNA: " + resp)
 

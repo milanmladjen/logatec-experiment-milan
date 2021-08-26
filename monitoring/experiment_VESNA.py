@@ -141,7 +141,7 @@ class ECMS_client():
                     # EXPERIMENT COMMAND
                     else:
                         # Evaluation 
-                        if sqn == "ROUNDTRIP":
+                        if cmd == "ROUNDTRIP":
                             self.sendCmdResp(sqn, "ROUNDTRIP")
 
                         elif cmd == "EXIT":
