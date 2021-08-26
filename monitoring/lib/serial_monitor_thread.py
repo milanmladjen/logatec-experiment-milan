@@ -10,8 +10,8 @@ import time
 from timeit import default_timer as timer
 from subprocess import Popen, PIPE
 
-import serial_monitor
-import file_logger
+from lib import serial_monitor
+from lib import file_logger
 
 
 # DEFINITIONS
