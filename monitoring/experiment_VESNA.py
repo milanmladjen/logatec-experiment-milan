@@ -87,7 +87,17 @@ class ECMS_client():
                     self.updateState(response)
 
                 elif sequence == "INFO":
-                    self.sendInfoResp(response)
+
+                    if response == "JOIN_DAG":
+                        self.updateState("JOINED_NETWORK")
+                        self.log.debug("Device joined RPL network!")
+
+                    elif response == "EXIT_DAG":
+                        self.updateState("EXITED_NETWORK")
+                        self.log.debug("Device exited RPL network!")
+
+                    else:
+                        self.sendInfoResp(response)
 
                 else:
                     if response == "START":
@@ -105,14 +115,6 @@ class ECMS_client():
 
                         if self._controller_died:
                             break
-
-                    elif response == "JOIN_DAG":
-                        self.updateState("JOINED_NETWORK")
-                        self.log.debug("Device joined RPL network!")
-
-                    elif response == "EXIT_DAG":
-                        self.updateState("EXITED_NETWORK")
-                        self.log.debug("Device exited RPL network!")
 
                     elif response == "ROOT":
                         self.updateState("DAG_ROOT")
