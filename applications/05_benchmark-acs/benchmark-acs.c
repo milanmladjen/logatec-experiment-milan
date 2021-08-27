@@ -126,7 +126,7 @@ input_command(char *data){
 
 			// Roundtrip measurement
 			if(strcmp(cmd, cmd_7) == 0){
-				printf("$ VTRIP");
+				printf("$ VTRIP\n");
 			}
 
 			// $ START
