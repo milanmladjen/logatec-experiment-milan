@@ -147,7 +147,10 @@ class ECMS_client():
                     else:
                         # Evaluation 
                         if cmd == "ROUNDTRIP":
-                            self.sendCmdResp(sqn, "ROUNDTRIP")
+                            # First to test roundtrip to VESNA
+                            self.queuePut(sqn, "VTRIP")
+                            # Second to test roundtrip to LGTC
+                            #self.sendCmdResp(sqn, "ROUNDTRIP")
 
                         elif cmd == "EXIT":
                             self.updateState("OFFLINE")
