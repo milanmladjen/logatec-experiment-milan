@@ -104,6 +104,7 @@ input_command(char *data){
 	const char cmd_4[] = "DURAT";
 	const char cmd_5[] = "IP";
 	const char cmd_6[] = "PAREN";
+	const char cmd_7[] = "VTRIP";
 
 	switch(cmd_sign){
 		// SYNC command
@@ -123,8 +124,13 @@ input_command(char *data){
 			memcpy(arg, p, 5);
 			arg[5] = '\0';
 
+			// Roundtrip measurement
+			if(strcmp(cmd, cmd_7) == 0){
+				printf("$ VTRIP");
+			}
+
 			// $ START
-			if(strcmp(cmd, cmd_1) == 0){
+			else if(strcmp(cmd, cmd_1) == 0){
 				process_start(&experiment_process, NULL);
 			}
 			// $ STOP

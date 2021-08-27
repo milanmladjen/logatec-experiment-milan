@@ -100,7 +100,10 @@ class ECMS_client():
                         self.sendInfoResp(response)
 
                 else:
-                    if response == "START":
+                    if response == "VTRIP":
+                        self.sendCmdResp(sequence, "ROUNDTRIP")
+
+                    elif response == "START":
                         self._is_app_running = True
                         self.updateState("RUNNING")
                         self.log.debug("Application started!")
