@@ -205,7 +205,7 @@ PROCESS_THREAD(experiment_process, ev, data)
 			//STATS_print_packet_stats();
 
 			if(NETSTACK_ROUTING.node_is_root()){
-				STATS_display_driver_stats_inline();
+				STATS_print_driver_stats();
 			}
 		}
 

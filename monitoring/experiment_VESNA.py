@@ -158,7 +158,7 @@ class ECMS_client():
                         elif cmd == "ERROR2":
                             self.updateState("VESNA_ERR")
 
-                        elif cmd == "ERROR2":
+                        elif cmd == "ERROR3":
                             self.updateState("TIMEOUT")
 
                         elif cmd == "EXIT":
