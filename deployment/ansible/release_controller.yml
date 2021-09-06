@@ -7,7 +7,7 @@
 
   vars:
     radio_type: SRDB
-    device_num: 19
+    device_num: 21
 
   tasks: 
   - name: Create directory
