@@ -152,6 +152,15 @@ class ECMS_client():
                             # Second to test roundtrip to LGTC
                             self.sendCmdResp(sqn, "ROUNDTRIP")
 
+                        elif cmd == "ERROR1":
+                            self.updateState("LGTC_WARNING")
+
+                        elif cmd == "ERROR2":
+                            self.updateState("VESNA_ERR")
+
+                        elif cmd == "ERROR2":
+                            self.updateState("TIMEOUT")
+
                         elif cmd == "EXIT":
                             self.updateState("OFFLINE")
                             self.log.info("Closing client thread.")
