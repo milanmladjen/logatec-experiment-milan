@@ -210,7 +210,7 @@ udp_rx_callback(struct simple_udp_connection *c,
 			device_count++;
 		}
 		else{
-			printf("$ Received response %"PRIu32" from ", message);
+			printf("Received response %"PRIu32" from ", message);
 			uiplib_ipaddr_print(sender_addr);
 			printf("\n");
 			received_responses++;
