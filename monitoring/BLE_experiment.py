@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from monitoring.experiment_LGTC import LOG_LEVEL
 import queue
 import threading
 from queue import Queue
@@ -10,11 +11,15 @@ import argparse
 import os
 import sys
 import time
+import logging
 class BLE_experiment(threading.Thread):
 
     def __init__(self, input_q, output_q, results_name, lgtc_name):
         threading.Thread.__init__(self)
         self._is_thread_running = True
+
+        self.log = logging.getLogger(__name__)
+        self.log.setLevel(LOG_LEVEL)
 
         self.in_q = input_q
         self.out_q = output_q
@@ -22,15 +27,19 @@ class BLE_experiment(threading.Thread):
         self.scr = Scanner().withDelegate(ScanDelegate())
 
     def run(self):
-        print("Starting experiment thread...")
+        self.log.info("Starting experiment thread...")
         self.queuePutState("RUNNING")
         # Start advertising
 
-        while self._is_thread_running:
-            print("Running...")
-            # Scan BLE interface
-            self.scr.scan(timeout=600, passive=True) 
+        i = 1
 
+        while self._is_thread_running:
+            #print("Running...")
+            # Scan BLE interface
+            self.scr.scan(timeout=600, passive=True)
+            if i:
+                self.log.info("Running...")
+                i = 0
             # -------------------------------------------------------------------------------
             # CONTROLLER CLIENT - GET COMMANDS
             # Check for incoming commands for queue - only when there is time 
@@ -45,7 +54,7 @@ class BLE_experiment(threading.Thread):
 
     def stop(self):
         self._is_thread_running = False
-        print("Stopping BLE experiment thread")
+        self.log.info("Stopping BLE experiment thread")
 
 
     # ----------------------------------------------------------------------------------------
