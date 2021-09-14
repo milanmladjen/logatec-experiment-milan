@@ -7,7 +7,7 @@
 
   vars:
     radio_type: BLE
-    device_num: 15
+    device_num: 1
 
   tasks: 
   - name: Create directory
@@ -26,7 +26,7 @@
       version: experiment/BLE
 
   - name: Build docker file
-    command: docker build -t controller -f monitoring/docker/Dockerfile .
+    command: docker build -t controller-ble -f monitoring/docker/Dockerfile .
     args:
       chdir: ~/deploy/logatec-experiment
 
@@ -34,11 +34,11 @@
     ignore_errors: yes
     command: "{{ item }}"
     with_items:
-      - docker kill controller-ble
-      - docker rm controller-ble
+      - docker kill controller_ble
+      - docker rm controller_ble
 
   - name: Run docker image
-    command: docker run --name controller-ble -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM={{device_num}} -e RADIO_TYPE={{radio_type}} controller 
+    command: docker run --name controller_ble -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM={{device_num}} -e RADIO_TYPE={{radio_type}} controller-ble
 
 
     # TODO: rename container into testbed_controller
