@@ -1,17 +1,19 @@
 #!/usr/bin/python3
 
 from monitoring.experiment_LGTC import LOG_LEVEL
+
 import queue
 import threading
 from queue import Queue
 
 from datetime import datetime
-from bluepy.btle import Scanner, DefaultDelegate, Peripheral
+from bluepy.btle import Scanner, DefaultDelegate, Peripheral, ScanEntry, BTLEInternalError
 import argparse
 import os
 import sys
 import time
 import logging
+import binascii
 class BLE_experiment(threading.Thread):
 
     def __init__(self, input_q, output_q, results_name, lgtc_name):
@@ -24,25 +26,44 @@ class BLE_experiment(threading.Thread):
         self.in_q = input_q
         self.out_q = output_q
 
-        self.scr = Scanner().withDelegate(ScanDelegate())
+        self.scr = Scanner()
 
     def run(self):
         self.log.info("Starting experiment thread...")
         self.queuePutState("RUNNING")
-        # Start advertising
 
-        i = 1
+        self.scr.clear()
+        self.scr.start()
 
         while self._is_thread_running:
-            #print("Running...")
-            # Scan BLE interface
-            self.scr.scan(timeout=600, passive=True)
-            if i:
-                self.log.info("Running...")
-                i = 0
-            # -------------------------------------------------------------------------------
-            # CONTROLLER CLIENT - GET COMMANDS
-            # Check for incoming commands for queue - only when there is time 
+            if self._helper is None:
+                raise BTLEInternalError("Helper not started (did you call start()?)")
+            remain = None
+            resp = self._waitResp(['scan', 'stat'], remain)
+            if resp is None:
+                break
+
+            respType = resp['rsp'][0]
+            if respType == 'stat':
+                # if scan ended, restart it
+                if resp['state'][0] == 'disc':
+                    self.scr._mgmtCmd(self.scr._cmd())
+
+            elif respType == 'scan':
+                # device found
+                addr = binascii.b2a_hex(resp['addr'][0]).decode('utf-8')
+                addr = ':'.join([addr[i:i+2] for i in range(0,12,2)])
+                if addr in self.scr.scanned:
+                    dev = self.scr.scanned[addr]
+                else:
+                    dev = ScanEntry(addr, self.scr.iface)
+                    self.scr.scanned[addr] = dev
+                isNewData = dev.scr._update(resp)
+                self.handleDiscovery(dev, (dev.updateCount <= 1), isNewData)
+                 
+            else:
+                raise BTLEInternalError("Unexpected response: " + respType, resp
+            
             if (not self.in_q.empty()):
 
                 sqn, cmd = self.queueGet()
@@ -50,7 +71,7 @@ class BLE_experiment(threading.Thread):
                 if cmd == "LINES":
                     resp = "Število vrstic je xy"
                     self.queuePutResp(sqn, resp)
-            self.stop()
+            self.scr.stop()
 
     def stop(self):
         self._is_thread_running = False
@@ -73,18 +94,12 @@ class BLE_experiment(threading.Thread):
         tmp = self.in_q.get()
         return tmp[0], tmp[1]
 
-class ScanDelegate(DefaultDelegate):
-    def __init__(self):
-        DefaultDelegate.__init__(self)
-        self.file = open("neki.txt", mode="w", encoding = "ASCII")
-
-
     def handleDiscovery(self, dev, isNewDev, isNewData):
 
         if isNewDev:
             print("Discovered device", dev.addr, dev.rssi)
-            self.file.write("[" + str(datetime.now().time())+"]: ")
-            self.file.write("N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
+            self.log.info("[" + str(datetime.now().time())+"]: ")
+            self.log.info("N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
         #elif isNewData:
             #print(dev.addr, dev.rssi, dev.updateCount, dev.getValueText(10), "Received new data")
             #file.write("[" + str(datetime.now().time())+"]: ")
@@ -97,10 +112,10 @@ class ScanDelegate(DefaultDelegate):
         #print(per.getServices())
         # this is how you get other info (advertising name, TX power... but LGTC isn't advertising much 
             if(dev.getValueText(9) == "OnePlus Nordic"):
-                self.file.write("[" + str(int(time.time()))+"]: ")
-                self.file.write("R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI " + str(dev.rssi) + "\n")
+                self.queuePutInfo("[" + str(int(time.time()))+"]: ")
+                self.queuePutInfo("R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI " + str(dev.rssi) + "\n")
                 print("RSSI of phone: ", dev.rssi)
                 #for i in range(255):
                 #	
                 #	if(dev.getValueText(i)):
-                #		print("  ", i, dev.getValueText(i))
+                #		print("  ", i, dev.getValueText(i)
