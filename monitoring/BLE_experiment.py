@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-from monitoring.experiment_LGTC import LOG_LEVEL
 import queue
 import threading
 from queue import Queue
