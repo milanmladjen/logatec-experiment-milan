@@ -253,19 +253,19 @@ if __name__ == "__main__":
 
 
     experiment_thread = BLE_experiment.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
-    experiment_thread.start()
+    #experiment_thread.start()
     # ------------------------------------------------------------------------------------
     # MAIN THREAD (ZMQ CLINET)
     # ------------------------------------------------------------------------------------
 
     # Start main thread - zmq client (communication with controller)
-    #client_thread = ECMS_client(E_C_QUEUE, C_E_QUEUE, LGTC_NAME, SUBSCR_HOSTNAME, ROUTER_HOSTNAME)
-    #client_thread.run()
+    client_thread = ECMS_client(E_C_QUEUE, C_E_QUEUE, LGTC_NAME, SUBSCR_HOSTNAME, ROUTER_HOSTNAME)
+    client_thread.run()
 
     # Ce pridemo sem, pomeni da se je client thread ustavil --> konec eksperimenta
     # TODO clean stuff
 
-    #client_thread.clean()
+    client_thread.clean()
 
     experiment_thread.stop()
     experiment_thread.join()
