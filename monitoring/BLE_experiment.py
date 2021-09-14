@@ -62,7 +62,7 @@ class BLE_experiment(threading.Thread):
                 self.handleDiscovery(dev, (dev.updateCount <= 1), isNewData)
                  
             else:
-                raise BTLEInternalError("Unexpected response: " + respType, resp
+                raise BTLEInternalError("Unexpected response: " + respType, resp)
             
             if (not self.in_q.empty()):
 
