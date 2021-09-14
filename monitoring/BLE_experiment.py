@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 from monitoring.experiment_LGTC import LOG_LEVEL
-
 import queue
 import threading
 from queue import Queue
@@ -14,6 +13,8 @@ import sys
 import time
 import logging
 import binascii
+
+LOG_LEVEL = logging.DEBUG
 class BLE_experiment(threading.Thread):
 
     def __init__(self, input_q, output_q, results_name, lgtc_name):
