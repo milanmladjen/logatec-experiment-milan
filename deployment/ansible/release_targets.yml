@@ -2,7 +2,7 @@
 # Option: run the script with strategy: free, so all the nodes will run simultaneously but they will not wait for each other 
 
 ---
-- hosts: 192.168.12.95
+- hosts: 192.168.12.94
 # Nodes 81, 84 and 85 will produce noise..
   strategy: free
   remote_user: videk
