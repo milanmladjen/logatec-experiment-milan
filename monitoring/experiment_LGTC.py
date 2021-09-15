@@ -215,18 +215,15 @@ if __name__ == "__main__":
         print("No app duration was defined...going with default 60min")
         APP_DURATION = 10
     
-
     try:
         APP_DIR = os.environ['APP_DIR']
     except:
         print("No application was given...aborting!")
         #sys.exit(1) TODO
         APP_DIR = "02_acs"
-
     # TODO: change when in container
     APP_PATH = "/root/logatec-experiment/applications/" + APP_DIR
     #APP_PATH = "/home/logatec/magistrska/logatec-experiment/applications/" + APP_DIR
-
     APP_NAME = APP_DIR[3:]
     """
     
@@ -303,5 +300,4 @@ if __name__ == "__main__":
 # STATE
 # SQN
 # ACK
-
 

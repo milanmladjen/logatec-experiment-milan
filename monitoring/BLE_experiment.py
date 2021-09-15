@@ -27,7 +27,6 @@ class BLE_experiment(threading.Thread):
         self.out_q = output_q
 
         self.scr = Scanner()
-        self.file = open("../results/" + lgtc_name + "_results.txt", "a+")
 
     def run(self):
         self.log.info("Starting experiment thread...")
@@ -79,7 +78,6 @@ class BLE_experiment(threading.Thread):
 
     def stop(self):
         self._is_thread_running = False
-        self.file.close()
         self.log.info("Stopping BLE experiment thread")
         self.queuePutState("STOPPED")
 
@@ -103,9 +101,7 @@ class BLE_experiment(threading.Thread):
         if isNewDev:
             self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
-            pass
         else:
             if(dev.getValueText(9) == "OnePlus Nordic"):
-                self.queuePutInfo(" Target RSSI " + "[" + str(int(time.time()))+"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                self.log.info(" Target RSSI " + "[" + str(int(time.time()))+"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                self.file.write(" Target RSSI " + "[" + str(int(time.time()))+"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
+                self.queuePutInfo("Target RSSI " + "[" + str(int(time.time()))+"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
+                self.log.info("Target RSSI " + "[" + str(int(time.time()))+"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
