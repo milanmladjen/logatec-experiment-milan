@@ -27,7 +27,7 @@ class BLE_experiment(threading.Thread):
         self.out_q = output_q
 
         self.scr = Scanner()
-        self.file = open("results/" + lgtc_name + "_results.txt", "a+")
+        self.file = open("../results/" + lgtc_name + "_results.txt", "a+")
 
     def run(self):
         self.log.info("Starting experiment thread...")
@@ -101,8 +101,8 @@ class BLE_experiment(threading.Thread):
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if isNewDev:
-            #self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
-            #self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
+            self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
+            self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             pass
         else:
             if(dev.getValueText(9) == "OnePlus Nordic"):
