@@ -5,7 +5,7 @@ import threading
 from queue import Queue
 
 from datetime import datetime
-from bluepy.btle import Scanner, DefaultDelegate, Peripheral, ScanEntry, BTLEInternalError
+from bluepy.btle import Scanner, Peripheral, ScanEntry, BTLEInternalError
 import argparse
 import os
 import sys
@@ -26,7 +26,7 @@ class BLE_experiment(threading.Thread):
         self.in_q = input_q
         self.out_q = output_q
 
-        self.scr = Scanner().withDelegate(ScanDelegate)
+        self.scr = Scanner()
 
     def run(self):
         self.log.info("Starting experiment thread...")
@@ -61,9 +61,8 @@ class BLE_experiment(threading.Thread):
                 else:
                     dev = ScanEntry(addr, self.scr.iface)
                     self.scr.scanned[addr] = dev
-                isNewData = dev.scr._update(resp)
-                print("scanning" + str(dev.rssi))
-                #self.handleDiscovery(dev, (dev.updateCount <= 1), isNewData)
+                isNewData = dev._update(resp)
+                self.handleDiscovery(dev, (dev.updateCount <= 1), isNewData)
                  
             else:
                 raise BTLEInternalError("Unexpected response: " + respType, resp)
@@ -80,6 +79,7 @@ class BLE_experiment(threading.Thread):
     def stop(self):
         self._is_thread_running = False
         self.log.info("Stopping BLE experiment thread")
+        self.queuePutState("STOPPED")
 
 
     # ----------------------------------------------------------------------------------------
@@ -101,57 +101,9 @@ class BLE_experiment(threading.Thread):
     def handleDiscovery(self, dev, isNewDev, isNewData):
 
         if isNewDev:
-            print("Discovered device", dev.addr, dev.rssi)
-            self.log.info("[" + str(datetime.now().time())+"]: ")
-            self.log.info("N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
-        #elif isNewData:
-            #print(dev.addr, dev.rssi, dev.updateCount, dev.getValueText(10), "Received new data")
-            #file.write("[" + str(datetime.now().time())+"]: ")
-            #file.write("D " + str(dev.addr) + " RSSI" + str(dev.rssi) + " CNT" + str(dev.updateCount) + "\n")
+            self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
+            self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
         else:
-            #print(dev.addr, dev.rssi, dev.updateCount, dev.getValueText(10), "Update rssi")
-            #file.write("[" + str(time.time())+"]: ")
-            #file.write("R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI" + str(dev.rssi) + "\n")
-        #per = Peripheral(dev.addr)
-        #print(per.getServices())
-        # this is how you get other info (advertising name, TX power... but LGTC isn't advertising much 
             if(dev.getValueText(9) == "OnePlus Nordic"):
-                self.queuePutInfo("[" + str(int(time.time()))+"]: ")
-                self.queuePutInfo("R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI " + str(dev.rssi) + "\n")
-                print("RSSI of phone: ", dev.rssi)
-                #for i in range(255):
-                #	
-                #	if(dev.getValueText(i)):
-                #		print("  ", i, dev.getValueText(i)
-
-class ScanDelegate(DefaultDelegate):
-    def __init__(self):
-        DefaultDelegate.__init__(self)
-        self.file = open("neki.txt", mode="w", encoding = "ASCII")
-
-
-    def handleDiscovery(self, dev, isNewDev, isNewData):
-
-        if isNewDev:
-            print("Discovered device", dev.addr, dev.rssi)
-            self.file.write("[" + str(datetime.now().time())+"]: ")
-            self.file.write("N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
-        #elif isNewData:
-            #print(dev.addr, dev.rssi, dev.updateCount, dev.getValueText(10), "Received new data")
-            #file.write("[" + str(datetime.now().time())+"]: ")
-            #file.write("D " + str(dev.addr) + " RSSI" + str(dev.rssi) + " CNT" + str(dev.updateCount) + "\n")
-        else:
-            #print(dev.addr, dev.rssi, dev.updateCount, dev.getValueText(10), "Update rssi")
-            #file.write("[" + str(time.time())+"]: ")
-            #file.write("R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI" + str(dev.rssi) + "\n")
-        #per = Peripheral(dev.addr)
-        #print(per.getServices())
-        # this is how you get other info (advertising name, TX power... but LGTC isn't advertising much 
-            if(dev.getValueText(9) == "OnePlus Nordic"):
-                self.file.write("[" + str(int(time.time()))+"]: ")
-                self.file.write("R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI " + str(dev.rssi) + "\n")
-                print("RSSI of phone: ", dev.rssi)
-                #for i in range(255):
-                #	
-                #	if(dev.getValueText(i)):
-                #		print("  ", i, dev.getValueText(i))
+                self.queuePutInfo("Target RSSI " + "[" + str(int(time.time()))+"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
+                self.log.info("Target RSSI " + "[" + str(int(time.time()))+"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
