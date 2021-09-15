@@ -81,7 +81,6 @@ class BLE_experiment(threading.Thread):
         self.log.info("Stopping BLE experiment thread")
         self.queuePutState("STOPPED")
 
-
     # ----------------------------------------------------------------------------------------
     # OTHER FUNCTIONS
     # ----------------------------------------------------------------------------------------
@@ -99,7 +98,6 @@ class BLE_experiment(threading.Thread):
         return tmp[0], tmp[1]
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
-
         if isNewDev:
             self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")

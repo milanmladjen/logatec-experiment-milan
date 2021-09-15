@@ -111,12 +111,13 @@ class ECMS_client():
 
                         elif msg == "START":
                             print("Start experiment thread")
+                            experiment_thread = BLE_experiment.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
                             experiment_thread.start()
 
                         elif msg == "STOP":
                             print("Stop experiment thread")
                             experiment_thread.stop()
-
+                            experiment_thread.join()
                         else:
                             # Forward it to the experiment
                             self.queuePut(sqn, msg)
@@ -252,7 +253,7 @@ if __name__ == "__main__":
     E_C_QUEUE = Queue()
 
 
-    experiment_thread = BLE_experiment.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
+    #experiment_thread = BLE_experiment.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
     #experiment_thread.start()
     # ------------------------------------------------------------------------------------
     # MAIN THREAD (ZMQ CLINET)
@@ -267,8 +268,8 @@ if __name__ == "__main__":
 
     client_thread.clean()
 
-    experiment_thread.stop()
-    experiment_thread.join()
+    #experiment_thread.stop()
+    #experiment_thread.join()
 
     logging.info("Dejanski konec")
 
