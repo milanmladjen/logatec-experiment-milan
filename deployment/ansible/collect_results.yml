@@ -1,5 +1,6 @@
 ---
-- hosts: 192.168.12.51, 192.168.12.52, 192.168.12.53, 192.168.12.54, 192.168.12.55, 192.168.12.56, 192.168.12.57, 192.168.12.58, 192.168.12.59, 192.168.12.60, 192.168.12.61, 192.168.12.62, 192.168.12.63, 192.168.12.64, 192.168.12.65, 192.168.12.66, 192.168.12.67, 192.168.12.68, 192.168.12.69, 192.168.12.70,                   
+- hosts: 192.168.12.55
+  #192.168.12.56, 192.168.12.57, 192.168.12.58, 192.168.12.59, 192.168.12.60, 192.168.12.61, 192.168.12.62, 192.168.12.63, 192.168.12.64, 192.168.12.65, 192.168.12.66, 192.168.12.67, 192.168.12.68, 192.168.12.69, 192.168.12.70,
   remote_user: videk
   tasks:
 
@@ -7,11 +8,11 @@
 # (TODO pointless? collect_results is called only when all containers are stopped)
   - name: Stop docker container (target)
     ignore_errors: yes
-    command: docker stop target_ble
+    command: docker stop target_ble_bruno
 
 # Get measurements from container to device
   - name: Copy file from the container
-    command: docker cp target_ble:/root/logatec-experiment/results/ .
+    command: docker cp target_ble_bruno:/root/logatec-experiment/results/ .
     args:
       chdir: ~/deploy/logatec-experiment
 
