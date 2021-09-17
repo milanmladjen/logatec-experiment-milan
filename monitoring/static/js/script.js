@@ -160,12 +160,14 @@ class Nodes {
     remove_dev(name){
         let loc = this._get_dev_loc(name);
         if (loc > 0){
+            $("#node_" + loc).css("textShadow", "none");
             $("#node_" + loc).css("visibility", "hidden");
         }
     }
 
     remove_all(){
         for(let i=1; i<28; i++){
+            $("#node_" + i).css("textShadow", "none");
             $("#node_" + i).css("visibility", "hidden");
         }
     }
