@@ -3,15 +3,14 @@
 
 ---
 - hosts: 192.168.12.82, 192.168.12.84, 192.168.12.86, 192.168.12.87, 192.168.12.88, 192.168.12.89, 192.168.12.90, 192.168.12.91, 192.168.12.92, 192.168.12.93, 192.168.12.94, 192.168.12.95, 192.168.12.96, 192.168.12.97, 192.168.12.98, 192.168.12.99, 192.168.12.100, 192.168.12.101
-# Nodes 81, 84 and 85 will produce noise..
   strategy: free
   remote_user: videk
 
-# Select which application to test, duration in minutes
+# Select which application to test, duration in minutes and additional options (monitoring/root/node)
   vars:
     application: 05_benchmark-acs
     duration: 20
-    autostart: false
+    option: monitor
 
 # Display experiment abstract in build.log 
 # TODO: How to display abstract only once, not at every node?
@@ -71,4 +70,4 @@
       - docker rm target
 
   - name: Run docker image
-    command: docker run --name target --privileged --net=host -e TARGET=experiment_with_controller -e APP_DIR="{{application}}" -e APP_DURATION_MIN="{{duration}}" logatec-experiment
+    command: docker run --name target --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" logatec-experiment

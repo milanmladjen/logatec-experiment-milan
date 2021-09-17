@@ -13,13 +13,13 @@ IPADDR=${IPADDR#*"192.168.12."}
 IPADDR=${IPADDR:0:3}
 
 # Remove first 3 characters from APP_DIR string to get the app name
-APP=${APP_DIR:3}
+# APP_NAME=${APP:3}
 echo "Testing application $APP on node $IPADDR"
 
 
 # Start the Serial Monitor with ECMS_client
 cd /root/logatec-experiment/monitoring/
-python3 experiment_VESNA.py $IPADDR 
+python3 experiment_VESNA.py $IPADDR $APP $APP_DUR
 
 # Move results and logs
 mv *.txt /root/logatec-experiment/results/

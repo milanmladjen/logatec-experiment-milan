@@ -4,7 +4,7 @@ experiment_node:
 experiment_root:
 	./run-experiment-root
 
-experiment_with_controller:
-	./run-experiment-with-controller
+experiment_monitor:
+	./run-experiment-with-monitor
 
-.PHONY: experiment_node experiment_root experiment_with_controller
+.PHONY: experiment_node experiment_root experiment_monitor

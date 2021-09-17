@@ -206,26 +206,19 @@ if __name__ == "__main__":
     LOGGING_FILENAME += ("_" + LGTC_ID + ".log")
 
     """
-    # Application name and duration should be defined as variable while running container
     try:
-        APP_DURATION = int(os.environ['APP_DURATION_MIN'])
-    except:
-        print("No app duration was defined...going with default 60min")
-        APP_DURATION = 10
-    
-
-    try:
-        APP_DIR = os.environ['APP_DIR']
+        APP_DIRECTORY = sys.argv[2]
     except:
         print("No application was given...aborting!")
-        #sys.exit(1) TODO
-        APP_DIR = "02_acs"
+        sys.exit(1)
 
-    # TODO: change when in container
-    APP_PATH = "/root/logatec-experiment/applications/" + APP_DIR
-    #APP_PATH = "/home/logatec/magistrska/logatec-experiment/applications/" + APP_DIR
+    APP_NAME = APP_DIRECTORY[3:]
 
-    APP_NAME = APP_DIR[3:]
+    try:
+        APP_DUR = int(sys.argv[3])
+    except:
+        print("No app duration was defined...going with default 10 min")
+        APP_DUR = 10
     """
     
 

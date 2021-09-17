@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-# First wake-up Vesna device --> WE DON'T HAVE TO because flashing does it for us
-# cd /root/logatec-experiment/deployment/tasks/
-# python reset_vesna.py 1
-
 # Update contiki-ng folder, if there were any changes from the last time we updated docker container
 cd /root/logatec-experiment/contiki-ng
 echo "Pull changes from Contiki-NG repo"
@@ -16,17 +12,19 @@ IPADDR=${IPADDR#*"192.168.12."}
 # Get only last 3 digits of IP address
 IPADDR=${IPADDR:0:3}
 
-# Enter experiment directory (APP_DIR is enviromental variable)
-cd /root/logatec-experiment/applications/$APP_DIR
-pwd
-
 # Remove first 3 characters from APP_DIR string to get the app name
-APP=${APP_DIR:3}
-echo "Testing $APP application on node $IPADDR"
+# APP_NAME=${APP:3}
+echo "Testing application $APP on node $IPADDR"
+
+# Enter experiment directory (APP_DIR is enviromental variable)
+cd /root/logatec-experiment/applications/$APP
 
 # Start the experiment
-make $APP.logatec3 -j2
-python3 serial_monitor.py -o "node_${IPADDR}.txt"
+make ${APP:3}.logatec3 -j2
+
+# Start the Serial Monitor script
+cd /root/logatec-experiment/deployment/tasks
+python3 vesna_serial_monitor.py -o "node_${IPADDR}.txt"
 
 # Move results
 mv *.txt /root/logatec-experiment/results/
