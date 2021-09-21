@@ -10,10 +10,15 @@ import argparse
 import os
 import sys
 import time
+import datetime
 import logging
 import binascii
+import requests
+import json
 
 LOG_LEVEL = logging.DEBUG
+data_stream_id = 32
+url = "https://e6-dataproc.ijs.si/api/v1/datapoints"
 class BLE_experiment(threading.Thread):
 
     def __init__(self, input_q, output_q, results_name, lgtc_name):
@@ -25,6 +30,8 @@ class BLE_experiment(threading.Thread):
 
         self.in_q = input_q
         self.out_q = output_q
+
+        self.name = lgtc_name
 
         self.file = open("../results/" + lgtc_name + "_results.txt", "a+")
 
@@ -107,6 +114,10 @@ class BLE_experiment(threading.Thread):
             pass
         else:
             if(dev.getValueText(9) == "OnePlus Nordic"):
-                self.queuePutInfo("Target RSSI " + "[" + str(int(time.time()))+"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                self.log.info("Target RSSI " + "[" + str(int(time.time()))+"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                self.file.write("Target RSSI " + "[" + str(int(time.time()))+"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
+                unixTime = str(int(time.time()))
+                payload = {'id': self.name, 'rssi': dev.rssi, 'unixTimestamp': unixTime}
+                self.queuePutInfo("Target RSSI " + "[" + unixTime+"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
+                self.log.info("Target RSSI " + "[" + unixTime +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
+                self.file.write("Target RSSI " + "[" + unixTime +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
+                upload_data = {'dataStreamId': data_stream_id, 'timestamp': datetime.datetime.now().isoformat(), 'payload': payload}
+                response = requests.post(url, data=json.dumps(upload_data), headers={'content-type': 'application/json'})
