@@ -7,7 +7,7 @@
 
   vars:
     radio_type: BLE
-    device_num: 3
+    device_num: 8
 
   tasks: 
   - name: Create directory
