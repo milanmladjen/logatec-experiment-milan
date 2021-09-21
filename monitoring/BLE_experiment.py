@@ -14,11 +14,12 @@ import datetime
 import logging
 import binascii
 import requests
+from requests.auth import HTTPBasicAuth
 import json
 
 LOG_LEVEL = logging.DEBUG
 data_stream_id = 32
-url = "https://e6-dataproc.ijs.si/api/v1/datapoints"
+url = "https://e6-dataproc.ijs.si/api/v1/datapoints?validate=false"
 class BLE_experiment(threading.Thread):
 
     def __init__(self, input_q, output_q, results_name, lgtc_name):
@@ -120,4 +121,4 @@ class BLE_experiment(threading.Thread):
                 self.log.info("Target RSSI " + "[" + unixTime +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 self.file.write("Target RSSI " + "[" + unixTime +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 upload_data = {'dataStreamId': data_stream_id, 'timestamp': datetime.datetime.now().isoformat(), 'payload': payload}
-                response = requests.post(url, data=json.dumps(upload_data), headers={'content-type': 'application/json'})
+                response = requests.post(url, data=json.dumps(upload_data), headers={'content-type': 'application/json'}, auth=HTTPBasicAuth("user", "P0datk!"))
