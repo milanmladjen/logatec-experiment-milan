@@ -121,9 +121,9 @@ class BLE_experiment(threading.Thread):
         else:
             if(dev.getValueText(9) == "OnePlus Nordic"):
                 unixTime = int(time.time())
-                payload = [{'LGTC_id': self.name, 'RSSI': int(dev.rssi), 'unixTimestamp': unixTime}]
+                payload = {'LGTC_id': self.name, 'RSSI': int(dev.rssi), 'unixTimestamp': unixTime}
                 self.queuePutInfo("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 self.log.info("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 self.file.write("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                upload_data = {'dataStreamId': data_stream_id, 'timestamp': datetime.datetime.now().isoformat() + 'Z', 'payload': payload}
+                upload_data = [{'dataStreamId': data_stream_id, 'timestamp': datetime.datetime.now().isoformat() + 'Z', 'payload': payload}]
                 response = requests.post(url, data=json.dumps(upload_data), headers={'content-type': 'application/json'}, auth=HTTPBasicAuth("user", "P0datk!"))
