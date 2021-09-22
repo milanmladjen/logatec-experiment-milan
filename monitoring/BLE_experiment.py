@@ -48,22 +48,26 @@ class BLE_experiment(threading.Thread):
         while self._is_thread_running:
             if self.scr._helper is None:
                 try: 
+                    self.log.info("Starting BLE helper...")
                     self.scr.start()
                 except:
                     raise BTLEInternalError("Helper not started (did you call start()?)")
             remain = None
             resp = self.scr._waitResp(['scan', 'stat'], remain)
             if resp is None:
+                self.log.info("No response from BLE, breaking.")
                 break
 
             respType = resp['rsp'][0]
             if respType == 'stat':
+                self.log.info("Scand ended, restarting it.")
                 # if scan ended, restart it
                 if resp['state'][0] == 'disc':
                     self.scr._mgmtCmd(self.scr._cmd())
 
             elif respType == 'scan':
                 # device found
+                self.log.info("Found device.")
                 addr = binascii.b2a_hex(resp['addr'][0]).decode('utf-8')
                 addr = ':'.join([addr[i:i+2] for i in range(0,12,2)])
                 if addr in self.scr.scanned:
@@ -75,6 +79,7 @@ class BLE_experiment(threading.Thread):
                 self.handleDiscovery(dev, (dev.updateCount <= 1), isNewData)
                  
             else:
+                self.log.info("Unexpected response")
                 raise BTLEInternalError("Unexpected response: " + respType, resp)
             
             if (not self.in_q.empty()):
@@ -110,13 +115,13 @@ class BLE_experiment(threading.Thread):
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if isNewDev:
-            self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
-            self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
+            #self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
+            #self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             pass
         else:
             if(dev.getValueText(9) == "OnePlus Nordic"):
                 unixTime = int(time.time())
-                payload =  [{'LGTC_id': self.name, 'RSSI': dev.rssi, 'unixTimestamp': unixTime}]
+                payload = [{'LGTC_id': self.name, 'RSSI': int(dev.rssi), 'unixTimestamp': unixTime}]
                 self.queuePutInfo("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 self.log.info("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 self.file.write("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
