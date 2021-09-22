@@ -115,7 +115,7 @@ class BLE_experiment(threading.Thread):
             pass
         else:
             if(dev.getValueText(9) == "OnePlus Nordic"):
-                unixTime = nt(time.time())
+                unixTime = int(time.time())
                 payload = {'LGTC_id': self.name, 'RSSI': dev.rssi, 'unixTimestamp': unixTime}
                 self.queuePutInfo("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 self.log.info("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
