@@ -64,7 +64,7 @@ class ECMS_client():
             self.log.error("Couldn't synchronize with broker...")
             self.queuePut("0", "CONTROLLER_DIED")
 
-        experiment_name = ""
+        experiment_name = "default"
         # ------------------------------------------------------------------------------------
         while True:
 

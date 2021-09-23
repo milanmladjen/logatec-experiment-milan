@@ -42,6 +42,7 @@ class BLE_experiment(threading.Thread):
     def run(self):
         self.log.info("Starting experiment thread...")
         self.log.info("Experiment name: " + self.experiment_name)
+        self.queuePutInfo("Experiment name: " + self.experiment_name)
         self.queuePutState("RUNNING")
 
         self.scr.clear()
