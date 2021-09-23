@@ -64,6 +64,7 @@ class ECMS_client():
             self.log.error("Couldn't synchronize with broker...")
             self.queuePut("0", "CONTROLLER_DIED")
 
+        experiment_name = ""
         # ------------------------------------------------------------------------------------
         while True:
 
@@ -111,13 +112,18 @@ class ECMS_client():
 
                         elif msg == "START":
                             print("Start experiment thread")
-                            experiment_thread = BLE_experiment.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
+                            experiment_thread = BLE_experiment.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, experiment_name)
                             experiment_thread.start()
 
                         elif msg == "STOP":
                             print("Stop experiment thread")
                             experiment_thread.stop()
                             experiment_thread.join()
+
+                        #NAME - name experiment - use: NAME your_name
+                        elif "NAME" in msg: 
+                            experiment_name = msg[5:]
+                            print("Naming experiment thread: {}".format(experiment_name))
                         else:
                             # Forward it to the experiment
                             self.queuePut(sqn, msg)

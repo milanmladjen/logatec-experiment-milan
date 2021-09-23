@@ -22,7 +22,7 @@ data_stream_id = 32
 url = "https://e6-dataproc.ijs.si/api/v1/datapoints?validate=false"
 class BLE_experiment(threading.Thread):
 
-    def __init__(self, input_q, output_q, results_name, lgtc_name):
+    def __init__(self, input_q, output_q, results_name, lgtc_name, experiment_name):
         threading.Thread.__init__(self)
         self._is_thread_running = True
 
@@ -32,7 +32,8 @@ class BLE_experiment(threading.Thread):
         self.in_q = input_q
         self.out_q = output_q
 
-        self.name = lgtc_name
+        self.lgtc_name = lgtc_name
+        self.experiment_name = experiment_name
 
         self.file = open("../results/" + lgtc_name + "_results.txt", "a+")
 
@@ -121,9 +122,9 @@ class BLE_experiment(threading.Thread):
         else:
             if(dev.getValueText(9) == "OnePlus Nordic"):
                 unixTime = int(time.time())
-                payload = {'LGTC_id': self.name, 'RSSI': int(dev.rssi), 'unixTimestamp': unixTime}
+                payload = {'LGTC_id': self.lgtc_name, 'RSSI': int(dev.rssi), 'unixTimestamp': unixTime, 'experimentName': self.experiment_name}
                 self.queuePutInfo("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 self.log.info("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 self.file.write("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 upload_data = [{'dataStreamId': data_stream_id, 'timestamp': datetime.datetime.now().isoformat() + 'Z', 'payload': payload}]
-                #response = requests.post(url, data=json.dumps(upload_data), headers={'content-type': 'application/json'}, auth=HTTPBasicAuth("user", "P0datk!"))
+                response = requests.post(url, data=json.dumps(upload_data), headers={'content-type': 'application/json'}, auth=HTTPBasicAuth("user", "P0datk!"))
