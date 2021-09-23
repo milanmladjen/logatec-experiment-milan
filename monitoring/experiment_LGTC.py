@@ -124,6 +124,7 @@ class ECMS_client():
                         elif "NAME" in msg: 
                             experiment_name = msg[5:]
                             print("Naming experiment thread: {}".format(experiment_name))
+
                         else:
                             # Forward it to the experiment
                             self.queuePut(sqn, msg)
