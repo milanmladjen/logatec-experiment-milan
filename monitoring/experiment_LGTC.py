@@ -46,6 +46,8 @@ class ECMS_client():
         self.in_q = input_q
         self.out_q = output_q
 
+        self.experiment_name = "default"
+
         self.__LGTC_STATE = "OFFLINE"
         self._UPTIME = 0
 
@@ -64,7 +66,6 @@ class ECMS_client():
             self.log.error("Couldn't synchronize with broker...")
             self.queuePut("0", "CONTROLLER_DIED")
 
-        experiment_name = "default"
         # ------------------------------------------------------------------------------------
         while True:
 
@@ -112,7 +113,7 @@ class ECMS_client():
 
                         elif msg == "START":
                             print("Start experiment thread")
-                            experiment_thread = BLE_experiment.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, experiment_name)
+                            experiment_thread = BLE_experiment.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, self.experiment_name)
                             experiment_thread.start()
 
                         elif msg == "STOP":
@@ -120,10 +121,11 @@ class ECMS_client():
                             experiment_thread.stop()
                             experiment_thread.join()
 
-                        #NAME - name experiment - use: NAME your_name
-                        elif "NAME" in msg: 
-                            experiment_name = msg[5:]
-                            print("Naming experiment thread: {}".format(experiment_name))
+                        #NAME - name experiment - use case: NAME$your_name
+                        elif "NAME$" in msg: 
+                            self.experiment_name = msg[5:]
+                            self.log.info("Naming experiment thread: {}".format(self.experiment_name))
+                            print("Naming experiment thread: {}".format(self.experiment_name))
 
                         else:
                             # Forward it to the experiment
