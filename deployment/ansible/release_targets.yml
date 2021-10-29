@@ -2,13 +2,13 @@
 # Option: run the script with strategy: free, so all the nodes will run simultaneously but they will not wait for each other 
 
 ---
-- hosts: 192.168.12.81
+- hosts: 192.168.12.111, 192.168.12.112, 192.168.12.113, 192.168.12.114
   strategy: free
   remote_user: videk
 
 # Select which application to test, duration in minutes and additional options (monitor/root/node)
   vars:
-    application: 00_template
+    application: 00_demo
     duration: 20
     option: monitor
 
@@ -38,7 +38,7 @@
       update: yes
       force: yes
       depth: 1
-      version: master
+      version: LPWA
 
 # It is better to download sub-modules separately, otherwise you get 95MB of data instead 28MB
 # Recursive option will download all sub-modules (also the ones from Contiki) which we don't need
@@ -52,22 +52,21 @@
     shell: "{{ item }} "
     with_items:
       #- cd ~/deploy/logatec-experiment && git clean -f -d
-      #- cd ~/deploy/logatec-experiment/contiki-ng && git clean -f -d
-      #- cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
+      - cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
 
 # Build...with -f flag so we can copy 'logatec-experiment' directory into container
   - name: Build docker file
-    command: docker build -t logatec-experiment -f deployment/docker/Dockerfile . 
+    command: docker build -t logatec-experiment-lpwa -f deployment/docker/Dockerfile . 
     args:
       chdir: ~/deploy/logatec-experiment
 
-  - name: Cleanup old docker containers (target)
-    register: target
+  - name: Cleanup old docker containers (target-lpwa)
+    register: target-lpwa
     ignore_errors: yes
     command: "{{ item }}"
     with_items:
-      - docker kill target
-      - docker rm target
+      - docker kill target-lpwa
+      - docker rm target-lpwa
 
   - name: Run docker image
-    command: docker run --name target --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" logatec-experiment
+    command: docker run --name target-lpwa --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" logatec-experiment-lpwa

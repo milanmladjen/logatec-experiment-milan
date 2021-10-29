@@ -1,10 +1,7 @@
 experiment_node:
 	./run-experiment-node
 
-experiment_root:
-	./run-experiment-root
+run_server:
+	./server-socket
 
-experiment_monitor:
-	./run-experiment-with-monitor
-
-.PHONY: experiment_node experiment_root experiment_monitor
+.PHONY: experiment_node run_server

@@ -6,7 +6,7 @@
   remote_user: videk
 
   vars:
-    radio_type: main
+    radio_type: LPWA
     device_num: 1
 
   tasks: 
@@ -23,7 +23,7 @@
       update: yes
       force: yes
       depth: 1
-      version: master
+      version: LPWA
 
   - name: Build docker file
     command: docker build -t ecms-controller -f monitor/docker/Dockerfile .
@@ -34,11 +34,11 @@
     ignore_errors: yes
     command: "{{ item }}"
     with_items:
-      - docker kill controller-main
-      - docker rm controller-main
+      - docker kill controller-lpwa
+      - docker rm controller-lpwa
 
   - name: Run docker image
-    command: docker run --name controller-main -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM={{device_num}} -e RADIO_TYPE={{radio_type}} ecms-controller 
+    command: docker run --name controller-lpwa -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM={{device_num}} -e RADIO_TYPE={{radio_type}} ecms-controller 
 
 
     # TODO: rename container into testbed_controller

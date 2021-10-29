@@ -2,34 +2,22 @@
 
 Continuous delivery template - deployment of experiments in the LOG-a-TEC testbed.
 
-## Branches
+More info about the testbed can be found [here](http://log-a-tec.eu/ap-cradio.html#jsi-campus "Official web-site").
 
-Each supported technology has its own branch to work on.
+## LoRa Branch
 
-* **SRDA** - 868 MHz ISM band
-* **SRDB** - 2.4 GHz ISM band
-* **LPWA** - LoRa 
-* **BLE** - Bluetooth LE
-* **UWB** - Ultra Wide Band
+We don't need Contiki-NG OS here - Vesna devices use ALH protocol, so we need only vesna-drivers sub-module.
 
-## Testbed info
+**NOTE**
 
-More info about the testbed can be found on the [official web-site](http://log-a-tec.eu/index.html "Official web-site").
+Make sure that your submodule is on the right branch:
 
-## Get repository
+| submodule | branch |
+| :-------: | :----: |
+| vesna-drivers | logatec-testbed | 
 
-To get the repository:
->```$ git clone git@github.com:logatec3/logatec-experiment.git```
+<br>
 
-To get the sub-modules files:
->```$ git submodule update --init```
+## Experiments
 
-Do it in one step:
->```$ git clone --recurse-submodules git@github.com:logatec3/logatec-experiment.git```
-
-**NOTE** \
-`git pull` will only pull the changes of the base repo.
-If you want to pull the changes of the sub-module as well use: ```$ git submodule update --remote``` \
-You can also add `--merge` or `--rebase` to merge/rebase your branch with remote.
-
-If you want to make some changes to the sub-modules, first checkout to the branch you want, then commit changes and push them.
+To make an experiment follow the instructions in *README.md* in folder applications.
