@@ -5,7 +5,7 @@
 import sys
 import os
 
-class reset_vesna():
+class vesna_reset():
 
     def __init__(self):
         # Export GPIO2_2 or linuxPin-66 to user space 
@@ -31,7 +31,7 @@ class reset_vesna():
 
 if __name__ == '__main__':
 
-    vesna = reset_vesna()
+    vesna = vesna_reset()
     
     if (int(sys.argv[1]) == 0):
         vesna.reset()

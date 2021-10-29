@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-# First update contiki-ng folder, if there were any changes from the last time we updated docker container
-cd /root/logatec-experiment/contiki-ng
-echo "Pull changes from Contiki-NG repo"
-git pull
-
 # Obtain node adresses
 IPADDR=$(hostname -I)
 # Get only our network address
@@ -29,7 +24,7 @@ if test -f "$ROOT_FILE"; then
     cd /root/logatec-experiment/deployment/tasks
     python3 vesna_serial_monitor.py -o "node_${IPADDR}.txt"
 else
-    echo "No root file located --> flashing Vesna with normal node"
+    echo "No root file located --> flashing Vesna with normal node and adding root option to the serial monitor"
     make $APP.logatec3 -j2
     cd /root/logatec-experiment/deployment/tasks
     python3 vesna_serial_monitor.py -o "node_${IPADDR}.txt" -r
@@ -40,4 +35,4 @@ mv *.txt /root/logatec-experiment/results/
 
 # Put Vesna to reset state so it doesnt interfeer with other networks
 cd /root/logatec-experiment/deployment/tasks
-python reset_vesna.py 0
+python vesna_reset.py 0
