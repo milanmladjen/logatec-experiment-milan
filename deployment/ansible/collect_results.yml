@@ -1,21 +1,22 @@
 ---
-- hosts: 192.168.12.81, 192.168.12.83
+- hosts: 192.168.12.81
   remote_user: videk
   tasks:
 
 # If it is still running, stop the container
+# (TODO pointless? collect_results is called only when all containers are stopped)
   - name: Stop docker container (target)
     ignore_errors: yes
     command: docker stop target
 
-# Get measurements from container
+# Get measurements from container to device
   - name: Copy file from the container
     command: docker cp target:/root/logatec-experiment/results/ .
     args:
       chdir: ~/deploy/logatec-experiment
 
-# Fetch measurements to videk container --> from there they will be forwarded to Github
-# On that container we have: videk-ci/<tag_name>/ folder...in it, there are logatec-experiment (a clone from
+# Fetch measurements from device to SMS container --> from there they will be forwarded to Github
+# On SMS container there is: videk-ci/<tag_name>/ folder...in it, there are logatec-experiment (a clone from
 # Github repo) and a folder out. We are calling this script from logatec-experiment/deployment/ansible, so dest:
 # is then ../../../out
   - name: Fetch data file to out folder
@@ -23,9 +24,21 @@
       src: "{{ item }}"
       dest: ../../../out/
       mode: pull
-    with_items: "~/deploy/logatec-experiment/results/*.txt"
+    with_items: 
+      - "~/deploy/logatec-experiment/results/*.txt"
+      - "~/deploy/logatec-experiment/results/*.log"
 
+# Delete results from device
   - name: Delete results
     file: 
       path:  ~/deploy/logatec-experiment/results
       state: absent
+
+
+# TODO: 
+# Should we stop controller container or will it stop automatically?
+# It can stop automatically...but how to access log files then? Another Ansible playbook?
+# With another bash script or should I put it in the same one?
+# $ docker stop controller  --> docker stop will stop the broker gracefully...docker kill will not
+# $ docker cp controller:/root/logatec-experiment/controller_broker.log .
+# $ sync to out

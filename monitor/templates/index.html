@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>  
+	<head> 
+		<meta charset = "utf-8"> 
+		<title>Experiment {{ example_string }}</title> 
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
+
+		<!-- script src="https://code.jquery.com/jquery-3.3.1.js"></script -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+		<link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+
+		<!-- FONT AWESOME - bootstrap 4 is not supporting glyphicons -->
+		<!-- link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" -->
+		
+		<!-- TOOLTIPSTER -->
+		<!-- script type="text/javascript" src="/static/js/tooltipster.bundle.min.js"></script>
+		<link href="{{ url_for('static',filename='css/tooltipster.bundle.css') }}" rel="stylesheet" type="text/css"-->
+		<script type="text/javascript" src="/controller/static/js/tooltipster.bundle.min.js"></script>
+		<link href="/controller/static/css/tooltipster.bundle.css" rel="stylesheet" type="text/css">
+
+		<!--script type="text/javascript" src="/static/js/script.js"></script>
+		<link href="{{ url_for('static',filename='css/main.css') }}" rel="stylesheet" type="text/css"-->
+		<script type="text/javascript" src="/controller/static/js/script.js"></script>
+		<link href="/controller/static/css/main.css" rel="stylesheet" type="text/css">
+
+		<link rel="icon" href="data:,">
+	</head> 
+
+	<body> 
+		<!-- Modal -->
+		<div id="help_modal" class="modal fade" role="dialog">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+						<h2>Help: How to use this tool?</h2>
+					</div>
+					<div class="modal-body">
+						<p>Available system commands for control over infrastructure devices:</p>
+						<ul>
+							<li>START_APP</li>
+							<li>STOP_APP</li>
+							<li>RESTART_APP</li>
+							<li>EXIT</li>
+							<li>STATE</li>
+							<li>FLASH</li>
+						</ul>
+						<br>
+						<p>Possible device states and its colors:</p>
+						<ul class="device_states">
+							<li><span class="glyphicon glyphicon-map-marker" style="color:gray;"></span> ONLINE - Device is online and ready for experiment.</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:yellow;"></span> COMPILING - LGTC is compiling application for VESNA.</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:green;"></span> RUNNING - Experiment is running successfully.</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:turquoise;"></span> FINISHED - Experiment has come to the end.</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:blue;"></span> STOPPED - User successfully stopped the experiment.</li>
+
+							<li><span class="glyphicon glyphicon-map-marker" style="color:red;"></span> TIMEOUT - VESNA is not responding for more than a minute.</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:orange;"></span> WARNING - Something went wrong, but experiment continues...</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:pink;"></span> COMPILE_ERROR - Experiment application could not be compiled.</li>
+							<li><span class="glyphicon glyphicon-map-marker" style="color:purple;"></span> VESNA_ERROR - Problems with UART connection. Check the logs...</li>
+						</ul>
+						
+					</div>
+					<div class="modal-footer">
+						<p>In development...</p>
+						<button type="button" class="btn btn-default" data-dismiss="modal">Try it out!</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<!-- Main page -->
+		<div class="container-fluid">
+
+            <div class="well">
+                <div class="row">
+                    <h2><i class="glyphicon glyphicon-eye-open"></i> Experiment Controller </h2>
+                    <p>A tool for real time monitoring and control over the running experiment in the LOG-a-TEC testbed.</p> 
+                    <input type="button" class="btn btn-default" data-toggle="modal" data-target="#help_modal" value="How to use?" />
+                </div>
+			</div>
+
+			<div class="row row-no-gutters" style="display: flex; flex-wrap: wrap;">
+				
+				<div class="col-md-6 well">
+					<div style="margin-left: 10px; margin-right: 10px;">
+
+						<h3 style="text-align: center;">Experiment Controller</h3>
+						<br>
+						<div style="width:fit-content; height:35px;">
+							<!-- form name="input_form" id="input_form" -->
+								Command: 
+								<input type="text" name="input_cmd" id="input_cmd" value="START"/>
+			
+								<select name="select_device" id="select_device" style="width: 120px;"> <!-- is width necessary? -->
+									<option value = "None" selected>--- Device ---</option>
+									<option value = "All">All</option>
+								</select>
+			
+								<input type="button" class="btn btn-default disabled" disabled name="send_cmd" id="send_cmd" value="Send" />
+
+								<input type="button" class="btn btn-default pull-right" name="clear_output" id="clear_output" value="Clear output"/>
+							<!-- /form -->
+						</div>
+
+						<br>
+
+						<div class="form-group blue-border-focus">
+							<label class="checkbox-inline pull-right"><input type="checkbox" value="" checked>Auto-scroll</label>
+							<label for="output_field">Output:</label>
+							<textarea class="form-control rounded-0" rows="24" name="output_field" id="output_field" ></textarea>
+						</div>
+
+					</div>
+				</div>
+
+                <div class="col-md-6 well">
+					<div style="margin-left: 10px; margin-right: 10px;">
+						
+						<h3 style="text-align: center;">Device Monitor</h3>
+						<br>
+						<div style="width: fit-content; height: 35px;">
+							<span class="radio_type">Devices in use: </span>
+							<input type="button" class="btn btn-default disabled pull-right" name="update_testbed" id="update_testbed" value="Update states" disabled>
+						</div>
+
+						<br>
+						<br>
+
+						<div style="height: 500px; width: 720px; background-color: white; margin: 0 auto;">
+							<!--img src="/static/img/tloris.png" style="height: 100%; width: 100%; object-fit: contain;"-->
+							<img src="/controller/static/img/tloris.png" style="height: 100%; width: 100%; object-fit: contain;">
+
+								<span class="glyphicon glyphicon-map-marker node" id="node_1"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_2"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_3"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_4"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_5"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_6"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_7"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_8"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_9"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_10"></span>
+
+								<span class="glyphicon glyphicon-map-marker node" id="node_11"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_12"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_13"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_14"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_15"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_16"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_17"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_18"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_19"></span>
+
+								<span class="glyphicon glyphicon-map-marker node" id="node_20"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_21"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_22"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_23"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_24"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_25"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_26"></span>
+								<span class="glyphicon glyphicon-map-marker node" id="node_27"></span>
+
+								<!-- Tooltip template -->
+								<div style="display: none;">
+									<div class="tooltip_template">
+										<table>
+											<tr>
+												<th>Name: </th>
+												<td id="tooltip_dev_name">LGTCxy</td>
+											</tr>
+											<tr>
+												<th>IP: </th>
+												<td id="tooltip_dev_ip">192.168.12.xy</td>
+											</tr>
+											<tr>
+												<th>Location: </th>
+												<td id="tooltip_dev_loc"> 0</td>
+											</tr>
+											<tr>
+												<th>Status: </th>
+												<td id="tooltip_dev_status">OFFLINE</td>
+											</tr>
+										</table>
+									</div>
+								</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+
+		</div>
+		
+		<footer> 
+			<br />
+			<hr />
+			<div style = "margin:auto; text-align: center;">
+				<p>In development...</a></p> 
+			</div>
+		</footer> 
+
+	</body> 
+</html> 

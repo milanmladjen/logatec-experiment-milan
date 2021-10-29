@@ -1,14 +1,5 @@
 #!/usr/bin/env bash
 
-# First wake-up Vesna device --> WE DON'T HAVE TO because flashing does it for us
-# cd /root/logatec-experiment/deployment/tasks/
-# python reset_vesna.py 1
-
-# First update contiki-ng folder, if there were any changes from the last time we updated docker container
-cd /root/logatec-experiment/contiki-ng
-echo "Pull changes from Contiki-NG repo"
-git pull
-
 # Obtain node adresses
 IPADDR=$(hostname -I)
 # Get only our network address
@@ -16,26 +7,27 @@ IPADDR=${IPADDR#*"192.168.12."}
 # Get only last 3 digits of IP address
 IPADDR=${IPADDR:0:3}
 
-# Enter experiment directory (APP_DIR is enviromental variable)
-cd /root/logatec-experiment/applications/$APP_DIR
-pwd
-
 # Remove first 3 characters from APP_DIR string to get the app name
-APP=${APP_DIR:3}
-echo "Testing $APP application on node $IPADDR"
+# APP_NAME=${APP:3}
+echo "Testing application $APP on node $IPADDR with option ROOT"
+
+# Enter experiment directory (APP_DIR is enviromental variable)
+cd /root/logatec-experiment/applications/$APP
 
 # If there is a separate file for root node, use this one to flash Vesna
-ROOT_FILE="/root/logatec-experiment/applications/${APP_DIR}/${APP}-root.c"
+ROOT_FILE="/root/logatec-experiment/applications/${APP}/${APP:3}-root.c"
 
 # Check if that file exists
 if test -f "$ROOT_FILE"; then
     echo "Root file located --> flashing Vesna with it!"
-    make ${APP}-root.logatec3 -j2
-    python3 serial_monitor.py -o "node_${IPADDR}.txt"
+    make ${APP:3}-root.logatec3 -j2
+    cd /root/logatec-experiment/deployment/tasks
+    python3 vesna_serial_monitor.py -o "node_${IPADDR}.txt"
 else
-    echo "No root file located --> flashing Vesna with normal node"
+    echo "No root file located --> flashing Vesna with normal node and adding root option to the serial monitor"
     make $APP.logatec3 -j2
-    python3 serial_monitor.py -o "node_${IPADDR}.txt" -r
+    cd /root/logatec-experiment/deployment/tasks
+    python3 vesna_serial_monitor.py -o "node_${IPADDR}.txt" -r
 fi
 
 # Move results
@@ -43,4 +35,4 @@ mv *.txt /root/logatec-experiment/results/
 
 # Put Vesna to reset state so it doesnt interfeer with other networks
 cd /root/logatec-experiment/deployment/tasks
-python reset_vesna.py 0
+python vesna_reset.py 0

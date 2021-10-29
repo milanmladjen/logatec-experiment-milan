@@ -11,19 +11,15 @@ IPADDR=${IPADDR:0:3}
 # APP_NAME=${APP:3}
 echo "Testing application $APP on node $IPADDR"
 
-# Enter experiment directory (APP_DIR is enviromental variable)
-cd /root/logatec-experiment/applications/$APP
 
-# Start the experiment
-make ${APP:3}.logatec3 -j2
+# Start the Serial Monitor with ECMS_client
+cd /root/logatec-experiment/monitor/
+python3 experiment_VESNA.py $IPADDR $APP $APP_DUR
 
-# Start the Serial Monitor script
-cd /root/logatec-experiment/deployment/tasks
-python3 vesna_serial_monitor.py -o "node_${IPADDR}.txt"
-
-# Move results
+# Move results and logs
 mv *.txt /root/logatec-experiment/results/
+mv *.log /root/logatec-experiment/results/
 
 # Put Vesna to reset state so it doesnt interfeer with other networks
 cd /root/logatec-experiment/deployment/tasks
-python vesna_reset.py 0
+python3 vesna_reset.py 0
