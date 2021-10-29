@@ -22,7 +22,7 @@ data_stream_id = 32
 url = "https://e6-dataproc.ijs.si/api/v1/datapoints?validate=false"
 class BLE_experiment(threading.Thread):
 
-    def __init__(self, input_q, output_q, results_name, lgtc_name, experiment_name):
+    def __init__(self, input_q, output_q, results_filename, lgtc_name, experiment_name):
         threading.Thread.__init__(self)
         self._is_thread_running = True
 
@@ -35,6 +35,9 @@ class BLE_experiment(threading.Thread):
         self.lgtc_name = lgtc_name
         self.experiment_name = experiment_name
 
+        #TODOB: Uporabi results_filename za shranjevanje meritev, log pa za debagiranje delovanja apk.
+        # neki v stilu:
+        # self.file = open("../results/" + results_filename, "a+")
         self.file = open("../results/" + lgtc_name + "_results.txt", "a+")
 
         self.scr = Scanner()

@@ -189,7 +189,21 @@ class ECMS_client():
 # ----------------------------------------------------------------------------------------
 # MAIN
 # ----------------------------------------------------------------------------------------
-if __name__ == "__main__":
+if __name__ == "__main__":    
+        
+    # ------------------------------------------------------------------------------------
+    # EXPERIMENT CONFIG
+    # ------------------------------------------------------------------------------------
+    try:
+        LGTC_ID = sys.argv[1]
+        LGTC_ID = LGTC_ID.replace(" ", "")
+    except:
+        print("No device name was given...going with default")
+        LGTC_ID = "xy"
+
+    LGTC_NAME = "LGTC" + LGTC_ID
+    RESULTS_FILENAME += ("_" + LGTC_ID + ".txt")
+    LOGGING_FILENAME += ("_" + LGTC_ID + ".log")
 
     # ------------------------------------------------------------------------------------
     # LOGGING CONFIG
@@ -199,30 +213,16 @@ if __name__ == "__main__":
     #logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
 
     _log = logging.getLogger(__name__)
-    _log.setLevel(LOG_LEVEL)        
-        
-    # ------------------------------------------------------------------------------------
-    # EXPERIMENT CONFIG
-    # ------------------------------------------------------------------------------------
-    try:
-        LGTC_ID = sys.argv[1]
-        LGTC_ID = LGTC_ID.replace(" ", "")
-    except:
-        _log.warning("No device name was given...going with default")
-        LGTC_ID = "xy"
-
-    LGTC_NAME = "LGTC" + LGTC_ID
-    RESULTS_FILENAME += ("_" + LGTC_ID + ".txt")
-    LOGGING_FILENAME += ("_" + LGTC_ID + ".log")
+    _log.setLevel(LOG_LEVEL)
 
     try:
-        APP_NAME = sys.argv[2]
-        APP_DIR = sys.argv[3]
+        APP_DIR = sys.argv[2]
+        APP_NAME = sys.argv[3]
     except:
         _log.error("No application given. Aborting execution!")
         sys.exit()
 
-    _log.info("Testing application " + APP_NAME + "on device " + LGTC_NAME + "!")
+    _log.info("Testing application " + APP_NAME + " on device " + LGTC_NAME + "!")
 
 
     # ------------------------------------------------------------------------------------
@@ -238,9 +238,12 @@ if __name__ == "__main__":
     # EXPERIMENT THREAD
     # ------------------------------------------------------------------------------------
     # TODOB: samo za info, kako se importa aplikacija, ki jo podaš kot spremenljivko pri zagonu apk
+    # Class aplikacije mora biti vedno isto poimenovan - lahko je kar BLE_experiment
+
+    # Import application thread during runtime and configure it (__init__)
     sys.path.append("../applications/" + APP_DIR)
-    experiment = importlib.import_module(APP_NAME, __name__)
-    experiment_thread = experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, APP_NAME)
+    module = importlib.import_module(APP_NAME, __name__)
+    experiment_thread = module.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, APP_NAME)
 
     # ------------------------------------------------------------------------------------
     # MAIN THREAD (ZMQ CLINET)

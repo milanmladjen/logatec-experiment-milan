@@ -13,7 +13,7 @@ import sys
 import time
 class BLE_experiment(threading.Thread):
 
-    def __init__(self, input_q, output_q, results_name, lgtc_name, experiment_name):
+    def __init__(self, input_q, output_q, results_filename, lgtc_name, experiment_name):
         threading.Thread.__init__(self)
         self._is_thread_running = True
 
