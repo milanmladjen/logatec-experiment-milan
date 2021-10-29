@@ -8,12 +8,14 @@ IPADDR=${IPADDR#*"192.168.12."}
 IPADDR=${IPADDR:0:3}
 
 # Remove first 3 characters from APP_DIR string to get the app name
-APP=${APP_DIR:3}
+APP_DIR = $APP
+APP_NAME=${APP_DIR:3}
 echo "Testing $APP application on node $IPADDR"
 
 # Start the experiment
-cd /root/logatec-experiment/applications/
-python3 $APP.py
+LOCATION = "/root/logatec-experiment/applications/$APP_DIR"
+cd $LOCATION
+python3 $APP_NAME.py
 # TODOB: fix the app so it can be run manually (if __name__ == "__main__":)
 
 # Move results and logs

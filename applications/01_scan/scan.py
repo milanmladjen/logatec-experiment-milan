@@ -39,6 +39,7 @@ class BLE_experiment(threading.Thread):
         # neki v stilu:
         # self.file = open("../results/" + results_filename, "a+")
         self.file = open("../results/" + lgtc_name + "_results.txt", "a+")
+        self.file.write("usaj neki more bit shranjeno v text fajlu, da obstaja")
 
         self.scr = Scanner()
 

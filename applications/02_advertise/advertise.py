@@ -20,6 +20,8 @@ class BLE_experiment(threading.Thread):
         self.in_q = input_q
         self.out_q = output_q
 
+        #TODOB: Podobno kot pri scan, fajl za shranjevanje meritev
+
     def run(self):
         print("Starting experiment thread...")
         self.queuePutState("RUNNING")
