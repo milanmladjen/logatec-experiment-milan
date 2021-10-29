@@ -1,16 +1,14 @@
 #!/bin/bash
 
-# Set test
-if [ "$TARGET" = "" ]; then
-  echo "Target missing!"
+if [ "$APP" = ""]; then
+  echo "No application given!"
 else
-  if [[ "$TARGET": = *"agent"* ]]; then
-    # Set serial device
-    if [ -z "$VESNA_DEV" ]; then
-      echo "Serial device missing!"
-    fi
+  if [ "$OPTION" = ""]; then
+    echo "No option given!"
+    OPTION = "node"
   fi
+
   cd deployment/tasks/
-  pwd 
-  make "$TARGET"
+  pwd
+  make "experiment_$OPTION"
 fi

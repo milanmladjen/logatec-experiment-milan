@@ -3,23 +3,14 @@
 
 ---
 - hosts: 192.168.12.50, 192.168.12.51, 192.168.12.52, 192.168.12.53, 192.168.12.54, 192.168.12.55, 192.168.12.56, 192.168.12.57, 192.168.12.58, 192.168.12.59, 192.168.12.60, 192.168.12.61, 192.168.12.62, 192.168.12.63, 192.168.12.64, 192.168.12.65, 192.168.12.66, 192.168.12.67, 192.168.12.68, 192.168.12.69, 192.168.12.70
-# Nodes 81, 84 and 85 will produce noise..
   strategy: free
   remote_user: videk
 
 # Select which application to test, duration in minutes
-  #vars:
-  #  application: 05_benchmark-acs
-  #  duration: 10
-  #  autostart: false
-
-# Display experiment abstract in build.log 
-# TODO: How to display abstract only once, not at every node?
-#  tasks:
-#  - name: Display abstract
-#    debug:
-#      msg: "Testing {{application}}, duration {{duration}} minutes"
-#    when: inventory_hostname == 192.168.12.81
+  vars:
+    application: 05_benchmark-acs
+    option: monitor
+  #  duration: 10 TODOB: obcijsko lahko damo tu timeout
 
   tasks:
   - name: Create directory
@@ -39,7 +30,7 @@
       update: yes
       force: yes
       depth: 1
-      version: experiment/BLE
+      version: BLE
 
 
 # Build...with -f flag so we can copy 'logatec-experiment' directory into container
@@ -53,8 +44,8 @@
     ignore_errors: yes
     command: "{{ item }}"
     with_items:
-      - docker kill target_ble_bruno
-      - docker rm target_ble_bruno
+      - docker kill target-ble
+      - docker rm target-ble
 
   - name: Run docker image
-    command: docker run --name target_ble_bruno --privileged --net=host -e TARGET=experiment_with_controller logatec-experiment-ble
+    command: docker run --name target-ble --privileged --net=host -e TARGET=experiment_with_controller logatec-experiment-ble

@@ -23,22 +23,22 @@
       update: yes
       force: yes
       depth: 1
-      version: experiment/BLE
+      version: BLE
 
   - name: Build docker file
-    command: docker build -t controller-ble -f monitoring/docker/Dockerfile .
+    command: docker build -t ecms-controller -f monitoring/docker/Dockerfile .
     args:
       chdir: ~/deploy/logatec-experiment
 
-  - name: Cleanup old docker container (controller-test)
+  - name: Cleanup old docker container (controller-ble)
     ignore_errors: yes
     command: "{{ item }}"
     with_items:
-      - docker kill controller_ble
-      - docker rm controller_ble
+      - docker kill controller-ble
+      - docker rm controller-ble
 
   - name: Run docker image
-    command: docker run --name controller_ble -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM={{device_num}} -e RADIO_TYPE={{radio_type}} controller-ble
+    command: docker run --name controller-ble -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM={{device_num}} -e RADIO_TYPE={{radio_type}} ecms-controller
 
 
     # TODO: rename container into testbed_controller

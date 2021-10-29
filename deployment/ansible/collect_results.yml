@@ -5,13 +5,13 @@
 
 # If it is still running, stop the container
 # (TODO pointless? collect_results is called only when all containers are stopped)
-  - name: Stop docker container (target)
+  - name: Stop docker container (target-ble)
     ignore_errors: yes
-    command: docker stop target_ble_bruno
+    command: docker stop target-ble
 
 # Get measurements from container to device
   - name: Copy file from the container
-    command: docker cp target_ble_bruno:/root/logatec-experiment/results/ .
+    command: docker cp target-ble:/root/logatec-experiment/results/ .
     args:
       chdir: ~/deploy/logatec-experiment
 
@@ -33,12 +33,3 @@
 #    file: 
 #      path:  ~/deploy/logatec-experiment/results
 #      state: absent
-
-
-# TODO: 
-# Should we stop controller container or will it stop automatically?
-# It can stop automatically...but how to access log files then? Another Ansible playbook?
-# With another bash script or should I put it in the same one?
-# $ docker stop controller  --> docker stop will stop the broker gracefully...docker kill will not
-# $ docker cp controller:/root/logatec-experiment/controller_broker.log .
-# $ sync to out
