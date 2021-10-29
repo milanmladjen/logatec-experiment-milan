@@ -5,13 +5,13 @@
 
 # If it is still running, stop the container
 # (TODO pointless? collect_results is called only when all containers are stopped)
-  - name: Stop docker container (target)
+  - name: Stop docker container (target-uwb)
     ignore_errors: yes
-    command: docker stop target
+    command: docker stop target-uwb
 
 # Get measurements from container to device
   - name: Copy file from the container
-    command: docker cp target:/root/logatec-experiment/results/ .
+    command: docker cp target-uwb:/root/logatec-experiment/results/ .
     args:
       chdir: ~/deploy/logatec-experiment
 

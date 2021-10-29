@@ -2,7 +2,7 @@
 # Option: run the script with strategy: free, so all the nodes will run simultaneously but they will not wait for each other 
 
 ---
-- hosts: 192.168.12.81
+- hosts: 192.168.12.141
   strategy: free
   remote_user: videk
 
@@ -11,14 +11,6 @@
     application: 00_template
     duration: 20
     option: monitor
-
-# Display experiment abstract in build.log 
-# TODO: How to display abstract only once, not at every node?
-#  tasks:
-#  - name: Display abstract
-#    debug:
-#      msg: "Testing {{application}}, duration {{duration}} minutes"
-#    when: inventory_hostname == 192.168.12.81
 
   tasks:
   - name: Create directory
@@ -38,36 +30,36 @@
       update: yes
       force: yes
       depth: 1
-      version: master
+      version: UWB
 
 # It is better to download sub-modules separately, otherwise you get 95MB of data instead 28MB
 # Recursive option will download all sub-modules (also the ones from Contiki) which we don't need
-  - name: Update submodules
-    command: git submodule update --init
-    args:
-      chdir: ~/deploy/logatec-experiment
+  #- name: Update submodules
+  #  command: git submodule update --init
+  #  args:
+  #    chdir: ~/deploy/logatec-experiment
 
 # Delete potential local changes (since force option in git task doesn't work for submodules)
-  - name: Delete local changes
-    shell: "{{ item }} "
-    with_items:
+  #- name: Delete local changes
+  #  shell: "{{ item }} "
+  #  with_items:
       #- cd ~/deploy/logatec-experiment && git clean -f -d
       #- cd ~/deploy/logatec-experiment/contiki-ng && git clean -f -d
       #- cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
 
 # Build...with -f flag so we can copy 'logatec-experiment' directory into container
   - name: Build docker file
-    command: docker build -t logatec-experiment -f deployment/docker/Dockerfile . 
+    command: docker build -t logatec-experiment-uwb -f deployment/docker/Dockerfile . 
     args:
       chdir: ~/deploy/logatec-experiment
 
-  - name: Cleanup old docker containers (target)
+  - name: Cleanup old docker containers (target-uwb)
     register: target
     ignore_errors: yes
     command: "{{ item }}"
     with_items:
-      - docker kill target
-      - docker rm target
+      - docker kill target-uwb
+      - docker rm target-uwb
 
   - name: Run docker image
-    command: docker run --name target --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" logatec-experiment
+    command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" logatec-experiment-uwb
