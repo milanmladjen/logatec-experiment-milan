@@ -109,7 +109,8 @@ class ECMS_client():
                         elif msg == "STOP":
                             self.log.debug("Stop experiment thread")
                             experiment_thread.stop()
-                            experiment_thread.join()
+                            # TODO: possible error: cannot join thread before it is started
+                            #experiment_thread.join()
 
                         #NAME - name experiment - use case: NAME$your_name
                         #elif "NAME$" in msg: 

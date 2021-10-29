@@ -8,16 +8,18 @@ IPADDR=${IPADDR#*"192.168.12."}
 IPADDR=${IPADDR:0:3}
 
 # Remove first 3 characters from APP_DIR string to get the app name
-APP_DIR = $APP
+APP_DIR=$APP
 APP_NAME=${APP_DIR:3}
-echo "Testing $APP application on node $IPADDR"
+echo "Testing $APP_NAME application on node $IPADDR"
 
 
 # Start the ECMS_client
 cd /root/logatec-experiment/monitoring/
 python3 experiment_LGTC.py $IPADDR $APP_DIR $APP_NAME
 
-# Move results and logs
-mv *.txt /root/logatec-experiment/results/
+# Move logs to a results folder
 mv *.log /root/logatec-experiment/results/
+
+# Measurements will be moved by experiment application, so next line is odveč
+#mv *.txt /root/logatec-experiment/results/
 
