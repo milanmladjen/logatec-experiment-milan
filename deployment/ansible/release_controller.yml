@@ -6,7 +6,7 @@
   remote_user: videk
 
   vars:
-    radio_type: main
+    radio_type: SRDB
     device_num: 1
 
   tasks: 
@@ -23,7 +23,7 @@
       update: yes
       force: yes
       depth: 1
-      version: master
+      version: SRDB
 
   - name: Build docker file
     command: docker build -t ecms-controller -f monitor/docker/Dockerfile .

@@ -52,12 +52,12 @@
     shell: "{{ item }} "
     with_items:
       #- cd ~/deploy/logatec-experiment && git clean -f -d
-      #- cd ~/deploy/logatec-experiment/contiki-ng && git clean -f -d
-      #- cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
+      - cd ~/deploy/logatec-experiment/contiki-ng && git clean -f -d
+      - cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
 
 # Build...with -f flag so we can copy 'logatec-experiment' directory into container
   - name: Build docker file
-    command: docker build -t logatec-experiment -f deployment/docker/Dockerfile . 
+    command: docker build -t logatec-experiment-srd -f deployment/docker/Dockerfile . 
     args:
       chdir: ~/deploy/logatec-experiment
 
@@ -70,4 +70,4 @@
       - docker rm target-srdb
 
   - name: Run docker image
-    command: docker run --name target-srdb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" logatec-experiment
+    command: docker run --name target-srdb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" logatec-experiment-srd
