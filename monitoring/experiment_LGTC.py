@@ -13,8 +13,11 @@ import time
 
 from lib import zmq_client
 
-import BLE_experiment
+sys.path.append('../applications/01_BLE-scan')
+sys.path.append('../applications/02_BLE-advertise')
 
+import BLE_scan
+import BLE_advertise
 
 # DEFINITIONS
 LOG_LEVEL = logging.DEBUG
@@ -50,8 +53,8 @@ class ECMS_client():
 
         self.__LGTC_STATE = "OFFLINE"
         self._UPTIME = 0
-
         
+        self.application = os.environ["APP"]
 
 
     # ----------------------------------------------------------------------------------------
@@ -113,8 +116,14 @@ class ECMS_client():
 
                         elif msg == "START":
                             print("Start experiment thread")
-                            experiment_thread = BLE_experiment.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, self.experiment_name)
-                            experiment_thread.start()
+                            if self.application is "01_BLE-scan":
+                                experiment_thread = BLE_scan.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, self.experiment_name)
+                                experiment_thread.start()
+                            elif self.application is "02_BLE-advertise":
+                                experiment_thread = BLE_advertise.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, self.experiment_name)
+                                experiment_thread.start()
+                            else:
+                                self.log.warning("Unknown application: ", self.application)
 
                         elif msg == "STOP":
                             print("Stop experiment thread")
