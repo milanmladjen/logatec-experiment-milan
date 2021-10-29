@@ -1,25 +1,16 @@
-# TODO:
-# Put zmq_client.py in this file as well?
-# V clienta bi lahko dal ukaz UPTIME - da odgovori kolko časa je že on
-
 #!/usr/bin/python3
-import threading
-from queue import Queue
 
+from queue import Queue
 import sys
-import os
 import logging
-import time
+import importlib
 
 from lib import zmq_client
 
-sys.path.append('../applications/01_BLE-scan')
-sys.path.append('../applications/02_BLE-advertise')
 
-import BLE_scan
-import BLE_advertise
-
+# -------------------------------------------------------------------------------------------
 # DEFINITIONS
+# -------------------------------------------------------------------------------------------
 LOG_LEVEL = logging.DEBUG
 
 #ROUTER_HOSTNAME = "tcp://192.168.2.191:5562"
@@ -49,12 +40,9 @@ class ECMS_client():
         self.in_q = input_q
         self.out_q = output_q
 
-        self.experiment_name = "default"
-
         self.__LGTC_STATE = "OFFLINE"
         self._UPTIME = 0
         
-        self.application = os.environ["APP"]
 
 
     # ----------------------------------------------------------------------------------------
@@ -115,26 +103,20 @@ class ECMS_client():
                             break
 
                         elif msg == "START":
-                            print("Start experiment thread")
-                            if self.application is "01_BLE-scan":
-                                experiment_thread = BLE_scan.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, self.experiment_name)
-                                experiment_thread.start()
-                            elif self.application is "02_BLE-advertise":
-                                experiment_thread = BLE_advertise.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, self.experiment_name)
-                                experiment_thread.start()
-                            else:
-                                self.log.warning("Unknown application: ", self.application)
+                            self.log.debug("Start experiment thread")
+                            experiment_thread.start()
 
                         elif msg == "STOP":
-                            print("Stop experiment thread")
+                            self.log.debug("Stop experiment thread")
                             experiment_thread.stop()
                             experiment_thread.join()
 
                         #NAME - name experiment - use case: NAME$your_name
-                        elif "NAME$" in msg: 
-                            self.experiment_name = msg[5:]
-                            self.log.info("Naming experiment thread: {}".format(self.experiment_name))
-                            print("Naming experiment thread: {}".format(self.experiment_name))
+                        #elif "NAME$" in msg: 
+                            #self.experiment_name = msg[5:]
+                            #self.log.info("Naming experiment thread: {}".format(self.experiment_name))
+                            #print("Naming experiment thread: {}".format(self.experiment_name))
+                            #TODOB - nazalost obsolete funkcionalnost
 
                         else:
                             # Forward it to the experiment
@@ -209,67 +191,57 @@ class ECMS_client():
 # ----------------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    
+    # ------------------------------------------------------------------------------------
+    # LOGGING CONFIG
+    # ------------------------------------------------------------------------------------
+    # Config logging module format for all scripts. Log level is defined in each submodule with var LOG_LEVEL.
+    logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
+    #logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
+
+    _log = logging.getLogger(__name__)
+    _log.setLevel(LOG_LEVEL)        
+        
     # ------------------------------------------------------------------------------------
     # EXPERIMENT CONFIG
     # ------------------------------------------------------------------------------------
-    # Device id should be given as argument at start of the scripT
     try:
         LGTC_ID = sys.argv[1]
         LGTC_ID = LGTC_ID.replace(" ", "")
     except:
-        print("No device name was given...going with default")
+        _log.warning("No device name was given...going with default")
         LGTC_ID = "xy"
 
     LGTC_NAME = "LGTC" + LGTC_ID
     RESULTS_FILENAME += ("_" + LGTC_ID + ".txt")
     LOGGING_FILENAME += ("_" + LGTC_ID + ".log")
 
-    """
-    # Application name and duration should be defined as variable while running container
     try:
-        APP_DURATION = int(os.environ['APP_DURATION_MIN'])
+        APP_NAME = sys.argv[2]
+        APP_DIR = sys.argv[3]
     except:
-        print("No app duration was defined...going with default 60min")
-        APP_DURATION = 10
-    
-    try:
-        APP_DIR = os.environ['APP_DIR']
-    except:
-        print("No application was given...aborting!")
-        #sys.exit(1) TODO
-        APP_DIR = "02_acs"
-    # TODO: change when in container
-    APP_PATH = "/root/logatec-experiment/applications/" + APP_DIR
-    #APP_PATH = "/home/logatec/magistrska/logatec-experiment/applications/" + APP_DIR
-    APP_NAME = APP_DIR[3:]
-    """
-    
+        _log.error("No application given. Aborting execution!")
+        sys.exit()
 
+    _log.info("Testing application " + APP_NAME + "on device " + LGTC_NAME + "!")
 
-    # ------------------------------------------------------------------------------------
-    # LOGGING CONFIG
-    # ------------------------------------------------------------------------------------
-
-    # Config logging module format for all scripts. Log level is defined in each submodule with var LOG_LEVEL.
-    logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
-    #logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
-
-    #logging.info("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME + "!")
 
     # ------------------------------------------------------------------------------------
     # QUEUE CONFIG
     # ------------------------------------------------------------------------------------
-
     # Create 2 queue for communication between threads
     # Client -> Experiment
     C_E_QUEUE = Queue()
     # Experiment -> Clinet
     E_C_QUEUE = Queue()
 
+    # ------------------------------------------------------------------------------------
+    # EXPERIMENT THREAD
+    # ------------------------------------------------------------------------------------
+    # TODOB: samo za info, kako se importa aplikacija, ki jo podaš kot spremenljivko pri zagonu apk
+    sys.path.append("../applications/" + APP_DIR)
+    experiment = importlib.import_module(APP_NAME, __name__)
+    experiment_thread = experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, APP_NAME)
 
-    #experiment_thread = BLE_experiment.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
-    #experiment_thread.start()
     # ------------------------------------------------------------------------------------
     # MAIN THREAD (ZMQ CLINET)
     # ------------------------------------------------------------------------------------
@@ -278,15 +250,14 @@ if __name__ == "__main__":
     client_thread = ECMS_client(E_C_QUEUE, C_E_QUEUE, LGTC_NAME, SUBSCR_HOSTNAME, ROUTER_HOSTNAME)
     client_thread.run()
 
-    # Ce pridemo sem, pomeni da se je client thread ustavil --> konec eksperimenta
     # TODO clean stuff
 
     client_thread.clean()
 
-    #experiment_thread.stop()
-    #experiment_thread.join()
+    experiment_thread.stop()
+    experiment_thread.join()
 
-    logging.info("Dejanski konec")
+    _log.info("Exiting application!")
 
 
 # This thread is designed for communication with controller_broker script - forwarding commands

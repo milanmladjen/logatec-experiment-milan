@@ -14,7 +14,7 @@ echo "Testing $APP application on node $IPADDR"
 
 # Start the ECMS_client
 cd /root/logatec-experiment/monitoring/
-python3 experiment_LGTC.py $IPADDR $APP
+python3 experiment_LGTC.py $IPADDR $APP_DIR $APP
 
 # Move results and logs
 mv *.txt /root/logatec-experiment/results/
