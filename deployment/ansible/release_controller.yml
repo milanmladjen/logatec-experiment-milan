@@ -30,15 +30,15 @@
     args:
       chdir: ~/deploy/logatec-experiment
 
-  - name: Cleanup old docker container (controller-test)
+  - name: Cleanup old docker container (controller-srdb)
     ignore_errors: yes
     command: "{{ item }}"
     with_items:
-      - docker kill controller-main
-      - docker rm controller-main
+      - docker kill controller-srdb
+      - docker rm controller-srdb
 
   - name: Run docker image
-    command: docker run --name controller-main -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM={{device_num}} -e RADIO_TYPE={{radio_type}} ecms-controller 
+    command: docker run --name controller-srdb -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM={{device_num}} -e RADIO_TYPE={{radio_type}} ecms-controller 
 
 
     # TODO: rename container into testbed_controller

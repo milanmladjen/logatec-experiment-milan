@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# Update contiki-ng folder, if there were any changes from the last time we updated docker container
+cd /root/logatec-experiment/contiki-ng
+echo "Pull changes from Contiki-NG repo"
+git pull
+
 # Obtain node adresses
 IPADDR=$(hostname -I)
 # Get only our network address

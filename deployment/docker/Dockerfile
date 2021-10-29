@@ -22,7 +22,7 @@ WORKDIR /root/logatec-experiment
 RUN mkdir results/
 
 # Pull the changes inside a container!
-#RUN git clone --single-branch --branch logatec-experiment/acs https://github.com/gcerar/contiki-ng.git
+RUN git clone --single-branch --branch logatec-experiment/acs https://github.com/gcerar/contiki-ng.git
 
 # Copy the logatec-experiment directory into container (without files in .dockerignore)
 COPY ./ ./
