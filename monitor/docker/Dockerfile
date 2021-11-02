@@ -30,8 +30,8 @@ EXPOSE 5562
 EXPOSE 5563
 
 # Start the python script
-CMD ["python3", "monitoring/ECMS_controller.py"]
+CMD ["python3", "monitor/ECMS_controller.py"]
 
 # Local test:
-# docker build -t controller -f monitoring/docker/Dockerfile .
+# docker build -t controller -f monitor/docker/Dockerfile .
 # docker run -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM=1 -e RADIO_TYPE=test_type controller
