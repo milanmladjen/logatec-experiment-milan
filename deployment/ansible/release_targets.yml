@@ -8,7 +8,7 @@
 
 # Select which application to test, duration in minutes and additional options (monitor/root/node)
   vars:
-    application: 00_template
+    application: 00_hello-world
     duration: 20
     option: monitor
 
