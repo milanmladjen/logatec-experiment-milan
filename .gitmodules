@@ -1,0 +1,4 @@
+[submodule "vesna-drivers"]
+	path = vesna-drivers
+	url = git@github.com:logatec3/vesna-drivers.git
+	branch = logatec-testbed
