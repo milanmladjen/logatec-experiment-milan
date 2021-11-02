@@ -19,13 +19,16 @@ More info about the testbed can be found on the [official web-site](http://log-a
 ## Get repository
 
 To get the repository:
-$ git clone git@github.com:logatec3/logatec-experiment.git
+
+`$ git clone git@github.com:logatec3/logatec-experiment.git`
 
 Some technologies use submodules. You can get them with:
-$ git submodule update --init
+
+`$ git submodule update --init`
 
 Do it in one step:
-$ git clone --recurse-submodules git@github.com:logatec3/logatec-experiment.git
+
+`$ git clone --recurse-submodules git@github.com:logatec3/logatec-experiment.git`
 
 **NOTE** \
 `git pull` will only pull the changes of the base repo.
