@@ -18,29 +18,8 @@ Make sure that your submodules are on the right branch:
 | contiki-ng | master |
 | vesna-drivers | logatec-testbed | 
 
-<<<<<<< HEAD
 <br>
 
 ## Experiments
 
 To make an experiment follow the instructions in *README.md* in folder applications.
-=======
-To get the repository:
-
-`$ git clone git@github.com:logatec3/logatec-experiment.git`
-
-Some technologies use submodules. You can get them with:
-
-`$ git submodule update --init`
-
-Do it in one step:
-
-`$ git clone --recurse-submodules git@github.com:logatec3/logatec-experiment.git`
-
-**NOTE** \
-`git pull` will only pull the changes of the base repo.
-If you want to pull the changes of the sub-module as well use: ```$ git submodule update --remote``` \
-You can also add `--merge` or `--rebase` to merge/rebase your branch with remote.
-
-If you want to make some changes to the sub-modules, first checkout to the branch you want, then commit changes and push them.
->>>>>>> master
