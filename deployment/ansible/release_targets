@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
 # Flag -f is alowing ansible to make 50 forks at the same time
-ansible-playbook -f 50 deployment/ansible/release_targets.yml
+ansible-playbook -f 50 -i deployment/ansible/inventory/logatec_testbed deployment/ansible/release_targets.yml

@@ -235,7 +235,7 @@ if __name__ == "__main__":
                 if msg_type == "TESTBED_UPDATE":
                     log.info("Return testbed state:")
                     log.debug(db.get_tb_state_str)
-                    broker.frontend_send(msg_type, "Broker", str(db.get_tb_state_json()))
+                    broker.frontend_send(msg_type, "Controller", str(db.get_tb_state_json()))
 
                 # FORWARD COMMAND - to LGTC devices
                 else:
@@ -245,7 +245,7 @@ if __name__ == "__main__":
                         broker.backend_send(sqn, address, arguments)
                     else:
                         log.warning("Device address is not in DB")
-                        broker.frontend_info("Broker", "Device " + address + " is not active!")
+                        broker.frontend_info("Controller", "Device " + address + " is not active!")
                         broker.frontend_deviceUpdate(address,"OFFLINE")
 
             # ------------------------------------------------------------------------------------
@@ -268,7 +268,7 @@ if __name__ == "__main__":
                         subscribers += 1
                         if subscribers == NUMBER_OF_DEVICES:
                             log.info("All devices ("+ str(NUMBER_OF_DEVICES) +") active")
-                            broker.frontend_info("Broker", "All devices (" + str(NUMBER_OF_DEVICES) +") available!")
+                            broker.frontend_info("Controller", "All devices (" + str(NUMBER_OF_DEVICES) +") available!")
 
                     else:
                         log.warning("Device %s allready in the experiment" % device)
@@ -328,6 +328,6 @@ if __name__ == "__main__":
 
         # Inform the frontend that experiment has stopped
         broker.frontend_send("EXP_STOP", "", "")
-        broker.frontend_info("Broker", "\n Experiment ended! \n -----------------")
+        broker.frontend_info("Controller", "\n Experiment ended! \n -----------------")
 
         log.info("End of controller main loop...")

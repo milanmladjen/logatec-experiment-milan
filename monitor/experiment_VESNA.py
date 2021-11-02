@@ -1,8 +1,3 @@
-# TODO:
-# Put zmq_client.py in this file as well?
-# V clienta bi lahko dal ukaz UPTIME - da odgovori kolko časa je že on
-# Controller_died obcijo dodej pousod, kjer je to mogoce zaznat
-
 
 #!/usr/bin/python3
 import threading
@@ -21,10 +16,8 @@ from lib import serial_monitor_thread
 # DEFINITIONS
 LOG_LEVEL = logging.DEBUG
 
-#ROUTER_HOSTNAME = "tcp://192.168.2.191:5562"
-#SUBSCR_HOSTNAME = "tcp://192.168.2.191:5561"
-ROUTER_HOSTNAME = "tcp://193.2.205.202:5562"
-SUBSCR_HOSTNAME = "tcp://193.2.205.202:5561"  
+ROUTER_HOSTNAME = "tcp://193.2.205.19:5562"
+SUBSCR_HOSTNAME = "tcp://193.2.205.19:5561"  
 
 RESULTS_FILENAME = "node_results"
 LOGGING_FILENAME = "logger"
@@ -87,10 +80,23 @@ class ECMS_client():
                     self.updateState(response)
 
                 elif sequence == "INFO":
-                    self.sendInfoResp(response)
+
+                    if response == "JOIN_DAG":
+                        self.updateState("JOINED_NETWORK")
+                        self.log.debug("Device joined RPL network!")
+
+                    elif response == "EXIT_DAG":
+                        self.updateState("EXITED_NETWORK")
+                        self.log.debug("Device exited RPL network!")
+
+                    else:
+                        self.sendInfoResp(response)
 
                 else:
-                    if response == "START":
+                    if response == "VTRIP":
+                        self.sendCmdResp(sequence, "ROUNDTRIP")
+
+                    elif response == "START":
                         self._is_app_running = True
                         self.updateState("RUNNING")
                         self.log.debug("Application started!")
@@ -105,14 +111,6 @@ class ECMS_client():
 
                         if self._controller_died:
                             break
-
-                    elif response == "JOIN_DAG":
-                        self.updateState("JOINED_NETWORK")
-                        self.log.debug("Device joined RPL network!")
-
-                    elif response == "EXIT_DAG":
-                        self.updateState("EXITED_NETWORK")
-                        self.log.debug("Device exited RPL network!")
 
                     elif response == "ROOT":
                         self.updateState("DAG_ROOT")
@@ -132,7 +130,7 @@ class ECMS_client():
                 if sqn:
 
                     self.log.debug("Received command from broker: [" + sqn + "] " + cmd)
-
+                    
                     # STATE COMMAND
                     # Return the state of the node
                     if sqn == "STATE":
@@ -140,8 +138,14 @@ class ECMS_client():
 
                     # EXPERIMENT COMMAND
                     else:
-
-                        if cmd == "EXIT":
+                        # Evaluation 
+                        if cmd == "ROUNDTRIP":
+                            # First to test roundtrip to VESNA
+                            #self.queuePut(sqn, "VTRIP")
+                            # Second to test roundtrip to LGTC
+                            self.sendCmdResp(sqn, "ROUNDTRIP")
+                            
+                        elif cmd == "EXIT":
                             self.updateState("OFFLINE")
                             self.log.info("Closing client thread.")
                             break
@@ -168,7 +172,7 @@ class ECMS_client():
                             self.log.info("Restart the application") #TODO
 
                         elif cmd == "DURATION":
-                            resp = "Defined duration: " + str(APP_DURATION) + " minutes"
+                            resp = "Defined duration: " + str(APP_DUR) + " minutes"
                             self.sendCmdResp(sqn, resp)
 
                         elif cmd == "UPTIME":
@@ -243,63 +247,6 @@ class ECMS_client():
 
     
 
-    
-
-
-    # ----------------------------------------------------------------------------------------
-    # FUNCTIONS TO CONTROL VESNA DEVICE
-    # ----------------------------------------------------------------------------------------
-    # Compile the C app and VESNA with its binary
-    def VESNA_flash(self):
-        # Compile the application
-        self.updateState("COMPILING")
-        self.log.info("Complie the application.")
-        #procDistclean = Popen(["make", "distclean"])
-        with Popen(["make", APP_NAME, "-j2"], stdout = PIPE, bufsize=1, universal_newlines=True, cwd = APP_PATH) as p:
-            for line in p.stdout:
-                self.log.debug(line)    #TODO maybe use print(line, end="")
-        if p.returncode:
-            self.log.error("Command " + str(p.args) + " returned non-zero exit status " + str(p.returncode))
-            self.updateState("COMPILE_ERR")
-            return False
-
-        # Flash the VESNA with app binary
-        self.log.info("Flash the app to VESNA .. ")
-        with Popen(["make", APP_NAME + ".logatec3"], stdout = PIPE, bufsize=1, universal_newlines=True, cwd = APP_PATH) as p:
-            for line in p.stdout:
-                self.log.debug(line)
-        if p.returncode:
-            self.log.error("Command " + str(p.args) + " returned non-zero exit status " + str(p.returncode))
-            self.updateState("COMPILE_ERR")
-            return False
-
-        self.log.info("Successfully flashed VESNA ...")
-        self.updateState("ONLINE")
-        return True
-
-    # Make a hardware reset on VESNA
-    def VESNA_reset(self):
-        self.log.info("VESNA hardware reset.")
-        try:
-            os.system('echo 66 > /sys/class/gpio/export')
-        except Exception:
-            pass
-        os.system('echo out > /sys/class/gpio/gpio66/direction')
-
-        os.system('echo 0 > /sys/class/gpio/gpio66/value')
-        os.system('echo 1 > /sys/class/gpio/gpio66/value')
-
-        self.sendInfoResp("Device reset complete!")
-        return True
-
-
-
-
-
-
-
-
-
 
 
 
@@ -312,7 +259,6 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------------
     # EXPERIMENT CONFIG
     # ------------------------------------------------------------------------------------
-    # Device id should be given as argument at start of the scripT
     try:
         LGTC_ID = sys.argv[1]
         LGTC_ID = LGTC_ID.replace(" ", "")
@@ -324,25 +270,23 @@ if __name__ == "__main__":
     RESULTS_FILENAME += ("_" + LGTC_ID + ".txt")
     LOGGING_FILENAME += ("_" + LGTC_ID + ".log")
 
-    # Application name and duration should be defined as variable while running container
     try:
-        APP_DURATION = int(os.environ['APP_DURATION_MIN'])
-    except:
-        print("No app duration was defined...going with default 60min")
-        APP_DURATION = 10
-
-    try:
-        APP_DIR = os.environ['APP_DIR']
+        APP_DIRECTORY = sys.argv[2]
     except:
         print("No application was given...aborting!")
-        #sys.exit(1) TODO
-        APP_DIR = "02_acs"
+        #sys.exit(1)
+        APP_DIRECTORY = "02_acs"
 
-    # TODO: change when in container
-    APP_PATH = "/root/logatec-experiment/applications/" + APP_DIR
+    APP_PATH = "/root/logatec-experiment/applications/" + APP_DIRECTORY
     #APP_PATH = "/home/logatec/magistrska/logatec-experiment/applications/" + APP_DIR
 
-    APP_NAME = APP_DIR[3:]
+    APP_NAME = APP_DIRECTORY[3:]
+
+    try:
+        APP_DUR = int(sys.argv[3])
+    except:
+        print("No app duration was defined...going with default 10 min")
+        APP_DUR = 10
 
     # ------------------------------------------------------------------------------------
     # LOGGING CONFIG
@@ -352,7 +296,7 @@ if __name__ == "__main__":
     logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
     #logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
 
-    logging.info("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME + "!")
+    logging.info("Testing application " + APP_NAME + " for " + str(APP_DUR) + " minutes on device " + LGTC_NAME + "!")
 
 
     # ------------------------------------------------------------------------------------
