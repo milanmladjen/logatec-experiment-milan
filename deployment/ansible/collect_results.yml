@@ -1,5 +1,5 @@
 ---
-- hosts: 192.168.12.81
+- hosts: SRDB
   remote_user: videk
   tasks:
 
