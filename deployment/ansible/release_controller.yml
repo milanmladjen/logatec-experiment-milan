@@ -2,7 +2,7 @@
 # Run experiment-controller container (in daemon mode, so Ansible continues to release_targets.yml)
 
 ---
-- hosts: videk-server
+- hosts: videk_server
   remote_user: videk
 
   vars:

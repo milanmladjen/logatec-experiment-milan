@@ -1,5 +1,5 @@
 
-[videk-server]
+[videk_server]
 172.17.0.1
 
 [SRDA]
@@ -11,11 +11,11 @@
 [LPWA]
 192.168.12.[111:114]
 
-[UWB-outdor]
+[UWB_outdor]
 192.168.12.[141:151]
 
-[UWB-indor-1]
+[UWB_indor_1]
 192.168.12.[152:163]
 
-[UWB-indor-2]
+[UWB_indor_2]
 192.168.12.[164:171]
