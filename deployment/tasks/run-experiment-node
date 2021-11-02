@@ -13,14 +13,15 @@ IPADDR=${IPADDR#*"192.168.12."}
 IPADDR=${IPADDR:0:3}
 
 # Remove first 3 characters from APP_DIR string to get the app name
-# APP_NAME=${APP:3}
-echo "Testing application $APP on node $IPADDR"
+APP_DIR=$APP
+APP_NAME=${APP:3}
+echo "Deploying $APP application on node $IPADDR"
 
 # Enter experiment directory (APP_DIR is enviromental variable)
-cd /root/logatec-experiment/applications/$APP
+cd /root/logatec-experiment/applications/$APP_DIR
 
 # Start the experiment
-make ${APP:3}.logatec3 -j2
+make $APP_NAME.logatec3 -j2
 
 # Start the Serial Monitor script
 cd /root/logatec-experiment/deployment/tasks

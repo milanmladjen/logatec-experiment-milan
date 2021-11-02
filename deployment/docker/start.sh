@@ -5,6 +5,7 @@ if [ "$APP" = ""]; then
 else
   if [ "$OPTION" = ""]; then
     echo "No option given!"
+    OPTION="node"
   fi
 
   cd deployment/tasks/
