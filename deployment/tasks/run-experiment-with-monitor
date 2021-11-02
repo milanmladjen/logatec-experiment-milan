@@ -8,8 +8,9 @@ IPADDR=${IPADDR#*"192.168.12."}
 IPADDR=${IPADDR:0:3}
 
 # Remove first 3 characters from APP_DIR string to get the app name
-# APP_NAME=${APP:3}
-echo "Testing application $APP on node $IPADDR"
+APP_DIR=$APP
+APP_NAME=${APP:3}
+echo "Deploying $APP application on node $IPADDR with option MONITOR"
 
 
 # Start the Serial Monitor with ECMS_client
