@@ -1,9 +1,9 @@
 #!/bin/bash
 
-if [ "$APP" = ""]; then
+if [ "$APP" = "" ]; then
   echo "No application given!"
 else
-  if [ "$OPTION" = ""]; then
+  if [ "$OPTION" = "" ]; then
     echo "No option given!"
     OPTION="node"
   fi
