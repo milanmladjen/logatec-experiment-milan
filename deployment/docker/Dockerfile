@@ -6,7 +6,7 @@ RUN set -ex \
     && apt-get update --fix-missing \
     && apt-get install -y 	nano \
                        		python3-pip \
-							pythnon3-numpy \					   
+							python3-numpy \					   
 							git \		
 	&& apt-get clean -y
 

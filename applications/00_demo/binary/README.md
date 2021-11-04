@@ -1,3 +1,0 @@
-# Description
-
-Binaries from saam app, both instances mac_mode is master ...

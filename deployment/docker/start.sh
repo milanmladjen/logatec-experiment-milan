@@ -4,13 +4,13 @@ if [ "$APP" = "" ]; then
   echo "No application given! Aborting!"
 else
   if [ "$OPTION" = "" ]; then
-    echo "Option param missing ... going with default"
+    echo "Option param is missing ... going with default."
     OPTION="none"
   fi
 
   if [ "$INSTANCE" = "" ]; then
-    echo "Mode is missing ... going with default!"
-    export MODE="tag"
+    echo "Instance is missing ... going with default."
+    export INSTANCE="tag"
   fi
 
   cd deployment/tasks/
