@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# Get only last 3 digits of IP address
+IPADDR=$(hostname -I)
+IPADDR=${IPADDR#*"192.168.12."}
+IPADDR=${IPADDR:0:3}
+
+# Remove first 3 characters from APP_DIR string to get the app name
+APP_LOC="/root/logatec-experiment/applications/${APP}"
+echo "Deploying ${APP:3} application on node $IPADDR"
+
+# Locate .bin file for given instance
+BIN_FILE="${APP_LOC}/binary/${INSTANCE}.bin"
+
+# Flash the UWB node with given application binaries
+python3 vesna_flash_uwb.py $BIN_FILE
+
+# Rename logg file and move it to the results folder
+mv flash_report.log flash_report_${IPADDR}.log
+mv *.log /root/logatec-experiment/results/
+
+# Start the serial monitor script that collects results and exits after a defined time $APP_DUR
+# Za ime skripte loh uporabiš APP_NAME
+cd $APP_LOC
+python3 uwb_monitor.py $IPADDR $APP_DUR
+
+# Move results
+mv *.txt /root/logatec-experiment/results/
+mv *.log /root/logatec-experiment/results/
+
+# Put Vesna to reset state so it doesnt interfeer with other networks
+#cd /root/logatec-experiment/deployment/tasks
+#python vesna_reset.py 0

@@ -1,5 +1,5 @@
 ---
-- hosts: 192.168.12.81
+- hosts: UWB_indor_1
   remote_user: videk
   tasks:
 

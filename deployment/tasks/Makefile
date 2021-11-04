@@ -1,10 +1,8 @@
-experiment_node:
-	./run-experiment-node
-
-experiment_root:
-	./run-experiment-root
+experiment_none:
+	# The default task
+	./run-experiment
 
 experiment_monitor:
 	./run-experiment-with-monitor
 
-.PHONY: experiment_node experiment_root experiment_monitor
+.PHONY: experiment_none experiment_monitor

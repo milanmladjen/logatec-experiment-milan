@@ -12,15 +12,4 @@ APP_DIR=$APP
 APP_NAME=${APP:3}
 echo "Deploying $APP application on node $IPADDR with option MONITOR"
 
-
-# Start the Serial Monitor with ECMS_client
-cd /root/logatec-experiment/monitor/
-python3 experiment_VESNA.py $IPADDR $APP $APP_DUR
-
-# Move results and logs
-mv *.txt /root/logatec-experiment/results/
-mv *.log /root/logatec-experiment/results/
-
-# Put Vesna to reset state so it doesnt interfeer with other networks
-cd /root/logatec-experiment/deployment/tasks
-python3 vesna_reset.py 0
+# TODO
