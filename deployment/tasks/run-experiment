@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run experiment node
+# Run experiment with no additional option
 
 # Obtain node adresses
 IPADDR=$(hostname -I)

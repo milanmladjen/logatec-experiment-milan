@@ -1,11 +1,11 @@
 #!/bin/bash
 
 if [ "$APP" = "" ]; then
-  echo "No application given!"
+  echo "No application given! Aborting!"
 else
   if [ "$OPTION" = "" ]; then
-    echo "No option given!"
-    OPTION="node"
+    echo "Option param is missing ... going with default."
+    OPTION="none"
   fi
 
   cd deployment/tasks/

@@ -6,7 +6,7 @@
   strategy: free
   remote_user: videk
 
-# Select which application to test, duration in minutes and additional options (monitor/root/node)
+# Select which application to test, duration in minutes and additional options (none/monitor/root/node)
   vars:
     application: 00_template
     duration: 20

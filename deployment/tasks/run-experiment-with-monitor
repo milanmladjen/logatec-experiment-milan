@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Run experiment with ECMS monitor
 
 # Obtain node adresses
 IPADDR=$(hostname -I)
