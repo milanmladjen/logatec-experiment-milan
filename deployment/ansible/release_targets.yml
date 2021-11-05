@@ -6,12 +6,12 @@
   strategy: free
   remote_user: videk
 
-# Select which application to test, duration in minutes and additional options (none/monitor/root/node)
+# Select which application to test, duration in minutes and additional options (none/monitor/master/slave)
   vars:
     application: 00_demo
     duration: 10
-    option: none
-    anchor_node: "192.168.12.152"
+    option: none  # defined at task: run docker image"
+    master_node: "192.168.12.152"
 
   tasks:
   - name: Create directory
@@ -63,10 +63,10 @@
       - docker rm target-uwb
 
   - name: Run docker image
-    command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" -e INSTANCE="slave" logatec-experiment-uwb
-    when: inventory_hostname != anchor_node
+    command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="slave" logatec-experiment-uwb
+    when: inventory_hostname != master_node
 
   # Maybe -d will be needed here
   - name: Run anchor docker image
-    command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" -e INSTANCE="master" logatec-experiment-uwb
-    when: inventory_hostname == anchor_node
+    command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="master"  logatec-experiment-uwb
+    when: inventory_hostname == master_node

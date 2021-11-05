@@ -9,8 +9,8 @@ IPADDR=${IPADDR:0:3}
 APP_LOC="/root/logatec-experiment/applications/${APP}"
 echo "Deploying ${APP:3} application on node $IPADDR"
 
-# Locate .bin file for slave
-BIN_FILE="${APP_LOC}/binary/slave.bin"
+# Locate .bin file for master
+BIN_FILE="${APP_LOC}/binary/master.bin"
 
 # Flash the UWB node with given application binaries
 python3 snp_uwb_flash.py $BIN_FILE
@@ -19,9 +19,15 @@ python3 snp_uwb_flash.py $BIN_FILE
 mv flash_report.log flash_report_${IPADDR}.log
 mv *.log /root/logatec-experiment/results/
 
-# Sleep for defined perion of experiment duration
-sleep ${APP_DUR}m
+# Start the serial monitor script that collects results and exits after a defined time $APP_DUR
+# Za ime skripte loh uporabiš APP_NAME
+cd $APP_LOC
+python3 uwb_monitor.py $IPADDR $APP_DUR
 
-# Put UWB into reset state so it doesnt interfeer with other experiments
+# Move results
+mv *.txt /root/logatec-experiment/results/
+mv *.log /root/logatec-experiment/results/
+
+# Put UWB into reset state so it doesnt interfeer with other networks
 cd /root/logatec-experiment/deployment/tasks
 python3 snp_uwb_poweroff.py

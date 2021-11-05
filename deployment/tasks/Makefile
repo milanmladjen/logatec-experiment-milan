@@ -2,7 +2,13 @@ experiment_none:
 	# The default task
 	./run-experiment
 
+experiment_slave:
+	./run-experiment
+
+experiment_master:
+	./run-experiment-master
+
 experiment_monitor:
 	./run-experiment-with-monitor
 
-.PHONY: experiment_none experiment_monitor
+.PHONY: experiment_none experiment_master experiment_monitor

@@ -8,10 +8,9 @@ else
     OPTION="none"
   fi
 
-  if [ "$INSTANCE" = "" ]; then
-    echo "Instance is missing ... going with default."
-    export INSTANCE="slave"
-  fi
+  if "$APP_DUR" = "" ]; then
+    echo "Application duration not defined ... going with default."
+    export APP_DUR="10"
 
   cd deployment/tasks/
   pwd
