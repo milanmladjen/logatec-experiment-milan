@@ -11,7 +11,7 @@
     application: 00_demo
     duration: 10
     option: none
-    anchor_node: 192.168.12.150
+    anchor_node: "192.168.12.152"
 
   tasks:
   - name: Create directory
@@ -67,6 +67,6 @@
     when: inventory_hostname != anchor_node
 
   # Maybe -d will be needed here
-  #- name: Run anchor docker image
-  #  command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" -e INSTANCE="anchor" logatec-experiment-uwb
-  #  when: inventory_hostname == anchor_node
+  - name: Run anchor docker image
+    command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" -e INSTANCE="anchor" logatec-experiment-uwb
+    when: inventory_hostname == anchor_node

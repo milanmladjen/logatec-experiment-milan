@@ -45,7 +45,7 @@ def put_into_bootloader():
     GPIO.output("GPIO1_25", GPIO.LOW)
     time.sleep(2)
     GPIO.output("GPIO1_25", GPIO.HIGH)
-    time.sleep(5)
+    time.sleep(10)
     GPIO.output("GPIO1_25", GPIO.LOW)
     time.sleep(2)
     

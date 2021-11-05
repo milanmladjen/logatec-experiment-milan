@@ -35,6 +35,7 @@ log = logging.getLogger("Monitor")
 log.setLevel(LOG_LEVEL)   
 
 file = open(RESULTS_FILENAME, mode="a+")
+file.write("Start")
 
 if __name__ == "__main__" :
 
