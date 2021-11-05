@@ -61,11 +61,11 @@ if __name__ == "__main__" :
 
                     frame = uwb_parser.parse(line)
                     file.write(frame.type())
-
-                    if (frame.type() == "ActiveDevices"):
-                        file.write("Devices table: ")
-                        for d in frame.devices():
-                            file.write(d)
+                    file.write("\n")
+                    #if (frame.type() == "ActiveDevices"):
+                    #    file.write("Devices table: ")
+                    #    for d in frame.devices():
+                    #        file.write(d)
 
             except Exception as e:
                 if type(e) == multiprocessing.Queue.Empty:
