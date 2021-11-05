@@ -11,6 +11,7 @@ else
   if "$APP_DUR" = "" ]; then
     echo "Application duration not defined ... going with default."
     export APP_DUR="10"
+  fi
 
   cd deployment/tasks/
   pwd
