@@ -63,10 +63,10 @@
       - docker rm target-uwb
 
   - name: Run docker image
-    command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" -e INSTANCE="tag" logatec-experiment-uwb
+    command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" -e INSTANCE="slave" logatec-experiment-uwb
     when: inventory_hostname != anchor_node
 
   # Maybe -d will be needed here
   - name: Run anchor docker image
-    command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" -e INSTANCE="anchor" logatec-experiment-uwb
+    command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" -e INSTANCE="master" logatec-experiment-uwb
     when: inventory_hostname == anchor_node

@@ -10,7 +10,7 @@ else
 
   if [ "$INSTANCE" = "" ]; then
     echo "Instance is missing ... going with default."
-    export INSTANCE="tag"
+    export INSTANCE="slave"
   fi
 
   cd deployment/tasks/
