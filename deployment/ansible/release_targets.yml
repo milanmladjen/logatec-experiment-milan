@@ -2,7 +2,7 @@
 # Option: run the script with strategy: free, so all the nodes will run simultaneously but they will not wait for each other 
 
 ---
-- hosts: UWB_indor_1
+- hosts: UWB_indor_1:!offline
   strategy: free
   remote_user: videk
 
