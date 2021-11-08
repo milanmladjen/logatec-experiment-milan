@@ -35,9 +35,10 @@ if __name__ == "__main__" :
             try:
                 if not q_uwb.empty():
                     line = q_uwb.get()
-                    file.write(line)
-                    file.write("\n")
-                    break
+                    if(line[0] == "I" and line[1] == "D"):
+                        file.write(line)
+                        file.write("\n")
+                        break
 
             except Exception as e:
                 if type(e) == multiprocessing.Queue.Empty:
