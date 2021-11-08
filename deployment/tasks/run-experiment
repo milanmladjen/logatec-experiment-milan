@@ -20,7 +20,7 @@ mv flash_report.log flash_report_${IPADDR}.log
 mv *.log /root/logatec-experiment/results/
 
 # Get device ID
-cd APP_LOC
+cd $APP_LOC
 python3 uwb_getid.py
 mv *.txt /root/logatec-experiment/results/
 
