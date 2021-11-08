@@ -11,4 +11,4 @@ experiment_master:
 experiment_monitor:
 	./run-experiment-with-monitor
 
-.PHONY: experiment_none experiment_master experiment_monitor
+.PHONY: experiment_none experiment_slave experiment_master experiment_monitor
