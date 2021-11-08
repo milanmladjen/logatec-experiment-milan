@@ -13,7 +13,7 @@ else
     export APP_DUR="10"
   fi
 
-  cd deployment/tasks/
+  cd /root/logatec-experiment/deployment/tasks/
   pwd
   make "experiment_$OPTION"
 fi
