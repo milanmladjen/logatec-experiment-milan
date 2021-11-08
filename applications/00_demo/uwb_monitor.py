@@ -49,6 +49,8 @@ if __name__ == "__main__" :
     log.info("Starting monitor proccess")
     _start_time = timer()
 
+    _get_id = True
+
     try:
         while(True):
             
@@ -57,11 +59,13 @@ if __name__ == "__main__" :
                 if not q_uwb.empty():
                     line = q_uwb.get()
                     file.write(line)
-                    #_DEV{681343156813383643520000;}
-
                     frame = uwb_parser.parse(line)
                     file.write(frame.type())
                     file.write("\n")
+
+                    if(line[0] == "I" and line[1] == "D"):
+                        _get_id = False
+                    
                     #if (frame.type() == "ActiveDevices"):
                     #    file.write("Devices table: ")
                     #    for d in frame.devices():
@@ -78,6 +82,9 @@ if __name__ == "__main__" :
             if((timer() - _start_time) > (APP_DUR * 60) ):
                 log.info("Application time (" + str(APP_DUR) + ") elapsed ...")
                 break
+
+            if _get_id:
+                p_uart.sendNodeIDRequest()
     except:
         log.debug("Exiting main process")
 
