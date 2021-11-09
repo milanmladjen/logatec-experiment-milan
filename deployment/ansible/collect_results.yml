@@ -29,10 +29,10 @@
       - "~/deploy/logatec-experiment/results/*.log"
 
 # Delete results from device
-#  - name: Delete results
-#    file: 
-#      path:  ~/deploy/logatec-experiment/results
-#      state: absent
+  - name: Delete results
+    file: 
+      path:  ~/deploy/logatec-experiment/results
+      state: absent
 
 
 # TODO: 
