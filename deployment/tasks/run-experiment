@@ -21,7 +21,7 @@ mv *.log /root/logatec-experiment/results/
 
 # Get device ID
 cd $APP_LOC
-python3 uwb_getid.py
+python3 uwb_getid.py $IPADDR
 mv *.txt /root/logatec-experiment/results/
 
 # Sleep for defined perion of experiment duration
