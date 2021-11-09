@@ -19,13 +19,13 @@ python3 snp_uwb_flash.py $BIN_FILE
 mv flash_report.log flash_report_${IPADDR}.log
 mv *.log /root/logatec-experiment/results/
 
+# Sleep for defined perion of experiment duration
+sleep ${APP_DUR}m
+
 # Get device ID
 cd $APP_LOC
 python3 uwb_getid.py $IPADDR
 mv *.txt /root/logatec-experiment/results/
-
-# Sleep for defined perion of experiment duration
-sleep ${APP_DUR}m
 
 # Put UWB into reset state so it doesnt interfeer with other experiments
 cd /root/logatec-experiment/deployment/tasks
