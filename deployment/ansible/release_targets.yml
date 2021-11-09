@@ -9,9 +9,9 @@
 # Select which application to test, duration in minutes and additional options (none/monitor/master/slave)
   vars:
     application: 00_demo
-    duration: 10
+    duration: 30
     option: none  # defined at task: run docker image"
-    master_node: "192.168.12.152"
+    master_node: "192.168.12.150"
 
   tasks:
   - name: Create directory
@@ -66,7 +66,6 @@
     command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="slave" logatec-experiment-uwb
     when: inventory_hostname != master_node
 
-  # Maybe -d will be needed here
   - name: Run anchor docker image
     command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="master"  logatec-experiment-uwb
     when: inventory_hostname == master_node
