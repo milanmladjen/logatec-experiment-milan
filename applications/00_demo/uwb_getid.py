@@ -1,6 +1,7 @@
 import logging
 import sys
 import multiprocessing
+from timeit import default_timer as timer
 
 import lib.uwb_device as uwb_device
 
@@ -22,6 +23,7 @@ log = logging.getLogger("Monitor")
 log.setLevel(LOG_LEVEL)   
 
 file = open(RESULTS_FILENAME, mode="a+")
+_start_time = timer()
 
 if __name__ == "__main__" :
 
@@ -46,6 +48,12 @@ if __name__ == "__main__" :
                     pass
                 else:
                     log.exception("Exception")
+
+            # Temp solution for time measuring
+            if((timer() - _start_time) > (1 * 10) ):
+                log.info("Application time elapsed ...")
+                break
+
             p_uart.sendNodeIDRequest()
 
     except:

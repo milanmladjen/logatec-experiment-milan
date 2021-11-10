@@ -1,5 +1,5 @@
 ---
-- hosts: UWB_indor_1:!offline
+- hosts: UWB_indor_2:!offline
   remote_user: videk
   tasks:
 

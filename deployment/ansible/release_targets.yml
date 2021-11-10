@@ -2,16 +2,16 @@
 # Option: run the script with strategy: free, so all the nodes will run simultaneously but they will not wait for each other 
 
 ---
-- hosts: UWB_indor_1:!offline
+- hosts: UWB_indor_2:!offline
   strategy: free
   remote_user: videk
 
 # Select which application to test, duration in minutes and additional options (none/monitor/master/slave)
   vars:
     application: 00_demo
-    duration: 30
+    duration: 10
     option: none  # defined at task: run docker image"
-    master_node: "192.168.12.150"
+    master_node: "192.168.12.164"
 
   tasks:
   - name: Create directory
