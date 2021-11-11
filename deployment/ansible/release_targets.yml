@@ -11,7 +11,7 @@
     application: 00_demo
     duration: 10
     option: none  # defined at task: run docker image"
-    master_node: "192.168.12.153"
+    master_node: "192.168.12.154"
 
   tasks:
   - name: Create directory
