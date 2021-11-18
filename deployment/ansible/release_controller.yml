@@ -1,12 +1,10 @@
-# From SMS platform container connect back to Videk server. 
 # Run experiment-controller container (in daemon mode, so Ansible continues to release_targets.yml)
-
 ---
 - hosts: videk_server
   remote_user: videk
 
   vars:
-    radio_type: main
+    technology: master
     device_num: 1
 
   tasks: 
@@ -23,7 +21,7 @@
       update: yes
       force: yes
       depth: 1
-      version: master
+      version: "{{ technology }}"
 
   - name: Build docker file
     command: docker build -t ecms-controller -f monitor/docker/Dockerfile .
@@ -34,11 +32,8 @@
     ignore_errors: yes
     command: "{{ item }}"
     with_items:
-      - docker kill controller-main
-      - docker rm controller-main
+      - docker kill controller-{{ technology }}
+      - docker rm controller-{{ technology }}
 
   - name: Run docker image
-    command: docker run --name controller-main -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM={{device_num}} -e RADIO_TYPE={{radio_type}} ecms-controller 
-
-
-    # TODO: rename container into testbed_controller
+    command: docker run --name controller-{{ technology }} -d --privileged -p 5561:5561 -p 5562:5562 -p 5563:5563 -e DEVICE_NUM={{ device_num }} -e RADIO_TYPE={{ technology }} ecms-controller 
