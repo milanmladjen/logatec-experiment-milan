@@ -18,8 +18,8 @@ Before deploying, select desired variables in the Ansible playbook `release_targ
 
 ### **Notes**
 
-* *hosts* for the `collect_results.yml` MUST be the same as in `release_targets.yml`!
-* strategy: free - enables parallel execution. All the nodes will run simultaneously but they will not wait for each other.
+* **hosts** for the `collect_results.yml` MUST be the same as in `release_targets.yml`!
+* `strategy: free` - enables parallel execution. All the nodes will run simultaneously but they will not wait for each other.
 * `-f 50` is allowing Ansible to make 50 forks at the same time.
 * `-i ` flag determines the inventory file - default is `ansible/inventory/logatec_testbed.ini`. You can add new clusters in your inventory file.
 
