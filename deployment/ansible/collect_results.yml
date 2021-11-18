@@ -35,10 +35,33 @@
       state: absent
 
 
-# TODO: 
-# Should we stop controller container or will it stop automatically?
-# It can stop automatically...but how to access log files then? Another Ansible playbook?
-# With another bash script or should I put it in the same one?
-# $ docker stop controller  --> docker stop will stop the broker gracefully...docker kill will not
-# $ docker cp controller:/root/logatec-experiment/controller_broker.log .
-# $ sync to out
+
+
+
+- hosts: videk_server
+  remote_user: videk
+  tasks:
+
+  - name: Stop docker container (controller-uwb)
+    ignore_errors: yes
+    command: "{{ item }}"
+    with_items:
+      - docker kill controller-uwb
+      - docker cp controller-uwb:/root/logatec-experiment/ECMS_controller.log .
+      - docker rm controller-uwb
+    args:
+      chdir: ~/deploy/logatec-experiment
+
+  - name: Move logging file
+    ignore_errors: yes
+    synchronize:
+      src: ~/deploy/logatec-experiment/*.log
+      dest: ../../../out/
+      mode: pull
+
+# Delete results from server
+  - name: Delete results
+    ignore_errors: yes
+    file: 
+      path:  ~/deploy/logatec-experiment/*.log
+      state: absent
