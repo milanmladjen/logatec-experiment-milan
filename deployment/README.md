@@ -2,10 +2,11 @@
 
 Continuous Deployment service, built with Docker containers and orchestrated with Ansible engine, deploys the experiment application to the selected nodes in the testbed. 
 
+![Continuous Deployment reference architecture.](deployment.png)
 ## Ansible playbook
 
 CD service starts with the main `Makefile` which executes 3 Ansible playbooks (located in folder `/ansible`):
-* `release_controller.yml` - deploys the *ECMS_monitor* to the *Management Server*,
+* `release_controller.yml` - optional - deploys the *ECMS_monitor* to the *Management Server* - more info in the folder `../monitor`,
 * `release_targets.yml` - deploys the experiment application to selected devices, 
 * `collect_results.yml` - collects results and forwards them back to the user.
 
