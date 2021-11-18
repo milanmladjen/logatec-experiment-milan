@@ -8,6 +8,7 @@
 
 # Select which application to test, duration in minutes and additional options (none/monitor/master/slave)
   vars:
+    technology: UWB
     application: 00_demo
     duration: 10
     option: none  # defined at task: run docker image"
@@ -31,7 +32,7 @@
       update: yes
       force: yes
       depth: 1
-      version: UWB
+      version: "{{ technology }}"
 
 # It is better to download sub-modules separately, otherwise you get 95MB of data instead 28MB
 # Recursive option will download all sub-modules (also the ones from Contiki) which we don't need
@@ -54,18 +55,18 @@
     args:
       chdir: ~/deploy/logatec-experiment
 
-  - name: Cleanup old docker containers (target-uwb)
+  - name: Cleanup old docker containers (target-{{ technology }})
     register: target
     ignore_errors: yes
     command: "{{ item }}"
     with_items:
-      - docker kill target-uwb
-      - docker rm target-uwb
+      - docker kill target-{{ technology }}
+      - docker rm target-{{ technology }}
 
   - name: Run docker image
-    command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="slave" logatec-experiment-uwb
+    command: docker run --name target-{{ technology }} --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="slave" logatec-experiment-uwb
     when: inventory_hostname != master_node
 
   - name: Run anchor docker image
-    command: docker run --name target-uwb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="master"  logatec-experiment-uwb
+    command: docker run --name target-{{ technology }} --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="master"  logatec-experiment-uwb
     when: inventory_hostname == master_node
