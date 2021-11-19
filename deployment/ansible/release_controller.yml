@@ -12,18 +12,15 @@
   tasks: 
   - name: Create directory
     file:
-      path: ~/deploy/logatec-experiment
+      path: ~/deploy
       state: directory
 
-  - name: Pull all changes from github
-    git:
-      repo: git@github.com:logatec3/logatec-experiment.git
-      dest: ~/deploy/logatec-experiment
-      recursive: no
-      update: yes
-      force: yes
-      depth: 1
-      version: "{{ technology }}"
+  - name: Deploy experiment repository
+    synchronize:
+      src: "{{ lookup('env','PWD') }}"
+      dest: ~/deploy
+      delete: yes
+      recursive: yes
 
   - name: Build docker file
     command: docker build -t ecms-controller -f monitor/docker/Dockerfile .

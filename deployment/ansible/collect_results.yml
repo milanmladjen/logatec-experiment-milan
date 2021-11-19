@@ -1,5 +1,5 @@
 ---
-- hosts: UWB_indor_1:!offline
+- hosts: 192.168.12.156
   remote_user: videk
 
   vars:
