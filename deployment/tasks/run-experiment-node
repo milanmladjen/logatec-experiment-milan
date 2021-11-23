@@ -1,30 +1,40 @@
 #!/usr/bin/env bash
 
-# Obtain node adresses
+# Run experiment - with mode: node
+
+# ----------------------------------------------------------------------------------------------------------
+# Prepare a device for the experiment
+# ----------------------------------------------------------------------------------------------------------
+# Obtain LGTC name - last 3 digits of node IP adresses
 IPADDR=$(hostname -I)
-# Get only our network address
 IPADDR=${IPADDR#*"192.168.12."}
-# Get only last 3 digits of IP address
 IPADDR=${IPADDR:0:3}
 
-# Remove first 3 characters from APP_DIR string to get the app name
-APP_DIR=$APP
+# Optain application location and filename
+APP_LOC=$APP
 APP_NAME=${APP:3}
-echo "Deploying $APP application on node $IPADDR"
 
-# Enter experiment directory (APP_DIR is enviromental variable)
-cd /root/logatec-experiment/applications/$APP_DIR
+echo "Deploying $APP application on node $IPADDR with option: node"
 
-# Start the experiment
+# ----------------------------------------------------------------------------------------------------------
+# Start the experiment application (storing the results into file with IPADDR in its name)
+# ----------------------------------------------------------------------------------------------------------
+cd /root/logatec-experiment/applications/$APP_LOC
+
+# Compile the app and flash it to the device
 make $APP_NAME.logatec3 -j2
 
 # Start the Serial Monitor script
 cd /root/logatec-experiment/deployment/tasks
 python3 vesna_serial_monitor.py -o "node_${IPADDR}.txt"
 
-# Move results
+# ----------------------------------------------------------------------------------------------------------
+# Move the measured data (and logg files) into results folder.
+# ----------------------------------------------------------------------------------------------------------
 mv *.txt /root/logatec-experiment/results/
 
-# Put Vesna to reset state so it doesnt interfeer with other networks
+# ----------------------------------------------------------------------------------------------------------
+# Cleanup (put Vesna to reset state so it doesn't interfeer with other networks).
+# ----------------------------------------------------------------------------------------------------------
 cd /root/logatec-experiment/deployment/tasks
 python vesna_reset.py 0

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Run experiment - with mode: root
+# Run experiment - with mode: none (same as node)
 
 # ----------------------------------------------------------------------------------------------------------
 # Prepare a device for the experiment
@@ -14,36 +14,27 @@ IPADDR=${IPADDR:0:3}
 APP_LOC=$APP
 APP_NAME=${APP:3}
 
-echo "Deploying $APP application on node $IPADDR with option: root"
+echo "Deploying $APP application on node $IPADDR with option: node"
 
 # ----------------------------------------------------------------------------------------------------------
 # Start the experiment application (storing the results into file with IPADDR in its name)
 # ----------------------------------------------------------------------------------------------------------
 cd /root/logatec-experiment/applications/$APP_LOC
 
-# If there is a separate file for root node, use this one to flash Vesna
-ROOT_FILE="/root/logatec-experiment/applications/${APP_LOC}/${APP_NAME}-root.c"
+# Compile the app and flash it to the device
+make $APP_NAME.logatec3 -j2
 
-# Check if that file exists
-if test -f "$ROOT_FILE"; then
-    echo "Root file located --> flashing Vesna with it!"
-    make ${APP_NAME}-root.logatec3 -j2
-    cd /root/logatec-experiment/deployment/tasks
-    python3 vesna_serial_monitor.py -o "node_${IPADDR}.txt"
-else
-    echo "No root file located --> flashing Vesna with normal node and adding root option to the serial monitor"
-    make $APP.logatec3 -j2
-    cd /root/logatec-experiment/deployment/tasks
-    python3 vesna_serial_monitor.py -o "node_${IPADDR}.txt" -r
-fi
+# Start the Serial Monitor script
+cd /root/logatec-experiment/deployment/tasks
+python3 vesna_serial_monitor.py -o "node_${IPADDR}.txt"
 
 # ----------------------------------------------------------------------------------------------------------
-# Move the measured data (and logg files) into results folder
+# Move the measured data (and logg files) into results folder.
 # ----------------------------------------------------------------------------------------------------------
 mv *.txt /root/logatec-experiment/results/
 
 # ----------------------------------------------------------------------------------------------------------
-# Cleanup (put Vesna to reset state so it doesn't interfeer with other networks)
+# Cleanup (put Vesna to reset state so it doesn't interfeer with other networks).
 # ----------------------------------------------------------------------------------------------------------
 cd /root/logatec-experiment/deployment/tasks
 python vesna_reset.py 0
