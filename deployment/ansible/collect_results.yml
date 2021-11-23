@@ -53,6 +53,9 @@
 
 - hosts: videk_server
   remote_user: videk
+  
+  vars:
+    technology: srda
 
   tasks:
     - name: Stop controller and obtain logging file
