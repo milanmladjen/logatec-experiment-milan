@@ -1,25 +1,39 @@
 #!/usr/bin/env bash
 
-# Obtain node adresses
+# Run experiment - with mode: monitor
+
+# ----------------------------------------------------------------------------------------------------------
+# Prepare a device for the experiment
+# ----------------------------------------------------------------------------------------------------------
+# Obtain LGTC name - last 3 digits of node IP adresses
 IPADDR=$(hostname -I)
-# Get only our network address
 IPADDR=${IPADDR#*"192.168.12."}
-# Get only last 3 digits of IP address
 IPADDR=${IPADDR:0:3}
 
-# Remove first 3 characters from APP_DIR string to get the app name
-APP_DIR=$APP
-APP_NAME=${APP_DIR:3}
-echo "Testing $APP_NAME application on node $IPADDR"
+# Optain application location and filename
+APP_LOC=$APP
+APP_NAME=${APP:3}
 
+echo "Deploying $APP application on node $IPADDR with option: monitor"
 
-# Start the ECMS_client
-cd /root/logatec-experiment/monitoring/
-python3 experiment_LGTC.py $IPADDR $APP_DIR $APP_NAME
+# ----------------------------------------------------------------------------------------------------------
+# Start the experiment application using monitor ECMS_client.
+# ----------------------------------------------------------------------------------------------------------
+# Start BT advertisment
+hciconfig hci0 leadv3
 
-# Move logs to a results folder
+# Start the ECMS_client with experiment application
+cd /root/logatec-experiment/monitor/
+python3 experiment_LGTC.py $IPADDR $APP_LOC $APP_NAME
+
+# ----------------------------------------------------------------------------------------------------------
+# Move the measured data and logg files into results folder.
+# ---------------------------------------------------------------------------------------------------------
 mv *.log /root/logatec-experiment/results/
+# Measurements will be moved by experiment application, so next line is obolete
+#mv *.txt /root/logatec-experiment/results/lts/
 
-# Measurements will be moved by experiment application, so next line is odveč
-#mv *.txt /root/logatec-experiment/results/
-
+# ----------------------------------------------------------------------------------------------------------
+# Cleanup (stop BLE advertising)
+# ----------------------------------------------------------------------------------------------------------
+hciconfig hci0 nolea

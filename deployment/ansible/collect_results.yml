@@ -1,35 +1,81 @@
 ---
+#############################################################################################################
+# COLLECT RESULTS
+#############################################################################################################
+# Ansible playbook script that obtains results from devices and forwards them back to IMBA.
+#
+# Before deploying an experiment, select:
+#
+#   *) Participating nodes - MUST correspond to hosts from release_targets.yml
+#
+#############################################################################################################
+
 - hosts: 192.168.12.81
   remote_user: videk
+  
+  vars:
+    technology: ble
+
   tasks:
+    - name: Stop the container
+      ignore_errors: yes
+      command: docker stop target-{{ technology }}
 
-# If it is still running, stop the container
-# (TODO pointless? collect_results is called only when all containers are stopped)
-  - name: Stop docker container (target-ble)
-    ignore_errors: yes
-    command: docker stop target-ble
+    - name: Copy file from the container
+      command: docker cp target-{{ technology }}:/root/logatec-experiment/results/ .
+      args:
+        chdir: ~/deploy/logatec-experiment
 
-# Get measurements from container to device
-  - name: Copy file from the container
-    command: docker cp target-ble:/root/logatec-experiment/results/ .
-    args:
-      chdir: ~/deploy/logatec-experiment
+    - name: Fetch measured data and log files to the out folder
+      ignore_errors: yes
+      synchronize:
+        src: "{{ item }}"
+        dest: ../../../out/
+        mode: pull
+      with_items: 
+        - "~/deploy/logatec-experiment/results/*.txt"
+        - "~/deploy/logatec-experiment/results/*.log"
+  
+    - name: Delete results from the device
+      file: 
+        path:  ~/deploy/logatec-experiment/results
+        state: absent
 
-# Fetch measurements from device to SMS container --> from there they will be forwarded to Github
-# On SMS container there is: videk-ci/<tag_name>/ folder...in it, there are logatec-experiment (a clone from
-# Github repo) and a folder out. We are calling this script from logatec-experiment/deployment/ansible, so dest:
-# is then ../../../out
-  - name: Fetch data file to out folder
-    synchronize:
-      src: "{{ item }}"
-      dest: ../../../out/
-      mode: pull
-    with_items: 
-      - "~/deploy/logatec-experiment/results/*.txt"
-      - "~/deploy/logatec-experiment/results/*.log"
 
-# Delete results from device
-#  - name: Delete results
-#    file: 
-#      path:  ~/deploy/logatec-experiment/results
-#      state: absent
+
+
+#############################################################################################################
+# CONTROLLER CLEANUP
+#############################################################################################################
+# Ansible playbook script that collect ECMS controller logs and cleans up the controller container.
+#
+############################################################################################################
+
+- hosts: videk_server
+  remote_user: videk
+
+  vars:
+    technology: ble
+
+  tasks:
+    - name: Stop controller and obtain logging file
+      ignore_errors: yes
+      command: "{{ item }}"
+      with_items:
+        - docker kill controller-{{ technology }}
+        - docker cp controller-{{ technology }}:/root/logatec-experiment/ECMS_controller.log .
+        - docker rm controller-{{ technology }}
+      args:
+        chdir: ~/deploy/logatec-experiment
+  
+    - name: Fetch logging file to the out folder
+      synchronize:
+        src: ~/deploy/logatec-experiment/*.log
+        dest: ../../../out/
+        mode: pull
+  
+    - name: Delete results from server
+      file: 
+        path:  ~/deploy/logatec-experiment/*.log
+        state: absent
+  

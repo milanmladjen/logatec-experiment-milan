@@ -1,23 +1,39 @@
 #!/usr/bin/env bash
 
-# Obtain node adresses
+# Run experiment - with mode: node
+
+# ----------------------------------------------------------------------------------------------------------
+# Prepare a device for the experiment
+# ----------------------------------------------------------------------------------------------------------
+# Obtain LGTC name - last 3 digits of node IP adresses
 IPADDR=$(hostname -I)
-# Get only our network address
 IPADDR=${IPADDR#*"192.168.12."}
-# Get only last 3 digits of IP address
 IPADDR=${IPADDR:0:3}
 
-# Remove first 3 characters from APP_DIR string to get the app name
-APP_DIR = $APP
-APP_NAME=${APP_DIR:3}
-echo "Testing $APP application on node $IPADDR"
+# Optain application location and filename
+APP_LOC=$APP
+APP_NAME=${APP:3}
 
-# Start the experiment
-LOCATION = "/root/logatec-experiment/applications/$APP_DIR"
-cd $LOCATION
-python3 $APP_NAME.py
+echo "Deploying $APP application on node $IPADDR with option: node"
+
+# ----------------------------------------------------------------------------------------------------------
+# Start the experiment application (storing the results into file with IPADDR in its name)
+# ----------------------------------------------------------------------------------------------------------
+# Start BT advertisment
+hciconfig hci0 leadv3
+
+# Start the application
+cd /root/logatec-experiment/applications/$APP_LOC
+python3 $APP_NAME.py $IPADDR
 # TODOB: fix the app so it can be run manually (if __name__ == "__main__":)
 
-# Move results and logs
+# ----------------------------------------------------------------------------------------------------------
+# Move the measured data (and logg files) into results folder.
+# ----------------------------------------------------------------------------------------------------------
 mv *.txt /root/logatec-experiment/results/
 mv *.log /root/logatec-experiment/results/
+
+# ----------------------------------------------------------------------------------------------------------
+# Cleanup (stop BLE advertising)
+# ----------------------------------------------------------------------------------------------------------
+hciconfig hci0 noleadv

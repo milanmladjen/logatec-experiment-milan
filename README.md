@@ -16,6 +16,6 @@ Each supported technology has its own branch to work on.
 
 More info about the testbed can be found on the [official web-site](http://log-a-tec.eu/index.html "Official web-site").
 
-## BLE branck
+## BLE branch
 
 A branch for experiments with Bluetooth Low Energy technology.

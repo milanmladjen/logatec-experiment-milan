@@ -1,51 +1,54 @@
-# TODO
-# Option: run the script with strategy: free, so all the nodes will run simultaneously but they will not wait for each other 
-
 ---
+#############################################################################################################
+# RELEASE TARGETS
+#############################################################################################################
+# Ansible playbook script that deploys experiment application to the testbed nodes.
+#
+# Before deploying an experiment, select:
+#
+#   *) Participating nodes    - by entering their IP address or a cluster name under the hosts variable. 
+#                               Cluster names are defined in the /inventory/logatec_testbed file.
+#   *) Experiment application - by entering application folder name under the application variable.
+#   *) Experiment duration    - by entering minutes to the duration variable.
+#   *) Additional options     - default is none. monitor applies ECMS service.                     
+#
+#############################################################################################################
+
 - hosts: 192.168.12.81
   strategy: free
   remote_user: videk
 
-# Select which application to test, duration in minutes and additional options (monitor/root/node)
   vars:
-    application: 01_scan
+    technology: ble
+    application: 00_scan
+    duration: 10
     option: monitor
-  #  duration: 10 TODOB: obcijsko lahko damo tu timeout
 
   tasks:
-  - name: Create directory
-    file:
-      path: ~/deploy/logatec-experiment
-      state: directory
+    - name: Create directory
+      file:
+        path: ~/deploy
+        state: directory
 
-# Recursive option will also download the sub-modules
-# Update will pull the changes from Github
-# Force will delete local changes
-# Version you can change which branch to pull
-  - name: Pull changes from github
-    git:
-      repo: git@github.com:logatec3/logatec-experiment.git
-      dest: ~/deploy/logatec-experiment
-      recursive: no
-      update: yes
-      force: yes
-      depth: 1
-      version: BLE
-
-
-# Build...with -f flag so we can copy 'logatec-experiment' directory into container
-  - name: Build docker file
-    command: docker build -t logatec-experiment-ble -f deployment/docker/Dockerfile . 
-    args:
-      chdir: ~/deploy/logatec-experiment
-
-  - name: Cleanup old docker containers (target)
-    register: target
-    ignore_errors: yes
-    command: "{{ item }}"
-    with_items:
-      - docker kill target-ble
-      - docker rm target-ble
-
-  - name: Run docker image
-    command: docker run --name target-ble --privileged --net=host -e APP={{application}} -e OPTION={{option}} logatec-experiment-ble
+    - name: Deploy experiment repository
+      synchronize:
+        src: "{{ lookup('env','PWD') }}"
+        dest: ~/deploy
+        delete: yes
+        recursive: yes
+  
+    - name: Build the docker file
+      command: docker build -t logatec-experiment-ble -f deployment/docker/Dockerfile . 
+      args:
+        chdir: ~/deploy/logatec-experiment
+  
+    - name: Cleanup old docker containers
+      ignore_errors: yes
+      command: "{{ item }}"
+      with_items:
+        - docker kill target-{{ technology }}
+        - docker rm target-{{ technology }}
+  
+    - name: Run docker container
+      command: docker run --name target-{{technology}} --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" logatec-experiment-ble
+  
