@@ -1,9 +1,22 @@
 ---
+#############################################################################################################
+# RELEASE TARGETS
+#############################################################################################################
+# Ansible playbook script that deploys experiment application to the testbed nodes.
+#
+# Before deploying an experiment, select:
+#
+#   *) Participating nodes    - by entering their IP address or a cluster name under the hosts variable. 
+#                               Cluster names are defined in the /inventory/logatec_testbed file.
+#   *) Experiment application - by entering application folder name under the application variable.
+#   *) Experiment duration    - by entering minutes to the duration variable.
+#   *) Additional options     - default is none. monitor applies ECMS service.                     
+#
+#############################################################################################################
 - hosts: 192.168.12.81
   strategy: free
   remote_user: videk
 
-  # Select which application to test, duration in minutes and additional options (none/monitor/root/node)
   vars:
     technology: master
     application: 00_template
