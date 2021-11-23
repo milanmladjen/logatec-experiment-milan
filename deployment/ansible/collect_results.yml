@@ -6,7 +6,7 @@
 #
 # Before deploying an experiment, select:
 #
-#   *) Participating nodes - MUST correspnd to hosts from release_targets.yml
+#   *) Participating nodes - MUST correspond to hosts from release_targets.yml
 #
 #############################################################################################################
 
@@ -27,6 +27,7 @@
         chdir: ~/deploy/logatec-experiment
 
     - name: Fetch measured data and log files to the out folder
+      ignore_errors: yes
       synchronize:
         src: "{{ item }}"
         dest: ../../../out/
