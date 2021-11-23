@@ -11,6 +11,7 @@
 #   *) Device number - an optional variable to indicate how many devices are included in the experiment                   
 #
 #############################################################################################################
+
 - hosts: videk_server
   remote_user: videk
 

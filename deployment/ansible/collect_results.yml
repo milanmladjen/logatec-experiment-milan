@@ -9,6 +9,7 @@
 #   *) Participating nodes - MUST correspnd to hosts from release_targets.yml
 #
 #############################################################################################################
+
 - hosts: 192.168.12.81
   remote_user: videk
   
@@ -48,6 +49,7 @@
 # Ansible playbook script that collect ECMS controller logs and cleans up the controller container.
 #
 ############################################################################################################
+
 - hosts: videk_server
   remote_user: videk
 
