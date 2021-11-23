@@ -1,34 +1,49 @@
 #!/usr/bin/env bash
 
-# Get only last 3 digits of IP address
+# Run experiment master - with no additional option
+
+# ----------------------------------------------------------------------------------------------------------
+# Prepare a device for the experiment
+# ----------------------------------------------------------------------------------------------------------
+# Obtain LGTC name - last 3 digits of node IP adresses
 IPADDR=$(hostname -I)
 IPADDR=${IPADDR#*"192.168.12."}
 IPADDR=${IPADDR:0:3}
 
-# Remove first 3 characters from APP_DIR string to get the app name
-APP_LOC="/root/logatec-experiment/applications/${APP}"
-echo "Deploying ${APP:3} application on node $IPADDR"
+# Optain application location and filename
+APP_LOC=$APP
+APP_NAME=${APP:3}
 
-# Locate .bin file for master
-BIN_FILE="${APP_LOC}/binary/master.bin"
+echo "Deploying ${APP:3} application on node $IPADDR in master mode"
+
+# ----------------------------------------------------------------------------------------------------------
+# Flash the device with corresponding binary file.
+# ----------------------------------------------------------------------------------------------------------
+# Locate .bin file for slave
+BIN_FILE="/root/logatec-experiment/applications/${APP_LOC}/binary/master.bin"
 
 # Flash the UWB node with given application binaries
-sleep 2m
 python3 snp_uwb_flash.py $BIN_FILE
 
 # Rename logg file and move it to the results folder
 mv flash_report.log flash_report_${IPADDR}.log
 mv *.log /root/logatec-experiment/results/
 
+# ----------------------------------------------------------------------------------------------------------
 # Start the serial monitor script that collects results and exits after a defined time $APP_DUR
-# Za ime skripte loh uporabiš APP_NAME
-cd $APP_LOC
+# TODO: za ime lahko uporabiš APP_NAME
+# ----------------------------------------------------------------------------------------------------------
+cd "/root/logatec-experiment/applications/${APP_LOC}"
 python3 uwb_monitor.py $IPADDR $APP_DUR
 
-# Move results
+# ----------------------------------------------------------------------------------------------------------
+# Move the measured data and logg files into results folder.
+# ---------------------------------------------------------------------------------------------------------
 mv *.txt /root/logatec-experiment/results/
 mv *.log /root/logatec-experiment/results/
 
-# Put UWB into reset state so it doesnt interfeer with other networks
+# ----------------------------------------------------------------------------------------------------------
+# Cleanup - put UWB to reset state so it doesn't interfeer with other networks
+# ----------------------------------------------------------------------------------------------------------
 cd /root/logatec-experiment/deployment/tasks
 python3 snp_uwb_poweroff.py

@@ -1,5 +1,4 @@
 experiment_none:
-	# The default task
 	./run-experiment
 
 experiment_slave:

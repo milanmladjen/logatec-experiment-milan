@@ -1,15 +1,30 @@
 #!/usr/bin/env bash
 
-# Obtain node adresses
+# Run experiment - with mode: monitor
+
+# ----------------------------------------------------------------------------------------------------------
+# Prepare a device for the experiment
+# ----------------------------------------------------------------------------------------------------------
+# Obtain LGTC name - last 3 digits of node IP adresses
 IPADDR=$(hostname -I)
-# Get only our network address
 IPADDR=${IPADDR#*"192.168.12."}
-# Get only last 3 digits of IP address
 IPADDR=${IPADDR:0:3}
 
-# Remove first 3 characters from APP_DIR string to get the app name
-APP_DIR=$APP
+# Optain application location and filename
+APP_LOC=$APP
 APP_NAME=${APP:3}
-echo "Deploying $APP application on node $IPADDR with option MONITOR"
 
+echo "Deploying $APP application on node $IPADDR with option: monitor"
 # TODO
+
+# ----------------------------------------------------------------------------------------------------------
+# Start the experiment application using monitor ECMS_client.
+# ----------------------------------------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------------------------------------
+# Move the measured data and logg files into results folder.
+# ---------------------------------------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------------------------------------
+# Cleanup (put VESNA to reset state so it doesn't interfeer with other networks).
+# ----------------------------------------------------------------------------------------------------------
