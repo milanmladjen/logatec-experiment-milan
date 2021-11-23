@@ -54,6 +54,9 @@
 - hosts: videk_server
   remote_user: videk
 
+  vars:
+    technology: master
+
   tasks:
     - name: Stop controller and obtain logging file
       ignore_errors: yes
