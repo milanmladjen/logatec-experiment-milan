@@ -1,13 +1,14 @@
 # logatec-experiment
 
-Continuous delivery template - deployment of experiments in the LOG-a-TEC testbed.
+LOG-a-TEC testbed experiment repository with included Continuous Deployment service and Experiment Control & Monitoring System.
 
-## SRDB branch
+## Sensor Radio Device B (2.4 GHz)
 
-Branch for experiments with **SRD B** devices - Vesna equipped with Atmel AT86RF231 and Texas Instruments CC1101 radios. 
-[More info](http://log-a-tec.eu/ap-cradio.html#hardware "Official web-site").
+A branch for experiments with **SRD B** nodes.
 
-This branch is focused on experiments with Atmels 2.4 GHz radio. Drivers for it are located in our fork of [Contiki-NG OS](https://github.com/gcerar/contiki-ng) in folder *contiki-ng/arch/platform/vesna/dev/*. 
+Target node [VESNA](http://log-a-tec.eu/ap-cradio.html#hardware "Official web-site") is equipped with Atmel AT86RF231 and Texas Instruments CC1101 radio.
+
+This branch is currently supporting only Atmels 2.4 GHz radio. Its drivers are located in the fork of [Contiki-NG OS](https://github.com/gcerar/contiki-ng) in folder `contiki-ng/arch/platform/vesna/dev/`. 
 
 **NOTE**
 
@@ -17,9 +18,3 @@ Make sure that your submodules are on the right branch:
 | :-------: | :----: |
 | contiki-ng | master |
 | vesna-drivers | logatec-testbed | 
-
-<br>
-
-## Experiments
-
-To make an experiment follow the instructions in *README.md* in folder applications.
