@@ -1,12 +1,13 @@
 # logatec-experiment
 
-Continuous delivery template - deployment of experiments in the LOG-a-TEC testbed.
+LOG-a-TEC testbed experiment repository with included Continuous Deployment service and Experiment Control & Monitoring System.
 
-More info about the testbed can be found [here](http://log-a-tec.eu/ap-cradio.html#jsi-campus "Official web-site").
+## LoRa - Low Power Wide Area
 
-## LoRa Branch
+A branch for experiments with **LoRa** nodes.
 
-We don't need Contiki-NG OS here - Vesna devices use ALH protocol, so we need only vesna-drivers sub-module.
+Target node [VESNA](http://log-a-tec.eu/ap-cradio.html "Official web-site") is equipped with a proprietary, chirp spread spectrum LoRaWAN radio. 
+It uses *ALH protocol* located in `vesna-drivers` sub-module.
 
 **NOTE**
 
@@ -15,9 +16,3 @@ Make sure that your submodule is on the right branch:
 | submodule | branch |
 | :-------: | :----: |
 | vesna-drivers | logatec-testbed | 
-
-<br>
-
-## Experiments
-
-To make an experiment follow the instructions in *README.md* in folder applications.

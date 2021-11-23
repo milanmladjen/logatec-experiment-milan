@@ -28,4 +28,3 @@ There are 6 handlers implemented for LGTC to communicate with Vesna:
     * Power in dBm (2 dBm ~ 14 dBm)
     * Message to be send (up to 64 Bytes)
 * **loraTxDone** - will tell us if the packet was sent successfully.
-0,
