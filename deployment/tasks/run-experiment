@@ -21,20 +21,13 @@ echo "Deploying $APP application on node $IPADDR"
 # ----------------------------------------------------------------------------------------------------------
 cd /root/logatec-experiment/applications/$APP_LOC
 
-# Compile the app and flash it to the device
-#make $APP_NAME.logatec3 -j2
-
-# Start the Serial Monitor script
-#python3 vesna_serial_monitor.py -o "node_${IPADDR}.txt"
+cat README.md > node_$IPADDR.txt
 
 # ----------------------------------------------------------------------------------------------------------
 # Move the measured data (and logg files) into results folder
 # ----------------------------------------------------------------------------------------------------------
 mv *.txt /root/logatec-experiment/results/
-#mv *.log /root/logatec-experiment/results/
 
 # ----------------------------------------------------------------------------------------------------------
-# Cleanup (put Vesna to reset state so it doesn't interfeer with other networks)
+# Cleanup
 # ----------------------------------------------------------------------------------------------------------
-#cd /root/logatec-experiment/deployment/tasks
-#python vesna_reset.py 0

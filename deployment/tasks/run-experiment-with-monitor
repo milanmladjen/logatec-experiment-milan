@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Run experiment - with mode: node
+
+# Run experiment - with mode: monitor
 
 # ----------------------------------------------------------------------------------------------------------
 # Prepare a device for the experiment
