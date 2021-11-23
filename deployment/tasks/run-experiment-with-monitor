@@ -1,31 +1,40 @@
 #!/usr/bin/env bash
 
+# Run experiment - with mode: monitor
+
+# ----------------------------------------------------------------------------------------------------------
+# Prepare a device for the experiment
+# ----------------------------------------------------------------------------------------------------------
+# Obtain LGTC name - last 3 digits of node IP adresses
+IPADDR=$(hostname -I)
+IPADDR=${IPADDR#*"192.168.12."}
+IPADDR=${IPADDR:0:3}
+
+# Optain application location and filename
+APP_LOC=$APP
+APP_NAME=${APP:3}
+
 # Update contiki-ng folder, if there were any changes from the last time we updated docker container
 cd /root/logatec-experiment/contiki-ng
 echo "Pull changes from Contiki-NG repo"
 git pull
 
-# Obtain node adresses
-IPADDR=$(hostname -I)
-# Get only our network address
-IPADDR=${IPADDR#*"192.168.12."}
-# Get only last 3 digits of IP address
-IPADDR=${IPADDR:0:3}
+echo "Deploying $APP application on node $IPADDR with option: monitor"
 
-# Remove first 3 characters from APP_DIR string to get the app name
-APP_DIR=$APP
-APP_NAME=${APP:3}
-echo "Deploying $APP application on node $IPADDR with option MONITOR"
-
-
-# Start the Serial Monitor with ECMS_client
+# ----------------------------------------------------------------------------------------------------------
+# Start the experiment application using monitor ECMS_client.
+# ----------------------------------------------------------------------------------------------------------
 cd /root/logatec-experiment/monitor/
-python3 experiment_VESNA.py $IPADDR $APP $APP_DUR
+python3 experiment_VESNA.py $IPADDR $APP_LOC $APP_DUR
 
-# Move results and logs
+# ----------------------------------------------------------------------------------------------------------
+# Move the measured data and logg files into results folder.
+# ---------------------------------------------------------------------------------------------------------
 mv *.txt /root/logatec-experiment/results/
 mv *.log /root/logatec-experiment/results/
 
-# Put Vesna to reset state so it doesnt interfeer with other networks
+# ----------------------------------------------------------------------------------------------------------
+# Cleanup (put Vesna to reset state so it doesn't interfeer with other networks).
+# ----------------------------------------------------------------------------------------------------------
 cd /root/logatec-experiment/deployment/tasks
 python3 vesna_reset.py 0

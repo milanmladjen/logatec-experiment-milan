@@ -1,73 +1,54 @@
-# TODO
-# Option: run the script with strategy: free, so all the nodes will run simultaneously but they will not wait for each other 
-
 ---
+#############################################################################################################
+# RELEASE TARGETS
+#############################################################################################################
+# Ansible playbook script that deploys experiment application to the testbed nodes.
+#
+# Before deploying an experiment, select:
+#
+#   *) Participating nodes    - by entering their IP address or a cluster name under the hosts variable. 
+#                               Cluster names are defined in the /inventory/logatec_testbed file.
+#   *) Experiment application - by entering application folder name under the application variable.
+#   *) Experiment duration    - by entering minutes to the duration variable.
+#   *) Additional options     - default is none. monitor applies ECMS service.                     
+#
+#############################################################################################################
+
 - hosts: SRDB
   strategy: free
   remote_user: videk
 
-# Select which application to test, duration in minutes and additional options (monitor/root/node)
   vars:
+    technology: srdb
     application: 00_hello-world
     duration: 20
     option: monitor
 
-# Display experiment abstract in build.log 
-# TODO: How to display abstract only once, not at every node?
-#  tasks:
-#  - name: Display abstract
-#    debug:
-#      msg: "Testing {{application}}, duration {{duration}} minutes"
-#    when: inventory_hostname == 192.168.12.81
-
   tasks:
-  - name: Create directory
-    file:
-      path: ~/deploy/logatec-experiment
-      state: directory
+    - name: Create directory
+      file:
+        path: ~/deploy
+        state: directory
 
-# Recursive option will also download the sub-modules
-# Update will pull the changes from Github
-# Force will delete local changes
-# Version you can change which branch to pull
-  - name: Pull changes from github
-    git:
-      repo: git@github.com:logatec3/logatec-experiment.git
-      dest: ~/deploy/logatec-experiment
-      recursive: no
-      update: yes
-      force: yes
-      depth: 1
-      version: SRDB
-
-# It is better to download sub-modules separately, otherwise you get 95MB of data instead 28MB
-# Recursive option will download all sub-modules (also the ones from Contiki) which we don't need
-  - name: Update submodules
-    command: git submodule update --init
-    args:
-      chdir: ~/deploy/logatec-experiment
-
-# Delete potential local changes (since force option in git task doesn't work for submodules)
-  - name: Delete local changes
-    shell: "{{ item }} "
-    with_items:
-      #- cd ~/deploy/logatec-experiment && git clean -f -d
-      - cd ~/deploy/logatec-experiment/contiki-ng && git clean -f -d
-      - cd ~/deploy/logatec-experiment/vesna-drivers && git clean -f -d
-
-# Build...with -f flag so we can copy 'logatec-experiment' directory into container
-  - name: Build docker file
-    command: docker build -t logatec-experiment-srd -f deployment/docker/Dockerfile . 
-    args:
-      chdir: ~/deploy/logatec-experiment
-
-  - name: Cleanup old docker containers (target)
-    register: target
-    ignore_errors: yes
-    command: "{{ item }}"
-    with_items:
-      - docker kill target-srdb
-      - docker rm target-srdb
-
-  - name: Run docker image
-    command: docker run --name target-srdb --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" logatec-experiment-srd
+    - name: Deploy experiment repository
+      synchronize:
+        src: "{{ lookup('env','PWD') }}"
+        dest: ~/deploy
+        delete: yes
+        recursive: yes
+  
+    - name: Build the docker file
+      command: docker build -t logatec-experiment-srd -f deployment/docker/Dockerfile . 
+      args:
+        chdir: ~/deploy/logatec-experiment
+  
+    - name: Cleanup old docker containers
+      ignore_errors: yes
+      command: "{{ item }}"
+      with_items:
+        - docker kill target-{{ technology }}
+        - docker rm target-{{ technology }}
+  
+    - name: Run docker container
+      command: docker run --name target-{{technology}} --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" logatec-experiment-srd
+  

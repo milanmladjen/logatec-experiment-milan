@@ -1,7 +1,6 @@
-# From base image
 FROM sensorlab6/vesna-tools-v2:latest
 
-# Install dependencies for experiment
+# Install dependencies for the experiment
 RUN set -ex \
     && apt-get update --fix-missing \
     && apt-get install -y 	nano \
@@ -21,11 +20,11 @@ WORKDIR /root/logatec-experiment
 # Prepare folder for results
 RUN mkdir results/
 
-# Pull the changes inside a container!
+# Pull the changes inside a container TODO: Use the submodule!
 RUN git clone --single-branch --branch logatec-experiment/acs https://github.com/gcerar/contiki-ng.git
 
 # Copy the logatec-experiment directory into container (without files in .dockerignore)
 COPY ./ ./
 
-# Start the deployment
+# Start the experiment
 ENTRYPOINT ["deployment/docker/start.sh"]
