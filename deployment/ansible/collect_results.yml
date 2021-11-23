@@ -6,12 +6,10 @@
     technology: master
 
   tasks:
-    # If it is still running, stop the container
     - name: Stop the docker container
       ignore_errors: yes
       command: docker stop target-{{ technology }}
 
-    # Get measurements from container to device
     - name: Copy file from the container
       command: docker cp target-{{ technology }}:/root/logatec-experiment/results/ .
       args:
@@ -30,7 +28,7 @@
         - "~/deploy/logatec-experiment/results/*.txt"
         - "~/deploy/logatec-experiment/results/*.log"
   
-  # Delete results from device
+  # Delete results from a device
     - name: Delete results
       file: 
         path:  ~/deploy/logatec-experiment/results
