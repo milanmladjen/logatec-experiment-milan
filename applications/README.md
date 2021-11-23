@@ -4,7 +4,7 @@ Experiment application are located in the corresponding folders.
 
 ## Local test
 
-To test them locally, run:
+To test them locally, run: \
 `make <app_name>.olimex -j9` \
 `python3 serial_monitor.py -o results.txt -p ttyUSB0 -r`
 
