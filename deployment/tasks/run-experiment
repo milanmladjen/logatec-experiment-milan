@@ -21,7 +21,7 @@ echo "Deploying $APP application on node $IPADDR"
 # ----------------------------------------------------------------------------------------------------------
 cd /root/logatec-experiment/applications/$APP_LOC
 
-cat README.md > node_$IPADDR.txt
+cat README.md > "node_${IPADDR}.txt"
 
 # ----------------------------------------------------------------------------------------------------------
 # Move the measured data (and logg files) into results folder

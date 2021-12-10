@@ -1,3 +1,24 @@
 #!/usr/bin/env bash
 
-ansible-playbook -i deployment/ansible/inventory/logatec_testbed deployment/ansible/release_controller.yml
+ANSIBLE_PLAYBOOK="deployment/ansible/release_controller.yml"
+CONF_FILE="experiment-setup.conf"
+
+
+get_conf() {
+    (grep -E "^${1}=" -m 1 $CONF_FILE 2>/dev/null || echo "VAR=_UNDEF_") | head -n 1 | cut -d '=' -f 2-;
+}
+
+
+usecfg=$(get_conf use_conf_file)
+if [ "${usecfg}" = "True" ]; then
+
+    o=$(get_conf option)
+
+    if [ "$o" != "_UNDEF_" ] && [ "$o" == "monitor"]; then
+        ansible-playbook -i deployment/ansible/inventory/logatec_testbed $ANSIBLE_PLAYBOOK
+    else
+        echo "Skipping controller"
+    fi
+else
+    ansible-playbook -i deployment/ansible/inventory/logatec_testbed $ANSIBLE_PLAYBOOK
+fi

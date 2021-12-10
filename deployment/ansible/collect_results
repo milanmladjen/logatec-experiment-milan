@@ -1,3 +1,22 @@
 #!/usr/bin/env bash
 
-ansible-playbook -f 50 -i deployment/ansible/inventory/logatec_testbed deployment/ansible/collect_results.yml
+ANSIBLE_PLAYBOOK="deployment/ansible/collect_results.yml"
+CONF_FILE="experiment-setup.conf"
+
+
+get_conf() {
+    (grep -E "^${1}=" -m 1 $CONF_FILE 2>/dev/null || echo "VAR=_UNDEF_") | head -n 1 | cut -d '=' -f 2-;
+}
+
+
+usecfg=$(get_conf use_conf_file)
+if [ "${usecfg}" = "True" ]; then
+    h=$(get_conf hosts)
+
+    if [ "$h" != "_UNDEF_" ]; then
+        sed -i "0,/hosts:.*/{s/hosts:.*/hosts: ${h}/g}" $ANSIBLE_PLAYBOOK
+    fi
+fi
+
+
+ansible-playbook -f 50 -i deployment/ansible/inventory/logatec_testbed $ANSIBLE_PLAYBOOK
