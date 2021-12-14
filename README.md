@@ -1,6 +1,7 @@
 # logatec-experiment
 
-LOG-a-TEC testbed experiment repository with included Continuous Deployment service and Experiment Control & Monitoring System.
+LOG-a-TEC testbed experiment repository template.\
+Includes ready-made applications, Continuous Deployment service and Experiment Control & Monitoring System.
 
 ## Ultra-Wide Band
 

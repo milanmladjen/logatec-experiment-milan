@@ -6,8 +6,9 @@
 #
 # Before deploying an experiment, select:
 #
-#   *) Participating nodes    - by entering their IP address or a cluster name under the hosts variable. 
+#   *) Participating nodes    - by entering their technology or a cluster name under the hosts variable. 
 #                               Cluster names are defined in the /inventory/logatec_testbed file.
+#                               Adding ":&sna-lgtc-192-168-12" will include only active devices. 
 #   *) Experiment application - by entering application folder name under the application variable.
 #   *) Experiment duration    - by entering minutes to the duration variable.
 #   *) Additional options     - default is none. monitor applies ECMS service.

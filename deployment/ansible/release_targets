@@ -1,3 +1,28 @@
 #!/usr/bin/env bash
 
-ansible-playbook -f 50 -i deployment/ansible/inventory/logatec_testbed deployment/ansible/release_targets.yml
+ANSIBLE_PLAYBOOK="deployment/ansible/release_targets.yml"
+CONF_FILE="experiment-setup.conf"
+
+
+get_conf() {
+    (grep -E "^${1}=" -m 1 $CONF_FILE 2>/dev/null || echo "VAR=_UNDEF_") | head -n 1 | cut -d '=' -f 2-;
+}
+
+
+usecfg=$(get_conf use_conf_file)
+if [ "${usecfg}" = "True" ]; then
+    h=$(get_conf hosts)
+    a=$(get_conf application)
+    d=$(get_conf duration)
+    o=$(get_conf option)
+
+    if [ "$h" != "_UNDEF_" ] || [ "$a" != "_UNDEF_" ] || [ "$d" != "_UNDEF_" ] || [ "$o" != "_UNDEF_" ]; then
+        sed -i "s/hosts:.*/hosts: ${h}:\&sna-lgtc-192-168-12/g" $ANSIBLE_PLAYBOOK
+        sed -i "s/application:.*/application: ${a}/g" $ANSIBLE_PLAYBOOK
+        sed -i "s/duration:.*/duration: ${d}/g" $ANSIBLE_PLAYBOOK
+        sed -i "s/option:.*/option: ${o}/g" $ANSIBLE_PLAYBOOK
+    fi
+fi
+
+
+ansible-playbook -f 50 -i deployment/ansible/inventory/logatec_testbed -i /etc/ansible/hosts $ANSIBLE_PLAYBOOK
