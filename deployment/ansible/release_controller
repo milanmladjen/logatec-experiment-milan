@@ -14,7 +14,7 @@ if [ "${usecfg}" = "True" ]; then
 
     o=$(get_conf option)
 
-    if [ "$o" != "_UNDEF_" ] && [ "$o" == "monitor"]; then
+    if [ "$o" != "_UNDEF_" ] && [ "$o" == "monitor" ]; then
         ansible-playbook -i deployment/ansible/inventory/logatec_testbed $ANSIBLE_PLAYBOOK
     else
         echo "Skipping controller"

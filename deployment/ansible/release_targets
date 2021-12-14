@@ -17,7 +17,7 @@ if [ "${usecfg}" = "True" ]; then
     o=$(get_conf option)
 
     if [ "$h" != "_UNDEF_" ] || [ "$a" != "_UNDEF_" ] || [ "$d" != "_UNDEF_" ] || [ "$o" != "_UNDEF_" ]; then
-        sed -i "s/hosts:.*/hosts: ${h}/g" $ANSIBLE_PLAYBOOK
+        sed -i "s/hosts:.*/hosts: ${h}:\&sna-lgtc-192-168-12/g" $ANSIBLE_PLAYBOOK
         sed -i "s/application:.*/application: ${a}/g" $ANSIBLE_PLAYBOOK
         sed -i "s/duration:.*/duration: ${d}/g" $ANSIBLE_PLAYBOOK
         sed -i "s/option:.*/option: ${o}/g" $ANSIBLE_PLAYBOOK
@@ -25,4 +25,4 @@ if [ "${usecfg}" = "True" ]; then
 fi
 
 
-ansible-playbook -f 50 -i deployment/ansible/inventory/logatec_testbed $ANSIBLE_PLAYBOOK
+ansible-playbook -f 50 -i deployment/ansible/inventory/logatec_testbed -i /etc/ansible/hosts $ANSIBLE_PLAYBOOK
