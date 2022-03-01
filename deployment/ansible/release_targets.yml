@@ -14,13 +14,13 @@
 #
 #############################################################################################################
 
-- hosts: 192.168.12.81
+- hosts: BLE
   strategy: free
   remote_user: videk
 
   vars:
     technology: ble
-    application: 00_scan
+    application: 00_localization
     duration: 10
     option: monitor
 

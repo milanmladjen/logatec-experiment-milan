@@ -17,7 +17,7 @@
 
   vars:
     technology: ble
-    device_num: 21
+    device_num: 6
 
   tasks: 
     - name: Create directory
