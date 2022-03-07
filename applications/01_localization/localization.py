@@ -92,10 +92,13 @@ class BLE_experiment(threading.Thread):
 
     def stop(self):
         self._is_thread_running = False
-        self.scr.stop()
-        self.file.close()
         self.log.info("Stopping BLE experiment thread")
         self.queuePutState("STOPPED")
+
+    def clean(self):
+        self.scr.stop()
+        self.file.close()
+        
 
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
