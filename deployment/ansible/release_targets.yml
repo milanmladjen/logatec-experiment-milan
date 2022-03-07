@@ -20,7 +20,7 @@
 
   vars:
     technology: ble
-    application: 00_localization
+    application: 01_localization
     duration: 10
     option: monitor
 

@@ -238,12 +238,14 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------------
     # EXPERIMENT THREAD
     # ------------------------------------------------------------------------------------
-    # TODOB: samo za info, kako se importa aplikacija, ki jo podaš kot spremenljivko pri zagonu apk
-    # Class aplikacije mora biti vedno isto poimenovan - lahko je kar BLE_experiment
-
     # Import application thread during runtime and configure it (__init__)
-    sys.path.append("../applications/" + APP_DIR)
-    module = importlib.import_module(APP_NAME, __name__)
+    try:
+        sys.path.append("../applications/" + APP_DIR)
+        module = importlib.import_module(APP_NAME, __name__)
+    except:
+        _log.error("No application found, aborting")
+        sys.exit(1)
+
     experiment_thread = module.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, APP_NAME)
 
     # ------------------------------------------------------------------------------------
