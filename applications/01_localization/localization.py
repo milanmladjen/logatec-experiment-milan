@@ -40,21 +40,25 @@ class BLE_experiment(threading.Thread):
         self.scr = Scanner()
 
     def run(self):
-        self.log.info("Started experiment")
         self.queuePutState("RUNNING")
 
         self.scr.clear()
         self.scr.start()
 
+        self.log.info("Started experiment")
+
         while self._is_thread_running:
+
             if self.scr._helper is None:
                 try: 
                     self.log.info("Starting BLE helper...")
                     self.scr.start()
                 except:
                     raise BTLEInternalError("Helper not started (did you call start()?)")
-            remain = None
-            resp = self.scr._waitResp(['scan', 'stat'], remain)
+
+            self.log.debug("Get response")
+            timeout = None
+            resp = self.scr._waitResp(['scan', 'stat'], timeout)
             if resp is None:
                 self.log.info("No response from BLE, breaking.")
                 break
@@ -83,14 +87,12 @@ class BLE_experiment(threading.Thread):
                 self.log.info("Unexpected response")
                 raise BTLEInternalError("Unexpected response: " + respType, resp)
             
-            if (not self.in_q.empty()):
 
+            # ECMS
+            if (not self.in_q.empty()):
                 sqn, cmd = self.queueGet()
 
-                if cmd == "LINES":
-                    resp = "Število vrstic je xy"
-                    self.queuePutResp(sqn, resp)
-
+        self.log.debug("Successfully stopped the scanner")
         self.scr.stop()
 
     def stop(self):
