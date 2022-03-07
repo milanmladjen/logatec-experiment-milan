@@ -103,15 +103,16 @@ class ECMS_client():
                             break
 
                         elif msg == "START":
-                            self.log.debug("Start experiment thread")
-                            # TODO: if running, don't start
-                            experiment_thread.start()
+                            if experiment_thread._is_thread_running == False:
+                                self.log.debug("Start experiment thread")
+                                experiment_thread.start()
 
                         elif msg == "STOP":
-                            self.log.debug("Stop experiment thread")
-                            experiment_thread.stop()
-                            # TODO: possible error: cannot join thread before it is started
-                            #experiment_thread.join()
+                            if experiment_thread._is_thread_running == True:
+                                self.log.debug("Stop experiment thread")
+                                experiment_thread.stop()
+                                # TODO: possible error: cannot join thread before it is started
+                                #experiment_thread.join()
 
                         #NAME - name experiment - use case: NAME$your_name
                         #elif "NAME$" in msg: 
@@ -247,7 +248,7 @@ if __name__ == "__main__":
         _log.error("No application found, aborting")
         sys.exit(1)
 
-    experiment_thread = module.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
+    experiment_thread = module.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME)
 
     # ------------------------------------------------------------------------------------
     # MAIN THREAD (ZMQ CLINET)
