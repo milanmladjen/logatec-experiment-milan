@@ -246,7 +246,7 @@ if __name__ == "__main__":
         _log.error("No application found, aborting")
         sys.exit(1)
 
-    experiment_thread = module.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME, APP_NAME)
+    experiment_thread = module.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
 
     # ------------------------------------------------------------------------------------
     # MAIN THREAD (ZMQ CLINET)

@@ -19,11 +19,10 @@ import json
 
 PHONE_NAME = "Note20G"
 LOG_LEVEL = logging.DEBUG
-data_stream_id = 32
-url = "https://e6-dataproc.ijs.si/api/v1/datapoints?validate=false"
+
 class BLE_experiment(threading.Thread):
 
-    def __init__(self, input_q, output_q, results_filename, lgtc_name, experiment_name):
+    def __init__(self, input_q, output_q, results_filename, lgtc_name):
         threading.Thread.__init__(self)
         self._is_thread_running = True
 
@@ -34,7 +33,6 @@ class BLE_experiment(threading.Thread):
         self.out_q = output_q
 
         self.lgtc_name = lgtc_name
-        self.experiment_name = experiment_name
 
         self.file = open("../results/" + results_filename, "a+")
         #self.file = open("../results/" + lgtc_name + "_results.txt", "a+")
@@ -43,9 +41,7 @@ class BLE_experiment(threading.Thread):
         self.scr = Scanner()
 
     def run(self):
-        self.log.info("Starting experiment thread...")
-        self.log.info("Experiment name: " + self.experiment_name)
-        self.queuePutInfo("Experiment name: " + self.experiment_name)
+        self.log.info("Started experiment")
         self.queuePutState("RUNNING")
 
         self.scr.clear()
@@ -95,6 +91,7 @@ class BLE_experiment(threading.Thread):
                 if cmd == "LINES":
                     resp = "Število vrstic je xy"
                     self.queuePutResp(sqn, resp)
+
         self.scr.stop()
 
     def stop(self):
@@ -121,8 +118,8 @@ class BLE_experiment(threading.Thread):
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if isNewDev:
-            #self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
-            #self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
+            self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
+            self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             pass
         else:
             # 9 = ime naprave
@@ -132,8 +129,6 @@ class BLE_experiment(threading.Thread):
                 self.queuePutInfo("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 self.log.info("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 self.file.write("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                #upload_data = [{'dataStreamId': data_stream_id, 'timestamp': datetime.datetime.now().isoformat() + 'Z', 'payload': payload}]
-                #response = requests.post(url, data=json.dumps(upload_data), headers={'content-type': 'application/json'}, auth=HTTPBasicAuth("user", "P0datk!"))
-
+                
             else:
                 self.file.write("Not our device")
