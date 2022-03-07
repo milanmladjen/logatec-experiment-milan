@@ -87,16 +87,15 @@ class BLE_experiment(threading.Thread):
             if (not self.in_q.empty()):
                 sqn, cmd = self.queueGet()
 
-        self.log.debug("Successfully stopped the scanner")
+        self.log.debug("Scanner stopped")
         self.scr.stop()
+        self.queuePutState("STOPPED")
 
     def stop(self):
         self._is_thread_running = False
         self.log.info("Stopping BLE experiment thread")
-        self.queuePutState("STOPPED")
 
     def clean(self):
-        self.scr.stop()
         self.file.close()
         
 

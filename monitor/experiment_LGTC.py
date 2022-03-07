@@ -111,7 +111,6 @@ class ECMS_client():
                             if experiment_thread._is_thread_running == True:
                                 experiment_thread.stop()
                                 experiment_thread.join()
-                                experiment_thread.clean()
                                 self.log.debug("Stop experiment thread")
 
                         #NAME - name experiment - use case: NAME$your_name
@@ -258,12 +257,12 @@ if __name__ == "__main__":
     client_thread = ECMS_client(E_C_QUEUE, C_E_QUEUE, LGTC_NAME, SUBSCR_HOSTNAME, ROUTER_HOSTNAME)
     client_thread.run()
 
-    # TODO clean stuff
 
     client_thread.clean()
-
+    
     experiment_thread.stop()
     experiment_thread.join()
+    experiment_thread.clean()
 
     _log.info("Exiting application!")
 
