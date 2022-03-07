@@ -10,7 +10,6 @@ import argparse
 import os
 import sys
 import time
-import datetime
 import logging
 import binascii
 import requests
