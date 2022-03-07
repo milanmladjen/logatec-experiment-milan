@@ -103,22 +103,12 @@ class ECMS_client():
                             break
 
                         elif msg == "START":
-                            if experiment_thread._is_thread_running == False:
-                                self.log.debug("Start experiment thread")
-                                experiment_thread.start()
+                            self.log.debug("Start experiment thread")
+                            experiment_thread._is_app_running == True
 
                         elif msg == "STOP":
-                            if experiment_thread._is_thread_running == True:
-                                experiment_thread.stop()
-                                experiment_thread.join()
-                                self.log.debug("Stop experiment thread")
-
-                        #NAME - name experiment - use case: NAME$your_name
-                        #elif "NAME$" in msg: 
-                            #self.experiment_name = msg[5:]
-                            #self.log.info("Naming experiment thread: {}".format(self.experiment_name))
-                            #print("Naming experiment thread: {}".format(self.experiment_name))
-                            #TODOB - nazalost obsolete funkcionalnost
+                            experiment_thread._is_app_running == False
+                            self.log.debug("Stop experiment thread")
 
                         else:
                             # Forward it to the experiment
@@ -259,7 +249,7 @@ if __name__ == "__main__":
 
 
     client_thread.clean()
-    
+
     experiment_thread.stop()
     experiment_thread.join()
     experiment_thread.clean()
@@ -297,3 +287,6 @@ if __name__ == "__main__":
 # SQN
 # ACK
 
+# TODO:
+# Stvar je bla narjena kukr da bi sz ukazi START & STOP štartou in ustavu threade - česar pa sz Pythonom ne moreš.
+# Trenutn workaround: ECMS thread sam spreminja spremenljivko _is_app_running. V bodoče naredi rajši sz procesi in jih ustauljet ter reštartej po želji
