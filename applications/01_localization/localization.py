@@ -23,7 +23,7 @@ class BLE_experiment(threading.Thread):
 
     def __init__(self, input_q, output_q, results_filename):
         threading.Thread.__init__(self)
-        self._is_thread_running = False
+        self._is_thread_running = True
         self._is_app_running = False
 
         self.log = logging.getLogger(__name__)
@@ -38,7 +38,6 @@ class BLE_experiment(threading.Thread):
         self.scr = Scanner()
 
     def run(self):
-        self._is_thread_running = True
         self.queuePutState("ONLINE")
         self.log.info("Experiment started")
 
@@ -95,7 +94,6 @@ class BLE_experiment(threading.Thread):
         # End of experiment
         self.log.debug("Scanner stopped")
         self.scr.stop()
-        self.queuePutState("STOPPED")
 
     def stop(self):
         self._is_thread_running = False

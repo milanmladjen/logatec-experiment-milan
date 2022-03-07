@@ -57,6 +57,9 @@ class ECMS_client():
             self.log.error("Couldn't synchronize with broker...")
             self.queuePut("0", "CONTROLLER_DIED")
 
+        # Workaround (poglej TODO na koncu)
+        experiment_thread.start()
+
         # ------------------------------------------------------------------------------------
         while True:
 
