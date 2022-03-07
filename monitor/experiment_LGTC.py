@@ -104,6 +104,7 @@ class ECMS_client():
 
                         elif msg == "START":
                             self.log.debug("Start experiment thread")
+                            # TODO: if running, don't start
                             experiment_thread.start()
 
                         elif msg == "STOP":

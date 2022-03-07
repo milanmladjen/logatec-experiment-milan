@@ -41,11 +41,13 @@ class BLE_experiment(threading.Thread):
 
     def run(self):
         self.queuePutState("RUNNING")
+        try:
+            self.scr.clear()
+            self.scr.start()
+        except:
+            pass
 
-        self.scr.clear()
-        self.scr.start()
-
-        self.log.info("Started experiment")
+        self.log.info("Experiment started")
 
         while self._is_thread_running:
 
@@ -65,8 +67,7 @@ class BLE_experiment(threading.Thread):
 
             respType = resp['rsp'][0]
             if respType == 'stat':
-                self.log.info("Scand ended, restarting it.")
-                # if scan ended, restart it
+                self.log.info("Scan ended, restarting it...")
                 if resp['state'][0] == 'disc':
                     self.scr._mgmtCmd(self.scr._cmd())
 
@@ -101,6 +102,24 @@ class BLE_experiment(threading.Thread):
         self.log.info("Stopping BLE experiment thread")
         self.queuePutState("STOPPED")
 
+
+    def handleDiscovery(self, dev, isNewDev, isNewData):
+        if isNewDev:
+            self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
+            #self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
+            pass
+        else:
+            # 9 = ime naprave
+            if(dev.getValueText(9) == PHONE_NAME):
+                unixTime = int(time.time())
+                payload = {'LGTC_id': self.lgtc_name, 'RSSI': int(dev.rssi), 'unixTimestamp': unixTime, 'experimentName': str(self.experiment_name)}
+                self.queuePutInfo("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
+                
+                self.log.info("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
+                self.file.write("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
+
+
+
     # ----------------------------------------------------------------------------------------
     # OTHER FUNCTIONS
     # ----------------------------------------------------------------------------------------
@@ -116,20 +135,3 @@ class BLE_experiment(threading.Thread):
     def queueGet(self):
         tmp = self.in_q.get()
         return tmp[0], tmp[1]
-
-    def handleDiscovery(self, dev, isNewDev, isNewData):
-        if isNewDev:
-            self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
-            self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
-            pass
-        else:
-            # 9 = ime naprave
-            if(dev.getValueText(9) == PHONE_NAME):
-                unixTime = int(time.time())
-                payload = {'LGTC_id': self.lgtc_name, 'RSSI': int(dev.rssi), 'unixTimestamp': unixTime, 'experimentName': str(self.experiment_name)}
-                self.queuePutInfo("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                self.log.info("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                self.file.write("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                
-            else:
-                self.file.write("Not our device")
