@@ -108,11 +108,11 @@ class ECMS_client():
                         elif msg == "START":
                             self.updateState("RUNNING")
                             self.log.debug("Start experiment thread")
-                            experiment_thread._is_app_running == True
+                            experiment_thread._is_app_running = True
 
                         elif msg == "STOP":
                             self.updateState("STOPPED")
-                            experiment_thread._is_app_running == False
+                            experiment_thread._is_app_running = False
                             self.log.debug("Stop experiment thread")
 
                         else:
