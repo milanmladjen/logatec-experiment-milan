@@ -109,7 +109,7 @@ class BLE_experiment(threading.Thread):
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if isNewDev:
-            #self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
+            self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             self.file.write("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             #self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
         else:
@@ -131,7 +131,7 @@ class BLE_experiment(threading.Thread):
         self.out_q.put([sqn, resp])
     
     def queuePutLoc(self, rssi):
-        self.out_q.put(["LOC"], rssi)
+        self.out_q.put(["LOC", rssi])
 
     def queuePutState(self, state):
         self.out_q.put(["STATE", state])
