@@ -121,10 +121,11 @@ class BLE_experiment(threading.Thread):
                 self.file.write("Ttt")
                 #self.log.info("Phone RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 #self.queuePutInfo("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                self.queuePutLoc(str(dev.rssi))
+                #self.queuePutLoc(str(dev.rssi))
             
             if(dev.getValueText(9) == "Galaxy S10e"):
                 self.file.write("Aaa")
+                self.queuePutLoc(str(dev.rssi))
 
 
 
