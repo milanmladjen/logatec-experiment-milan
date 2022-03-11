@@ -212,7 +212,7 @@ def ZMQ_thread(input_q):
             elif msg[0] == "LOC":
                 z_log.info("received RSSI measurement")
 
-                response = {
+                message = {
                     "sequence" : "loc",
                     "device" : msg[1],
                     "data" : msg[2]
