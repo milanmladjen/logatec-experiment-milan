@@ -256,8 +256,11 @@ if __name__ == "__main__":
     client_thread.clean()
 
     experiment_thread.stop()
-    experiment_thread.join()
-    experiment_thread.clean()
+    try:
+        experiment_thread.join()
+        experiment_thread.clean()
+    except:
+        pass
 
     _log.info("Exiting application!")
 
