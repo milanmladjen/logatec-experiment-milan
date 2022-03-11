@@ -96,7 +96,10 @@ class BLE_experiment(threading.Thread):
 
         # End of experiment
         self.log.debug("Scanner stopped")
-        self.scr.stop()
+        try:
+            self.scr.stop()
+        except:
+            pass
 
     def stop(self):
         self._is_thread_running = False
