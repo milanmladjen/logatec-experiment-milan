@@ -16,7 +16,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import json
 
-PHONE_NAME = "Note20G"
+PHONE_NAME = "Tomaz S20"
 LOG_LEVEL = logging.DEBUG
 
 class BLE_experiment(threading.Thread):
@@ -113,14 +113,18 @@ class BLE_experiment(threading.Thread):
             self.file.write("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             #self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
         else:
-            self.queuePutLoc(str(dev.rssi))
+
+            unixTime = int(time.time())
+            self.file.write("RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
             # 9 = ime naprave
             if(dev.getValueText(9) == PHONE_NAME):
-                unixTime = int(time.time())
-                #self.log.info("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                self.file.write("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
+                self.file.write("Ttt")
+                #self.log.info("Phone RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 #self.queuePutInfo("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 self.queuePutLoc(str(dev.rssi))
+            
+            if(dev.getValueText(9) == "Galaxy S10e"):
+                self.file.write("Aaa")
 
 
 
