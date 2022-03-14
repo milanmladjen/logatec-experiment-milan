@@ -63,7 +63,7 @@ class BLE_experiment(threading.Thread):
                 resp = self.scr._waitResp(['scan', 'stat'], timeout)
                 if resp is None:
                     self.log.info("No response from BLE, exiting...")
-                    break
+                    #break
 
                 respType = resp['rsp'][0]
                 if respType == 'stat':
