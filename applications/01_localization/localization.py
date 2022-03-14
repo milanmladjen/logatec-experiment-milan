@@ -61,7 +61,6 @@ class BLE_experiment(threading.Thread):
 
                 timeout = 1
                 resp = self.scr._waitResp(['scan', 'stat'], timeout)
-                self.log.debug(resp)
                 if resp is None:
                     self.log.info("No response from BLE, exiting...")
                     break
@@ -119,6 +118,7 @@ class BLE_experiment(threading.Thread):
         else:
 
             unixTime = int(time.time())
+            self.log.debug("RSSI " + "[" + str(unixTime) + "]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") {" + str(dev.rssi) + "}\n")
             # 9 = ime naprave
             if(dev.getValueText(9) == PHONE_NAME):
                 self.file.write("RSSI " + "[" + str(unixTime) + "]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") {" + str(dev.rssi) + "}\n")
