@@ -16,7 +16,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import json
 
-PHONE_NAME = "Tomaz S20"
+PHONE_NAME = "Grega20"
 LOG_LEVEL = logging.DEBUG
 
 class BLE_experiment(threading.Thread):
@@ -94,6 +94,10 @@ class BLE_experiment(threading.Thread):
             if (not self.in_q.empty()):
                 sqn, cmd = self.queueGet()
 
+                if sqn:
+                    self.file.write(cmd)
+
+
         # End of experiment
         self.log.debug("Scanner stopped")
         try:
@@ -115,20 +119,22 @@ class BLE_experiment(threading.Thread):
             self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             self.file.write("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             #self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
+            if(dev.getValueText(9) == PHONE_NAME):
+                self.queuePutInfo("Found phone")
         else:
 
             unixTime = int(time.time())
-            self.file.write("RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
             # 9 = ime naprave
             if(dev.getValueText(9) == PHONE_NAME):
-                self.file.write("Ttt")
+                self.file.write("RSSI " + "[" + str(unixTime) + "]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") {" + str(dev.rssi) + "}\n")
+                #self.file.write("Ttt")
                 #self.log.info("Phone RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 #self.queuePutInfo("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 #self.queuePutLoc(str(dev.rssi))
             
-            if(dev.getValueText(9) == "Galaxy S10e"):
-                self.file.write("Aaa")
-                self.queuePutLoc(str(dev.rssi))
+            #if(dev.getValueText(9) == "Galaxy S10e"):
+            #    self.file.write("Aaa")
+            #    self.queuePutLoc(str(dev.rssi))
 
 
 
