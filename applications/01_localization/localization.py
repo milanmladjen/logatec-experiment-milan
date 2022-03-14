@@ -59,19 +59,24 @@ class BLE_experiment(threading.Thread):
                     except:
                         self.log.error("Helper not started!")
 
-                timeout = 1
+                timeout = 3
+                self.log.info("A")
                 resp = self.scr._waitResp(['scan', 'stat'], timeout)
                 if resp is None:
                     self.log.info("No response from BLE, exiting...")
+                    self.scr.start()
                     #break
 
+                self.log.info("B")
                 respType = resp['rsp'][0]
                 if respType == 'stat':
                     self.log.info("Scan ended, restarting it...")
                     if resp['state'][0] == 'disc':
+                        self.log.info("C")
                         self.scr._mgmtCmd(self.scr._cmd())
 
                 elif respType == 'scan':
+                    self.log.info("D")
                     # device found
                     addr = binascii.b2a_hex(resp['addr'][0]).decode('utf-8')
                     addr = ':'.join([addr[i:i+2] for i in range(0,12,2)])
