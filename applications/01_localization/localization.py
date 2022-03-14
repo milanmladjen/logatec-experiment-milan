@@ -95,7 +95,7 @@ class BLE_experiment(threading.Thread):
                 sqn, cmd = self.queueGet()
 
                 if sqn:
-                    self.file.write(cmd)
+                    self.file.write(cmd + "\n")
 
 
         # End of experiment
