@@ -20,7 +20,7 @@ echo "Deploying $APP application on node $IPADDR with option: monitor"
 # Start the experiment application using monitor ECMS_client.
 # ----------------------------------------------------------------------------------------------------------
 # Start BT advertisment
-hciconfig hci0 leadv3
+#hciconfig hci0 leadv3
 
 # Start the ECMS_client with experiment application
 cd /root/logatec-experiment/monitor/
@@ -36,4 +36,4 @@ mv *.log /root/logatec-experiment/results/
 # ----------------------------------------------------------------------------------------------------------
 # Cleanup (stop BLE advertising)
 # ----------------------------------------------------------------------------------------------------------
-hciconfig hci0 nolea
+#hciconfig hci0 noleadv
