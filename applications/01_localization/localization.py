@@ -61,16 +61,21 @@ class BLE_experiment(threading.Thread):
                 
                 try:
                     timeout = None
+                    print("a")
+                    self.log.info("A")
                     resp = self.scr._waitResp(['scan', 'stat'], timeout)
                     if resp is None:
                         self.log.info("No response from BLE, exiting...")
-                        break
-
+                        #break
+                    print("b")
+                    self.log.info("B")
                     respType = resp['rsp'][0]
                     if respType == 'stat':
                         self.log.info("Scan ended, restarting it...")
                         if resp['state'][0] == 'disc':
                             self.scr._mgmtCmd(self.scr._cmd())
+                            print("c")
+                            self.log.info("C")
 
                     elif respType == 'scan':
                         # device found
@@ -83,10 +88,14 @@ class BLE_experiment(threading.Thread):
                             self.scr.scanned[addr] = dev
                         isNewData = dev._update(resp)
                         self.handleDiscovery(dev, (dev.updateCount <= 1), isNewData)
+                        print("d")
+                        self.log.info("D")
                         
                     else:
                         self.log.warning("Unexpected response: " + respType)
                 except:
+                    print("e")
+                    self.log.info("E")
                     pass
 
 
@@ -97,13 +106,13 @@ class BLE_experiment(threading.Thread):
                 if sqn:
                     self.file.write(cmd + "\n")
 
+                print("f")
+                self.log.info("F")
+
 
         # End of experiment
         self.log.debug("Scanner stopped")
-        try:
-            self.scr.stop()
-        except:
-            pass
+        self.scr.stop()
 
     def stop(self):
         self._is_thread_running = False
