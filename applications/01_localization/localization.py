@@ -58,45 +58,44 @@ class BLE_experiment(threading.Thread):
                         self.scr.start()
                     except:
                         self.log.error("Helper not started!")
-                
-                try:
-                    timeout = None
-                    print("a")
-                    self.log.info("A")
-                    resp = self.scr._waitResp(['scan', 'stat'], timeout)
-                    if resp is None:
-                        self.log.info("No response from BLE, exiting...")
-                        #break
-                    print("b")
-                    self.log.info("B")
-                    respType = resp['rsp'][0]
-                    if respType == 'stat':
-                        self.log.info("Scan ended, restarting it...")
-                        if resp['state'][0] == 'disc':
-                            self.scr._mgmtCmd(self.scr._cmd())
-                            print("c")
-                            self.log.info("C")
 
-                    elif respType == 'scan':
-                        # device found
-                        addr = binascii.b2a_hex(resp['addr'][0]).decode('utf-8')
-                        addr = ':'.join([addr[i:i+2] for i in range(0,12,2)])
-                        if addr in self.scr.scanned:
-                            dev = self.scr.scanned[addr]
-                        else:
-                            dev = ScanEntry(addr, self.scr.iface)
-                            self.scr.scanned[addr] = dev
-                        isNewData = dev._update(resp)
-                        self.handleDiscovery(dev, (dev.updateCount <= 1), isNewData)
-                        print("d")
-                        self.log.info("D")
-                        
+
+                
+                timeout = 1
+                print("a")
+                self.log.info("A")
+                # Tuki noter se vcasih zacikla in ne pride ven dokler drugi proces ne kliče scr.clear() scr.sttart() ponovno
+                resp = self.scr._waitResp(['scan', 'stat'], timeout)
+                self.log.debug(resp)
+                if resp is None:
+                    self.log.info("No response from BLE, exiting...")
+                    #break
+                print("b")
+                self.log.info("B")
+                respType = resp['rsp'][0]
+                if respType == 'stat':
+                    self.log.info("Scan ended, restarting it...")
+                    if resp['state'][0] == 'disc':
+                        self.scr._mgmtCmd(self.scr._cmd())
+                        print("c")
+                        self.log.info("C")
+
+                elif respType == 'scan':
+                    # device found
+                    addr = binascii.b2a_hex(resp['addr'][0]).decode('utf-8')
+                    addr = ':'.join([addr[i:i+2] for i in range(0,12,2)])
+                    if addr in self.scr.scanned:
+                        dev = self.scr.scanned[addr]
                     else:
-                        self.log.warning("Unexpected response: " + respType)
-                except:
-                    print("e")
-                    self.log.info("E")
-                    pass
+                        dev = ScanEntry(addr, self.scr.iface)
+                        self.scr.scanned[addr] = dev
+                    isNewData = dev._update(resp)
+                    self.handleDiscovery(dev, (dev.updateCount <= 1), isNewData)
+                    print("d")
+                    self.log.info("D")
+                    
+                else:
+                    self.log.warning("Unexpected response: " + respType)
 
 
             #### ECMS #####################################
