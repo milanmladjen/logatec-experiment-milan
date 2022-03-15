@@ -43,7 +43,7 @@ class BLE_experiment():
         start = time.time()
         while self._is_thread_running:
 
-            if (time.time() - start >= 100):
+            if (time.time() - start >= 200):
                 self._is_thread_running = False
                 self.log.info("Exit")
 
@@ -64,7 +64,10 @@ class BLE_experiment():
                 resp = self.scr._waitResp(['scan', 'stat'], timeout)
                 if resp is None:
                     self.log.info("No response from BLE, exiting...")
+                    self.scr.stop()
+                    self.scr.clear()
                     self.scr.start()
+                    continue
                     #break
 
                 self.log.info("B")
