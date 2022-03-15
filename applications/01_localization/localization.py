@@ -64,8 +64,11 @@ class BLE_experiment(threading.Thread):
                 self.log.info("A")
                 resp = self.scr._waitResp(['scan', 'stat'], timeout)
                 if resp is None:
-                    self.log.info("No response from BLE, exiting...")
+                    self.log.info("No response from BLE, resetting...")
+                    self.scr.stop()
+                    self.scr.clear()
                     self.scr.start()
+                    continue
                     #break
 
                 self.log.info("B")
