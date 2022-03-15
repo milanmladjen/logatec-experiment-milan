@@ -15,6 +15,8 @@ import json
 
 PHONE_NAME = "Grega20"
 LOG_LEVEL = logging.DEBUG
+RESULTS_FILENAME = "node_results"
+LOGGING_FILENAME = "logger"
 
 class BLE_experiment():
 
@@ -26,7 +28,7 @@ class BLE_experiment():
         self.log = logging.getLogger(__name__)
         self.log.setLevel(LOG_LEVEL)
 
-        self.file = open("../results/" + results_filename, "a+")
+        self.file = open("/root/logatec-experiment/results/" + results_filename, "a+")
         self.file.write("usaj neki more bit shranjeno v text fajlu, da obstaja")
 
         self.scr = Scanner()
