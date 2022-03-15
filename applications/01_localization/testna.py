@@ -134,6 +134,7 @@ if __name__ == "__main__":
         LGTC_ID = "xy"
 
     LGTC_NAME = "LGTC" + LGTC_ID
+    LOGGING_FILENAME += ("_" + LGTC_ID + ".log")
 
     logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
     #logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
