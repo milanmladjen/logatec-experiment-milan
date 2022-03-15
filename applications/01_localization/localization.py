@@ -60,13 +60,13 @@ class BLE_experiment(threading.Thread):
                         self.log.error("Helper not started!")
 
                 # Timeout in seconds
-                timeout = 3
+                timeout = None
                 self.log.info("A")
                 resp = self.scr._waitResp(['scan', 'stat'], timeout)
                 if resp is None:
                     self.log.info("No response from BLE, resetting...")
-                    self.scr.stop()
-                    self.scr.clear()
+                    #self.scr.stop()
+                    #self.scr.clear()
                     self.scr.start()
                     continue
                     #break
