@@ -23,8 +23,14 @@ echo "Deploying $APP application on node $IPADDR with option: monitor"
 #hciconfig hci0 leadv3
 
 # Start the ECMS_client with experiment application
-cd /root/logatec-experiment/monitor/
-python3 experiment_LGTC.py $IPADDR $APP_LOC $APP_NAME
+    #cd /root/logatec-experiment/monitor/
+    #python3 experiment_LGTC.py $IPADDR $APP_LOC $APP_NAME
+
+cd /root/applications/01_localization
+python3 testna.py $IPADDR
+
+
+
 
 # ----------------------------------------------------------------------------------------------------------
 # Move the measured data and logg files into results folder.

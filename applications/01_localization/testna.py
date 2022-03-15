@@ -1,8 +1,5 @@
 #!/usr/bin/python3
 
-import queue
-import threading
-from queue import Queue
 
 from datetime import datetime
 from bluepy.btle import Scanner, Peripheral, ScanEntry
@@ -19,18 +16,15 @@ import json
 PHONE_NAME = "Grega20"
 LOG_LEVEL = logging.DEBUG
 
-class BLE_experiment(threading.Thread):
+class BLE_experiment():
 
-    def __init__(self, input_q, output_q, results_filename):
-        threading.Thread.__init__(self)
+    def __init__(self, results_filename):
+        #threading.Thread.__init__(self)
         self._is_thread_running = True
-        self._is_app_running = False
+        self._is_app_running = True
 
         self.log = logging.getLogger(__name__)
         self.log.setLevel(LOG_LEVEL)
-
-        self.in_q = input_q
-        self.out_q = output_q
 
         self.file = open("../results/" + results_filename, "a+")
         self.file.write("usaj neki more bit shranjeno v text fajlu, da obstaja")
@@ -38,16 +32,19 @@ class BLE_experiment(threading.Thread):
         self.scr = Scanner()
 
     def run(self):
-        self.queuePutState("ONLINE")
         self.log.info("Experiment started")
 
-        try:
-            self.scr.clear()
-            self.scr.start()
-        except:
-            pass       
+        self.scr.clear()
+        self.scr.start()
+      
 
+        start = time.time()
         while self._is_thread_running:
+
+            if (time.time() - start >= 100):
+                self._is_thread_running = False
+                self.log.info("Exit")
+
 
             ##### MAIN APP #####################################
             if self._is_app_running:
@@ -60,7 +57,7 @@ class BLE_experiment(threading.Thread):
                         self.log.error("Helper not started!")
 
                 # Timeout in seconds
-                timeout = 3
+                timeout = None
                 self.log.info("A")
                 resp = self.scr._waitResp(['scan', 'stat'], timeout)
                 if resp is None:
@@ -94,13 +91,6 @@ class BLE_experiment(threading.Thread):
                     self.log.warning("Unexpected response: " + respType)
 
 
-            #### ECMS #####################################
-            if (not self.in_q.empty()):
-                sqn, cmd = self.queueGet()
-
-                if sqn:
-                    self.file.write(cmd + "\n")
-
 
         # End of experiment
         self.log.debug("Scanner stopped")
@@ -119,9 +109,8 @@ class BLE_experiment(threading.Thread):
         if isNewDev:
             self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             self.file.write("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
-            #self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             if(dev.getValueText(9) == PHONE_NAME):
-                self.queuePutInfo("Found phone")
+                self.log.info("Phone found")
         else:
 
             unixTime = int(time.time())
@@ -129,32 +118,28 @@ class BLE_experiment(threading.Thread):
             # 9 = ime naprave
             if(dev.getValueText(9) == PHONE_NAME):
                 self.file.write("RSSI " + "[" + str(unixTime) + "]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") {" + str(dev.rssi) + "}\n")
-                #self.file.write("Ttt")
-                #self.log.info("Phone RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                #self.queuePutInfo("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                #self.queuePutLoc(str(dev.rssi))
-            
-            #if(dev.getValueText(9) == "Galaxy S10e"):
-            #    self.file.write("Aaa")
-            #    self.queuePutLoc(str(dev.rssi))
+ 
 
 
 
-    # ----------------------------------------------------------------------------------------
-    # OTHER FUNCTIONS
-    # ----------------------------------------------------------------------------------------
-    def queuePutResp(self, sqn, resp):
-        self.out_q.put([sqn, resp])
-    
-    def queuePutLoc(self, rssi):
-        self.out_q.put(["LOC", rssi])
+if __name__ == "__main__":
 
-    def queuePutState(self, state):
-        self.out_q.put(["STATE", state])
+    try:
+        LGTC_ID = sys.argv[1]
+        LGTC_ID = LGTC_ID.replace(" ", "")
+    except:
+        print("No device name was given...going with default")
+        LGTC_ID = "xy"
 
-    def queuePutInfo(self, info):
-        self.out_q.put(["INFO", info])
+    LGTC_NAME = "LGTC" + LGTC_ID
 
-    def queueGet(self):
-        tmp = self.in_q.get()
-        return tmp[0], tmp[1]
+    logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
+    #logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
+
+    _log = logging.getLogger(__name__)
+    _log.setLevel(LOG_LEVEL)
+
+
+    ble = BLE_experiment("rezultat_"+LGTC_NAME)
+
+    ble.run()
