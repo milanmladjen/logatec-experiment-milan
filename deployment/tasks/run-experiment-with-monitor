@@ -22,6 +22,11 @@ echo "Deploying $APP application on node $IPADDR with option: monitor"
 # Start BT advertisment
 #hciconfig hci0 leadv3
 
+echo "Resetting BLE device"
+hciconfig hci0 down
+hciconfig hci0 up
+echo "Done"
+
 # Start the ECMS_client with experiment application
 cd /root/logatec-experiment/monitor/
 python3 experiment_LGTC.py $IPADDR $APP_LOC $APP_NAME
