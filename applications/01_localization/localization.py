@@ -71,8 +71,10 @@ class BLE_experiment(threading.Thread):
                     #break
 
                 self.log.info("B")
+                self.log.info(resp)
                 # ZDEJ KU JE timeout maš lohku resp=None in tuki vrže error
                 respType = resp['rsp'][0]
+                self.log.info(respType)
                 if respType == 'stat':
                     self.log.info("Scan ended, restarting it...")
                     if resp['state'][0] == 'disc':
