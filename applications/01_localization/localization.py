@@ -70,7 +70,7 @@ class BLE_experiment(threading.Thread):
                     if remain <= 0.0:
                         break
                     
-                    self.log.info("A")
+                    self.log.info("Reamin: " + str(remain))
                     resp = self.scr._waitResp(['scan', 'stat'], remain)
                     if resp is None:
                         self.log.warning(msg)("No response from BLE, resetting...")
