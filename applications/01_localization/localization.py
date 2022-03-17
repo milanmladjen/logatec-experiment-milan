@@ -43,7 +43,7 @@ class BLE_experiment(threading.Thread):
 
         
         self.scr.clear()
-        self.scr.start(True)
+        self.scr.start()
     
 
         while self._is_thread_running:

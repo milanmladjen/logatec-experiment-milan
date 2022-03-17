@@ -23,8 +23,10 @@ echo "Deploying $APP application on node $IPADDR with option: monitor"
 #hciconfig hci0 leadv3
 
 echo "Resetting BLE device"
+hciconfig hci0 reset
 hciconfig hci0 down
 hciconfig hci0 up
+hciconfig hci0 rstat
 echo "Done"
 
 # Start the ECMS_client with experiment application
