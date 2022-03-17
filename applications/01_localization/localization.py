@@ -41,11 +41,10 @@ class BLE_experiment(threading.Thread):
         self.queuePutState("ONLINE")
         self.log.info("Experiment started")
 
-        try:
-            self.scr.clear()
-            self.scr.start()
-        except:
-            pass       
+        
+        self.scr.clear()
+        self.scr.start(True)
+    
 
         while self._is_thread_running:
 
