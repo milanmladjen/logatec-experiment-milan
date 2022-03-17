@@ -30,11 +30,11 @@ hciconfig hci0 rstat
 echo "Done"
 
 # Start the ECMS_client with experiment application
-cd /root/logatec-experiment/monitor/
-python3 experiment_LGTC.py $IPADDR $APP_LOC $APP_NAME
+#cd /root/logatec-experiment/monitor/
+#python3 experiment_LGTC.py $IPADDR $APP_LOC $APP_NAME
 
-#cd /root/logatec-experiment/applications/01_localization
-#python3 testna.py $IPADDR
+cd /root/logatec-experiment/applications/01_localization
+python3 testna2.py $IPADDR
 
 
 
