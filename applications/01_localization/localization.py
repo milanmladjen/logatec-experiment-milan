@@ -46,6 +46,7 @@ class BLE_experiment(threading.Thread):
         #self.scr.start()
     
 
+        self.scr.clear()
         while self._is_thread_running:
 
             ##### MAIN APP #####################################
@@ -58,7 +59,6 @@ class BLE_experiment(threading.Thread):
                 #    except:
                 #        self.log.error("Helper not started!")
 
-                self.scr.clear()
                 self.scr.start()
 
                 timeout = 5
@@ -135,9 +135,9 @@ class BLE_experiment(threading.Thread):
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if isNewDev:
             self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
-            self.file.write("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             #self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             if(dev.getValueText(9) == PHONE_NAME):
+                self.file.write("Phone ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
                 self.queuePutInfo("Found phone")
         else:
 
