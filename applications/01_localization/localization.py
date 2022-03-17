@@ -42,8 +42,8 @@ class BLE_experiment(threading.Thread):
         self.log.info("Experiment started")
 
         
-        self.scr.clear()
-        self.scr.start()
+        #self.scr.clear()
+        #self.scr.start()
     
 
         while self._is_thread_running:
@@ -51,59 +51,72 @@ class BLE_experiment(threading.Thread):
             ##### MAIN APP #####################################
             if self._is_app_running:
 
-                if self.scr._helper is None:
-                    try: 
-                        self.log.info("Starting BLE helper.")
-                        self.scr.start()
-                    except:
-                        self.log.error("Helper not started!")
+                #if self.scr._helper is None:
+                #    try: 
+                #        self.log.info("Starting BLE helper.")
+                #        self.scr.start()
+                #    except:
+                #        self.log.error("Helper not started!")
 
-                # Timeout in seconds
-                timeout = None
-                self.log.info("A")
-                resp = self.scr._waitResp(['scan', 'stat'], timeout)
-                if resp is None:
-                    self.log.info("No response from BLE, resetting...")
-                    #self.scr.stop()
-                    #self.scr.clear()
-                    self.scr.start()
-                    continue
-                    #break
+                self.scr.clear()
+                self.scr.start()
 
-                self.log.info("B")
-                self.log.info(resp)
-                # ZDEJ KU JE timeout maš lohku resp=None in tuki vrže error
-                respType = resp['rsp'][0]
-                self.log.info(respType)
-                if respType == 'stat':
-                    self.log.info("Scan ended, restarting it...")
-                    if resp['state'][0] == 'disc':
-                        self.log.info("C")
-                        self.scr._mgmtCmd(self.scr._cmd())
+                timeout = 5
 
-                elif respType == 'scan':
-                    self.log.info("D")
-                    # device found
-                    addr = binascii.b2a_hex(resp['addr'][0]).decode('utf-8')
-                    addr = ':'.join([addr[i:i+2] for i in range(0,12,2)])
-                    if addr in self.scr.scanned:
-                        dev = self.scr.scanned[addr]
-                    else:
-                        dev = ScanEntry(addr, self.scr.iface)
-                        self.scr.scanned[addr] = dev
-                    isNewData = dev._update(resp)
-                    self.handleDiscovery(dev, (dev.updateCount <= 1), isNewData)
+                start = time.time()
+                while True:
+
+                    remain = start + timeout - time.time()
+                    if remain <= 0.0:
+                        break
                     
-                else:
-                    self.log.warning("Unexpected response: " + respType)
+                    self.log.info("A")
+                    resp = self.scr._waitResp(['scan', 'stat'], remain)
+                    if resp is None:
+                        self.log.info("No response from BLE, resetting...")
+                        #self.scr.stop()
+                        #self.scr.clear()
+                        #self.scr.start()
+                        #continue
+                        break
 
 
-            #### ECMS #####################################
-            if (not self.in_q.empty()):
-                sqn, cmd = self.queueGet()
 
-                if sqn:
-                    self.file.write(cmd + "\n")
+                    # {'rsp': ['stat'], 'state': ['scan'], 'dst': ['(null)'], 'mtu': [0], 'sec': ['low']}
+                    # {'rsp': ['stat'], 'state': ['scan'], 'dst': ['(null)'], 'mtu': [0], 'sec': ['low']}
+                    # {'rsp': ['stat'], 'state': ['disc'], 'mtu': [0], 'sec': ['low']}
+
+                    respType = resp['rsp'][0]
+                    if respType == 'stat':
+                        self.log("Scanning ...")
+                        if resp['state'][0] == 'disc':
+                            self.log.info("Scan ended, restarting it ...")
+                            self.scr._mgmtCmd(self.scr._cmd())
+
+                    elif respType == 'scan':
+                        # device found
+                        addr = binascii.b2a_hex(resp['addr'][0]).decode('utf-8')
+                        addr = ':'.join([addr[i:i+2] for i in range(0,12,2)])
+                        if addr in self.scr.scanned:
+                            dev = self.scr.scanned[addr]
+                        else:
+                            dev = ScanEntry(addr, self.scr.iface)
+                            self.scr.scanned[addr] = dev
+                        isNewData = dev._update(resp)
+                        self.handleDiscovery(dev, (dev.updateCount <= 1), isNewData)
+                        
+                    else:
+                        self.log.warning("Unexpected response: " + respType)
+
+
+                    #### ECMS #####################################
+                    if (not self.in_q.empty()):
+                        sqn, cmd = self.queueGet()
+
+                        if sqn:
+                            self.file.write(cmd + "\n")
+
+                self.scr.stop()
 
 
         # End of experiment
