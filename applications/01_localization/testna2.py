@@ -36,10 +36,6 @@ class BLE_experiment():
     def run(self):
         self.log.info("Experiment started")
 
-        self.scr.clear()
-        self.scr.start()
-      
-
         start = time.time()
         while self._is_thread_running:
 
