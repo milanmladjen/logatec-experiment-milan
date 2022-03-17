@@ -33,6 +33,9 @@ echo "Done"
 #cd /root/logatec-experiment/monitor/
 #python3 experiment_LGTC.py $IPADDR $APP_LOC $APP_NAME
 
+
+
+sed -i 's/Debugging = False/Debugging = True/' /usr/local/lib/python3.8/dist-packages/bluepy/btle.py
 cd /root/logatec-experiment/applications/01_localization
 python3 testna2.py $IPADDR
 
