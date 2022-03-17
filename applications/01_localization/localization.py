@@ -73,7 +73,7 @@ class BLE_experiment(threading.Thread):
                     self.log.info("A")
                     resp = self.scr._waitResp(['scan', 'stat'], remain)
                     if resp is None:
-                        self.log.info("No response from BLE, resetting...")
+                        self.log.warning(msg)("No response from BLE, resetting...")
                         #self.scr.stop()
                         #self.scr.clear()
                         #self.scr.start()
@@ -88,9 +88,9 @@ class BLE_experiment(threading.Thread):
 
                     respType = resp['rsp'][0]
                     if respType == 'stat':
-                        self.log("Scanning ...")
+                        self.log.debug("Scanning ...")
                         if resp['state'][0] == 'disc':
-                            self.log.info("Scan ended, restarting it ...")
+                            self.log.debug("Scan ended, restarting it ...")
                             self.scr._mgmtCmd(self.scr._cmd())
 
                     elif respType == 'scan':
