@@ -364,7 +364,7 @@ $(document).ready(function(){
         console.log("Experiment has just started!");
 
         // Every BLE_INTERVAL update localization
-        bleExecution = setInterval(displayBleLocation(), BLE_INTERVAL);
+        bleExecution = setInterval(displayBleLocation, BLE_INTERVAL);
 
         experiment_started(msg.data);
         socket.emit("testbed update");
