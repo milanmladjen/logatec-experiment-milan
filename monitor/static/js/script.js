@@ -39,7 +39,7 @@ var ble_f = new ble_fingerprint();
 var BLE_INTERVAL = 500;
 
 function displayBleLocation() {
-    console.log("Displaying location.");
+    //console.log("Displaying location.");
 
     // Get measurements from Q
     var rssi_measurements = ble_q.getAllMeasurements();
@@ -378,8 +378,7 @@ $(document).ready(function(){
         dropdown.remove_all();
         alert("Experiment stopped!")
 
-        // Stop the BLE localization
-        clearInterval(bleExecution);
+        
     });
 
     socket.on("command response", function(msg){
@@ -501,6 +500,11 @@ $(document).ready(function(){
         // ROUND TRIP time measurement start
         if(cmd == "ROUNDTRIP"){
             roundtrip_startTime = new Date();
+        }
+
+        if(cmd == "EXIT"){
+            // Stop the BLE localization
+            clearInterval(bleExecution);
         }
 
         // Check which device is selected from dropdown menu
