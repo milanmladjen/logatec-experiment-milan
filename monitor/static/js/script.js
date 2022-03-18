@@ -29,10 +29,11 @@ var EXPERIMENT_COMMANDS = [
 // ------------------------------------------------------------------------------------------------------------
 // Localization module
 // ------------------------------------------------------------------------------------------------------------
-import ble_localization ,{rssi_queue} from "./ble_localization.js"
+import ble_localization ,{ble_fingerprint, rssi_queue} from "./ble_localization.js"
 
 var ble_math = new ble_localization();
 var ble_q = new rssi_queue();
+var ble_f = new ble_fingerprint();
 
 // Period of location display (in ms)
 var BLE_INTERVAL = 500;
@@ -42,24 +43,17 @@ function displayBleLocation() {
 
     // Get measurements from Q
     var rssi_measurements = ble_q.getAllMeasurements();
-    var enabled_nodes = ble_q.getActiveDevices();
-
-    // If there is are new measurements (from at least 2 nodes)
-    let m = rssi_measurements.filter(v => v > 0)
-    if (m.length > 1){
-        // Math
-        var distances = ble_math.RSSI_to_distance(rssi_measurements);
-        var locations = ble_math.weights_to_locations(enabled_nodes);
-        let x = locations[0];
-        let y = locations[1];
-        var position = ble_math.WLS_localization(x, y, enabled_nodes, distances);
+    
+    if (rssi_measurements) {
+        // Compare with fingerprint
+        var position = ble_f.getLocation(rssi_measurements);
         // Display
         console.log("Location: " + position);
         $("#phone").css("top", position[0]+"px");
         $("#phone").css("left", position[1]+"px");
     }
     else{
-        console.log("No active measurements")
+        console.log("No phone measurements found");
     }
 }
 
