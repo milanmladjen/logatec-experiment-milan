@@ -49,8 +49,8 @@ function displayBleLocation() {
         var position = ble_f.getLocation(rssi_measurements);
         // Display
         console.log("Location: " + position);
-        $("#phone").css("top", position[0]+"px");
-        $("#phone").css("left", position[1]+"px");
+        $("#phone").css("top", position[1]+"px");
+        $("#phone").css("left", position[2]+"px");
     }
     else{
         console.log("No phone measurements found");
@@ -455,7 +455,8 @@ $(document).ready(function(){
 
     // store a BLE measurement for localization into a RSSI Q
     socket.on("localization", function(msg){
-        console.log("Received BLE RSSI");
+        console.log(data);
+        console.log("Received RSSI "+ msg.data + " from " + msg.device);
         ble_q.putMeasurement(msg.device, msg.data);
     });
 
