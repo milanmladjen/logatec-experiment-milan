@@ -218,7 +218,7 @@ def ZMQ_thread(input_q):
                     "data" : msg[2]
                 }
 
-                socket.emit("localization", message, broadcast=True)
+                socketio.emit("localization", message, broadcast=True)
 
             # Received command response
             else:
