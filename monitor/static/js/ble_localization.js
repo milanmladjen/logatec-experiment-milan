@@ -50,7 +50,14 @@ var node_names = [
     "LGTC68",
     "LGTC69",
     "LGTC70",
-    "LGTC71"
+    "LGTC71",
+    
+    "LGTC81",
+    "LGTC82",
+    "LGTC83",
+    "LGTC84",
+    "LGTC85",
+    "LGTC86"
 ]
 
 
@@ -719,35 +726,43 @@ var position_measurements = [
 
 
 
-    var position_coordiantes =[
-        [1 , -220, -405],
-        [2 , -220, -395],
-        [3 , -220, -385],   // node 51
-        [4 , -220, -374],
-        [5 , -220, -363],
-        [6 , -220, -352],
-        [7 , -220, -341],
-        [8 , -220, -330],
-        [9 , -220, -319],
-        [10, -220, -308],
-        [11 , -220, -297],   // node 53
-        [12 , -220, -286],
-        [13 , -220, -275],
-        [14 , -220, -264],
-        [15 , -220, -253],
-        [16 , -220, -241],
-        [17 , -220, -230],
-        [18 , -220, -220],
-        [19 , -220, -210],   // node 55
-        [20 , -220, -200],
-        [21 , -220, -190],
-    ];
+// Zacnes pri zacetku smetnjaka in po 3 ploscice naprej (2 preskocis)
+var position_coordiantes =[
+    [1 , -220, -403],   // smetnjak zacetek
+    [2 , -220, -394],
+    [3 , -220, -385],   // node 51
+    [4 , -220, -376],
+    [5 , -220, -367],
+    [6 , -220, -358],
+    [7 , -220, -349],
+    [8 , -220, -340],
+    [9 , -220, -331],
+    [10, -220, -322],
+    [11, -220, -313],
+    [12, -220, -304],
+    [13, -220, -295],   // node 53
+    [14, -220, -286],
+    [15, -220, -277],
+    [16, -220, -268],
+    [17, -220, -259],
+    [18, -220, -250],
+    [19, -220, -241],
+    [20, -220, -232],
+    [21, -220, -223],
+    [22, -220, -214],
+    [23, -220, -205],
+    [24, -220, -196],   // node 55
+    [25, -220, -187],
+    [26, -220, -178],   // smetnjak sredina
+];
 
 export class ble_fingerprint {
 
     constructor() {
-        this.num_rx_nodes = 21;
-        this.num_positions = 21;
+        this.num_rx_nodes = 27;
+        this.num_positions = 26;
+
+        this.weight_rssi_threshold = -79;
 
         // Queue for las 5 locations with its weight
         this.q_len = 10;
@@ -767,11 +782,12 @@ export class ble_fingerprint {
 
         console.log(rssi);
 
+        // Calculate weight for incoming measurements
         for(let i=0; i<rssi.length; i++){
             if (rssi[i] != 0){
                 weight += 1;
-            
-                if (rssi[i] > -79){
+                // better measurements get higher weight)
+                if (rssi[i] > this.weight_rssi_threshold){
                     weight +=1;
                     console.log(rssi[i]);
                 }
