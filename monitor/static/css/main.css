@@ -181,22 +181,26 @@ ul.device_states {
 
 #node_3{
     top: -250px; 
-    left: 300px;
+    /*left: 300px;*/
+    left: 302px;
 }
 
 #node_4{
     top: -180px; 
-    left: 276px;
+    /*left: 276px;*/
+    left:278px;
 }
 
 #node_5{
     top: -250px; 
-    left: 340px;
+    /*left: 340px;*/
+    left:354px;
 }
 
 #node_6{
     top: -180px; 
-    left: 316px;
+    /*left: 316px;*/
+    left: 330px;
 }
 
 #node_7{
