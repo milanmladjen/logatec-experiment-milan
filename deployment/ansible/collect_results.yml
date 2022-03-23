@@ -10,11 +10,11 @@
 #
 #############################################################################################################
 
-- hosts: SRDB_template:&sna-lgtc-192-168-1
+- hosts: BLE:!offline
   remote_user: videk
   
   vars:
-    technology: master
+    technology: ble
 
   tasks:
     - name: Stop the container
@@ -55,7 +55,7 @@
   remote_user: videk
 
   vars:
-    technology: master
+    technology: ble
 
   tasks:
     - name: Stop controller and obtain logging file

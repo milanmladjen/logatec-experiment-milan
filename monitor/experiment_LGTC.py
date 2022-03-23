@@ -1,19 +1,16 @@
-
 #!/usr/bin/python3
-import threading
-from queue import Queue
 
+from queue import Queue
 import sys
-import os
 import logging
-import time
+import importlib
 
 from lib import zmq_client
 
-import BLE_experiment
 
-
+# -------------------------------------------------------------------------------------------
 # DEFINITIONS
+# -------------------------------------------------------------------------------------------
 LOG_LEVEL = logging.DEBUG
 
 #ROUTER_HOSTNAME = "tcp://192.168.2.191:5562"
@@ -45,7 +42,6 @@ class ECMS_client():
 
         self.__LGTC_STATE = "OFFLINE"
         self._UPTIME = 0
-
         
 
 
@@ -60,6 +56,9 @@ class ECMS_client():
         if self.client.wait_ack("SYNC", 10) is False:
             self.log.error("Couldn't synchronize with broker...")
             self.queuePut("0", "CONTROLLER_DIED")
+
+        # Workaround (poglej TODO na koncu)
+        experiment_thread.start()
 
         # ------------------------------------------------------------------------------------
         while True:
@@ -107,11 +106,14 @@ class ECMS_client():
                             break
 
                         elif msg == "START":
-                            print("Start")
-                            experiment_thread.start()
+                            self.updateState("RUNNING")
+                            self.log.debug("Start experiment thread")
+                            experiment_thread._is_app_running = True
 
                         elif msg == "STOP":
-                            experiment_thread.stop()
+                            self.updateState("STOPPED")
+                            experiment_thread._is_app_running = False
+                            self.log.debug("Stop experiment thread")
 
                         else:
                             # Forward it to the experiment
@@ -184,13 +186,11 @@ class ECMS_client():
 # ----------------------------------------------------------------------------------------
 # MAIN
 # ----------------------------------------------------------------------------------------
-if __name__ == "__main__":
-
-    
+if __name__ == "__main__":    
+        
     # ------------------------------------------------------------------------------------
     # EXPERIMENT CONFIG
     # ------------------------------------------------------------------------------------
-    # Device id should be given as argument at start of the scripT
     try:
         LGTC_ID = sys.argv[1]
         LGTC_ID = LGTC_ID.replace(" ", "")
@@ -202,46 +202,47 @@ if __name__ == "__main__":
     RESULTS_FILENAME += ("_" + LGTC_ID + ".txt")
     LOGGING_FILENAME += ("_" + LGTC_ID + ".log")
 
-    """
-    try:
-        APP_DIRECTORY = sys.argv[2]
-    except:
-        print("No application was given...aborting!")
-        sys.exit(1)
-
-    APP_NAME = APP_DIRECTORY[3:]
-
-    try:
-        APP_DUR = int(sys.argv[3])
-    except:
-        print("No app duration was defined...going with default 10 min")
-        APP_DUR = 10
-    """
-    
-
-
     # ------------------------------------------------------------------------------------
     # LOGGING CONFIG
     # ------------------------------------------------------------------------------------
-
     # Config logging module format for all scripts. Log level is defined in each submodule with var LOG_LEVEL.
     logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(module)26s > %(funcName)16s() > %(lineno)3s] - %(message)s", level=LOG_LEVEL, filename=LOGGING_FILENAME)
     #logging.basicConfig(format="[%(levelname)5s:%(funcName)16s() > %(module)17s] %(message)s", level=LOG_LEVEL)
 
-    #logging.info("Testing application " + APP_NAME + " for " + str(APP_DURATION) + " minutes on device " + LGTC_NAME + "!")
+    _log = logging.getLogger(__name__)
+    _log.setLevel(LOG_LEVEL)
+
+    try:
+        APP_DIR = sys.argv[2]
+        APP_NAME = sys.argv[3]
+    except:
+        _log.error("No application given. Aborting execution!")
+        sys.exit()
+
+    _log.info("Testing application " + APP_NAME + " on device " + LGTC_NAME + "!")
+
 
     # ------------------------------------------------------------------------------------
     # QUEUE CONFIG
     # ------------------------------------------------------------------------------------
-
     # Create 2 queue for communication between threads
     # Client -> Experiment
     C_E_QUEUE = Queue()
     # Experiment -> Clinet
     E_C_QUEUE = Queue()
 
+    # ------------------------------------------------------------------------------------
+    # EXPERIMENT THREAD
+    # ------------------------------------------------------------------------------------
+    # Import application thread during runtime and configure it (__init__)
+    try:
+        sys.path.append("../applications/" + APP_DIR)
+        module = importlib.import_module(APP_NAME, __name__)
+    except:
+        _log.error("No application found, aborting")
+        sys.exit(1)
 
-    experiment_thread = BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME, LGTC_NAME)
+    experiment_thread = module.BLE_experiment(C_E_QUEUE, E_C_QUEUE, RESULTS_FILENAME)
 
     # ------------------------------------------------------------------------------------
     # MAIN THREAD (ZMQ CLINET)
@@ -251,21 +252,17 @@ if __name__ == "__main__":
     client_thread = ECMS_client(E_C_QUEUE, C_E_QUEUE, LGTC_NAME, SUBSCR_HOSTNAME, ROUTER_HOSTNAME)
     client_thread.run()
 
-    # Ce pridemo sem, pomeni da se je client thread ustavil --> konec eksperimenta
-    # TODO clean stuff
 
     client_thread.clean()
 
     experiment_thread.stop()
-    experiment_thread.join()
+    try:
+        experiment_thread.join()
+        experiment_thread.clean()
+    except:
+        pass
 
-    logging.info("Dejanski konec")
-
-
-
-
-
-
+    _log.info("Exiting application!")
 
 
 # This thread is designed for communication with controller_broker script - forwarding commands
@@ -298,4 +295,7 @@ if __name__ == "__main__":
 # SQN
 # ACK
 
-
+# TODO:
+# Stvar je bla narjena kukr da bi sz ukazi START & STOP štartou in ustavu threade - česar pa sz Pythonom ne moreš.
+# Trenutn workaround: ECMS thread sam spreminja spremenljivko _is_app_running. V bodoče naredi rajši sz procesi in jih ustauljet ter reštartej po želji
+# TUdi stanja bi blu fanj posodabljat iz experiment_threada, ne pa it ECMS_threada
