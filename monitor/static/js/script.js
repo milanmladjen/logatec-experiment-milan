@@ -418,6 +418,20 @@ $(document).ready(function(){
         }
     });
 
+    socket.on("localization", function(msg){
+        console.log("Received info");
+
+        var formatted_msg = "[" + msg.device + "]: " + msg.data + "\n";
+
+        // Append text into textarea (don't delete old one)
+        $("#output_field").val( $("#output_field").val() + formatted_msg);
+
+        // Scroll to bottom
+        if(auto_scroll){
+            $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
+        }
+    });
+
     // --------------------------------------------------------------------------------------------------------
     // Buttons
     // --------------------------------------------------------------------------------------------------------

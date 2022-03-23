@@ -19,17 +19,38 @@ echo "Deploying $APP application on node $IPADDR with option: monitor"
 # ----------------------------------------------------------------------------------------------------------
 # Start the experiment application using monitor ECMS_client.
 # ----------------------------------------------------------------------------------------------------------
+# Start BT advertisment
+#hciconfig hci0 leadv3
+
+echo "Resetting BLE device"
+hciconfig hci0 reset
+hciconfig hci0 down
+hciconfig hci0 up
+hciconfig hci0 rstat
+hcitool -i hci0 cmd 0x03 0x0003
+echo "Done"
+
+# Start the ECMS_client with experiment application
+#sed -i 's/Debugging = False/Debugging = True/' /usr/local/lib/python3.8/dist-packages/bluepy/btle.py
 cd /root/logatec-experiment/monitor/
-python3 experiment_VESNA.py $IPADDR $APP_LOC $APP_DUR
+python3 experiment_LGTC.py $IPADDR $APP_LOC $APP_NAME
+
+
+
+#cd /root/logatec-experiment/applications/01_localization
+#python3 testna2.py $IPADDR
+
+
+
 
 # ----------------------------------------------------------------------------------------------------------
 # Move the measured data and logg files into results folder.
 # ---------------------------------------------------------------------------------------------------------
-mv *.txt /root/logatec-experiment/results/
 mv *.log /root/logatec-experiment/results/
+# Measurements will be moved by experiment application, so next line is obolete
+#mv *.txt /root/logatec-experiment/results/lts/
 
 # ----------------------------------------------------------------------------------------------------------
-# Cleanup (put Vesna to reset state so it doesn't interfeer with other networks).
+# Cleanup (stop BLE advertising)
 # ----------------------------------------------------------------------------------------------------------
-cd /root/logatec-experiment/deployment/tasks
-python3 vesna_reset.py 0
+#hciconfig hci0 noleadv

@@ -15,15 +15,15 @@
 #
 #############################################################################################################
 
-- hosts: SRDB_template:&sna-lgtc-192-168-1
+- hosts: BLE:!offline
   strategy: free
   remote_user: videk
 
   vars:
-    technology: master
-    application: 00_template
-    duration: 20
-    option: none
+    technology: ble
+    application: 01_localization
+    duration: 10
+    option: monitor
 
   tasks:
     - name: Create directory
@@ -39,7 +39,7 @@
         recursive: yes
   
     - name: Build the docker file
-      command: docker build -t logatec-experiment -f deployment/docker/Dockerfile . 
+      command: docker build -t logatec-experiment-ble -f deployment/docker/Dockerfile . 
       args:
         chdir: ~/deploy/logatec-experiment
   
@@ -51,5 +51,5 @@
         - docker rm target-{{ technology }}
   
     - name: Run docker container
-      command: docker run --name target-{{technology}} --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" logatec-experiment
+      command: docker run --name target-{{technology}} --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" logatec-experiment-ble
   

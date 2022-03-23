@@ -5,12 +5,16 @@ RUN set -ex \
     && apt-get update --fix-missing \
     && apt-get install -y 	nano \
                        		python3-pip \
+							bluetooth \
+							bluez \
+							bluez-tools \
+							libglib2.0-dev \
 	&& apt-get clean -y
 
 # Install Python3 libs
 RUN set -ex \
 	&& pip3 install 	pyzmq \
-						pyserial
+						bluepy
 
 # Prepare folder for experiment files
 RUN mkdir logatec-experiment

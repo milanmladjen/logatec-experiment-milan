@@ -16,8 +16,8 @@
   remote_user: videk
 
   vars:
-    technology: master
-    device_num: 21
+    technology: ble
+    device_num: 6
 
   tasks: 
     - name: Create directory
