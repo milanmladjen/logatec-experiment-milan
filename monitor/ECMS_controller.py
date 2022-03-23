@@ -287,6 +287,12 @@ if __name__ == "__main__":
                     broker.frontend_deviceUpdate(device, data)
                     log.info("New state of device %s: %s" % (device, data))
 
+                    if data == "OFFLINE":
+                        subscribers -= 1
+                        if subscribers == 0:
+                            log.info("All devices offline -> exiting!")
+                            break
+
                 # DEVICE INFO
                 elif msg_type == "INFO":
                     broker.frontend_info(device, data)
@@ -322,9 +328,6 @@ if __name__ == "__main__":
         logging.error(e.message)
     
     finally:
-
-        # Inform devices in backend that monitoring is over
-        broker.backend_send("SYS", "All", "EXIT")
 
         # Inform the frontend that experiment has stopped
         broker.frontend_send("EXP_STOP", "", "")
