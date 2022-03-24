@@ -36,7 +36,7 @@ var ble_q = new rssi_queue();
 var ble_f = new ble_fingerprint();
 
 // Period of location display (in ms)
-var BLE_INTERVAL = 500;
+var BLE_INTERVAL = 1000;
 
 function displayBleLocation() {
     //console.log("Displaying location.");

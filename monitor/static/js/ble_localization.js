@@ -946,6 +946,12 @@ export default class ble_localization {
 
 }
 
+const median = arr => {
+    let middle = Math.floor(arr.length / 2);
+      arr = [...arr].sort((a, b) => a - b);
+    return arr.length % 2 !== 0 ? arr[middle] : (arr[middle - 1] + arr[middle]) / 2;
+  };
+
 /**
  * Device list with their measurement queues & list of active devices.
  * 
@@ -1024,11 +1030,17 @@ export class rssi_queue {
             let items = this.queue[i]["data"].length;
             // Cycle through items (if there are any)
             if (items != 0){
+                
+                /*
                 for(let j=0; j<items; j++) {
                     avg += this.queue[i]["data"][j];
                 }
                 avg /= items;
                 m[i] = avg;
+                */
+               let medi = median(this.queue[i]["data"]);
+               m[i] = medi;
+
                 // Delete old measurements
                 if (del == true) this.queue[i]["data"] = [];
                 this.node_states[i] = 1;
@@ -1068,7 +1080,7 @@ export class ble_fingerprint {
         this.weight_rssi_threshold = -77;
 
         // Queue for las 5 locations with its weight
-        this.q_len = 10;
+        this.q_len = 15;
         this.location_q = [];
 
         // For LPF
@@ -1244,7 +1256,7 @@ export class ble_fingerprint {
 
         // ------------------ LP filter --------------------
 
-        let lp_index = (this.old_pos * 0.7) + (weighted_index * 0.3);
+        let lp_index = (this.old_pos * 0.5) + (weighted_index * 0.5);
 
         
         lp_index = Math.round(lp_index);
