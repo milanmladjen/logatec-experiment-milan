@@ -1,33 +1,763 @@
 
-var node_locations = [
-    [-235,265], // 1
-    [-165,265], // 2
-    [-235,353], // 3
-    [-165,353], // 4
-    [-235,441], // 5
-    [-165,441], // 6
-    [-135,175], // 7
-    //[-175,190], 
-    [-195,175], // 9
-    //[-235,190], 
-    [-255,173], // 11
-    //[-292,264], 
-    [-327,288], // 13
-    //[-310,330], 
-    [-333,360], // 15
-    [-337,408], // 16
-    //[-333,433], 
-    [-355,478], // 18
-    [-435,472], // 19
-    [-455,525], // 20
-    [-313,538], // 21
-    [-203,548], // 22
-    [-95 ,530], // 23
-    [-95 ,440], // 24
-    [-93 ,350], // 25
-    [-43 ,198], // 26
-    //[-140,490]
-];
+// 26 pozicij, 27 naprav
+var position_measurements = [ 
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-78,4.52]},
+        {node: "LGTC53", rssi: [-97.0,4.99]},
+        {node: "LGTC54", rssi: [-86,3.78]},
+        {node: "LGTC55", rssi: [-97,4.39]},
+        {node: "LGTC56", rssi: [-93,5.52]},
+        {node: "LGTC57", rssi: [-85,4.44]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-87.5,5.25]},
+        {node: "LGTC60", rssi: [-99,7.34]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-96,2.09]},
+        {node: "LGTC63", rssi: [-100.0,2.26]},
+        {node: "LGTC64", rssi: [0,0]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-100,3.99]},
+        {node: "LGTC67", rssi: [-97.0,3.72]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-86.5,3.22]},
+        {node: "LGTC70", rssi: [-83,3.98]},
+        {node: "LGTC71", rssi: [-94.0,3.8]},
+        {node: "LGTC81", rssi: [-87,5.06]},
+        {node: "LGTC82", rssi: [-78,4.8]},
+        {node: "LGTC83", rssi: [-93.0,5.2]},
+        {node: "LGTC84", rssi: [-90.0,5.01]},
+        {node: "LGTC85", rssi: [-95.0,3.08]},
+        {node: "LGTC86", rssi: [-96.0,3.25]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-74,4.04]},
+        {node: "LGTC53", rssi: [-95,4.72]},
+        {node: "LGTC54", rssi: [-88,4.38]},
+        {node: "LGTC55", rssi: [-97,4.05]},
+        {node: "LGTC56", rssi: [-96.0,3.82]},
+        {node: "LGTC57", rssi: [-84.0,5.38]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-90.0,5.68]},
+        {node: "LGTC60", rssi: [-98,3.25]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-97,3.3]},
+        {node: "LGTC63", rssi: [-99.5,3.07]},
+        {node: "LGTC64", rssi: [0,0]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-99.5,4.12]},
+        {node: "LGTC67", rssi: [-97,3.64]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-87,3.79]},
+        {node: "LGTC70", rssi: [-89,4.16]},
+        {node: "LGTC71", rssi: [-86.0,4.55]},
+        {node: "LGTC81", rssi: [-92.0,4.35]},
+        {node: "LGTC82", rssi: [-72.0,3.48]},
+        {node: "LGTC83", rssi: [-96,4.43]},
+        {node: "LGTC84", rssi: [-93,4.78]},
+        {node: "LGTC85", rssi: [-96,6.46]},
+        {node: "LGTC86", rssi: [-96.0,5.21]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-75,3.2]},
+        {node: "LGTC53", rssi: [-93.0,4.85]},
+        {node: "LGTC54", rssi: [-93.0,4.39]},
+        {node: "LGTC55", rssi: [-96,5.26]},
+        {node: "LGTC56", rssi: [-97,5.43]},
+        {node: "LGTC57", rssi: [-84,3.95]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-86,6.43]},
+        {node: "LGTC60", rssi: [-98,3.43]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-97.0,3.61]},
+        {node: "LGTC63", rssi: [-99.5,3.91]},
+        {node: "LGTC64", rssi: [0,0]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-100.0,6.36]},
+        {node: "LGTC67", rssi: [-95.0,4.27]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-89.0,5.06]},
+        {node: "LGTC70", rssi: [-91,4.51]},
+        {node: "LGTC71", rssi: [-88,4.26]},
+        {node: "LGTC81", rssi: [-96,5.18]},
+        {node: "LGTC82", rssi: [-73,3.76]},
+        {node: "LGTC83", rssi: [-90,5.1]},
+        {node: "LGTC84", rssi: [-89,5.5]},
+        {node: "LGTC85", rssi: [-96.0,3.93]},
+        {node: "LGTC86", rssi: [-96,4.19]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-74.0,3.37]},
+        {node: "LGTC53", rssi: [-91.0,4.97]},
+        {node: "LGTC54", rssi: [-91.0,3.82]},
+        {node: "LGTC55", rssi: [-94.0,5.23]},
+        {node: "LGTC56", rssi: [-94,4.32]},
+        {node: "LGTC57", rssi: [-91.0,4.9]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-90,4.72]},
+        {node: "LGTC60", rssi: [-103.0,4.79]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-97.0,3.63]},
+        {node: "LGTC63", rssi: [-98,2.9]},
+        {node: "LGTC64", rssi: [0,0]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-97.0,3.44]},
+        {node: "LGTC67", rssi: [-97,5.13]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-92.0,4.97]},
+        {node: "LGTC70", rssi: [-90.0,4.69]},
+        {node: "LGTC71", rssi: [-94,5.68]},
+        {node: "LGTC81", rssi: [-89,5.44]},
+        {node: "LGTC82", rssi: [-75.0,4.24]},
+        {node: "LGTC83", rssi: [-92.0,4.06]},
+        {node: "LGTC84", rssi: [-92,3.92]},
+        {node: "LGTC85", rssi: [-96,4.16]},
+        {node: "LGTC86", rssi: [-96,3.28]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-76,4.59]},
+        {node: "LGTC53", rssi: [-90,4.24]},
+        {node: "LGTC54", rssi: [-88,3.7]},
+        {node: "LGTC55", rssi: [-97.0,3.7]},
+        {node: "LGTC56", rssi: [-96,4.98]},
+        {node: "LGTC57", rssi: [-89,6.01]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-90.0,5.71]},
+        {node: "LGTC60", rssi: [-97.0,2.84]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-94,3.94]},
+        {node: "LGTC63", rssi: [-103,2.35]},
+        {node: "LGTC64", rssi: [0,0]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-97,2.79]},
+        {node: "LGTC67", rssi: [-93,3.91]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-90,3.75]},
+        {node: "LGTC70", rssi: [-87.0,3.75]},
+        {node: "LGTC71", rssi: [-94.0,3.95]},
+        {node: "LGTC81", rssi: [-88,4.88]},
+        {node: "LGTC82", rssi: [-73.0,4.02]},
+        {node: "LGTC83", rssi: [-93,4.31]},
+        {node: "LGTC84", rssi: [-89.0,5.49]},
+        {node: "LGTC85", rssi: [-97.0,4.35]},
+        {node: "LGTC86", rssi: [-95.0,3.46]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-80.0,3.79]},
+        {node: "LGTC53", rssi: [-90,5.9]},
+        {node: "LGTC54", rssi: [-88,5.74]},
+        {node: "LGTC55", rssi: [-97,3.72]},
+        {node: "LGTC56", rssi: [-96,4.02]},
+        {node: "LGTC57", rssi: [-95,3.9]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-93.5,4.48]},
+        {node: "LGTC60", rssi: [-100.5,2.88]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-96,5.41]},
+        {node: "LGTC63", rssi: [-100,3.13]},
+        {node: "LGTC64", rssi: [0,0]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-96.0,4.35]},
+        {node: "LGTC67", rssi: [-98.0,6.32]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-92,3.6]},
+        {node: "LGTC70", rssi: [-80.0,4.72]},
+        {node: "LGTC71", rssi: [-87.0,3.53]},
+        {node: "LGTC81", rssi: [-93.5,4.44]},
+        {node: "LGTC82", rssi: [-76,3.97]},
+        {node: "LGTC83", rssi: [-90,4.73]},
+        {node: "LGTC84", rssi: [-85.0,4.41]},
+        {node: "LGTC85", rssi: [-95,3.61]},
+        {node: "LGTC86", rssi: [-92,3.78]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-77.0,3.2]},
+        {node: "LGTC53", rssi: [-92,4.45]},
+        {node: "LGTC54", rssi: [-92.0,4.87]},
+        {node: "LGTC55", rssi: [-93,4.14]},
+        {node: "LGTC56", rssi: [-94,4.19]},
+        {node: "LGTC57", rssi: [-90,3.8]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-91.5,4.31]},
+        {node: "LGTC60", rssi: [-98,2.41]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-93.0,3.44]},
+        {node: "LGTC63", rssi: [-100,3.14]},
+        {node: "LGTC64", rssi: [0,0]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-96,3.35]},
+        {node: "LGTC67", rssi: [0,0]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-93.5,3.2]},
+        {node: "LGTC70", rssi: [-83,4.3]},
+        {node: "LGTC71", rssi: [-86.0,6.05]},
+        {node: "LGTC81", rssi: [-92.0,4.72]},
+        {node: "LGTC82", rssi: [-75.0,4.63]},
+        {node: "LGTC83", rssi: [-87,6.61]},
+        {node: "LGTC84", rssi: [-90,4.2]},
+        {node: "LGTC85", rssi: [-94.0,3.71]},
+        {node: "LGTC86", rssi: [-93.0,2.88]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-78.0,3.81]},
+        {node: "LGTC53", rssi: [-87,5.53]},
+        {node: "LGTC54", rssi: [-92.0,5.84]},
+        {node: "LGTC55", rssi: [-92.5,4.56]},
+        {node: "LGTC56", rssi: [-93.0,4.52]},
+        {node: "LGTC57", rssi: [-85.0,3.07]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-90,4.43]},
+        {node: "LGTC60", rssi: [-100,1.88]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-94,4.33]},
+        {node: "LGTC63", rssi: [-103,4.71]},
+        {node: "LGTC64", rssi: [0,0]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-97,3.21]},
+        {node: "LGTC67", rssi: [0,0]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-92,4.17]},
+        {node: "LGTC70", rssi: [-89,5.48]},
+        {node: "LGTC71", rssi: [-89.0,3.89]},
+        {node: "LGTC81", rssi: [-90.0,4.34]},
+        {node: "LGTC82", rssi: [-77.0,3.24]},
+        {node: "LGTC83", rssi: [-87,5.63]},
+        {node: "LGTC84", rssi: [-87,5.75]},
+        {node: "LGTC85", rssi: [-90.0,6.61]},
+        {node: "LGTC86", rssi: [-91.0,4.57]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-82.0,4.16]},
+        {node: "LGTC53", rssi: [-91,4.38]},
+        {node: "LGTC54", rssi: [-92,5.68]},
+        {node: "LGTC55", rssi: [-89.0,5.86]},
+        {node: "LGTC56", rssi: [-92,3.91]},
+        {node: "LGTC57", rssi: [-86,3.45]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-89.0,6.92]},
+        {node: "LGTC60", rssi: [-100.0,2.84]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-93.0,5.59]},
+        {node: "LGTC63", rssi: [-99,2.67]},
+        {node: "LGTC64", rssi: [-103,5.0]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-92.0,4.8]},
+        {node: "LGTC67", rssi: [0,0]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-91.0,3.69]},
+        {node: "LGTC70", rssi: [-83.0,4.12]},
+        {node: "LGTC71", rssi: [-90,3.26]},
+        {node: "LGTC81", rssi: [-92,5.11]},
+        {node: "LGTC82", rssi: [-81,6.04]},
+        {node: "LGTC83", rssi: [-84.5,5.61]},
+        {node: "LGTC84", rssi: [-87.0,4.85]},
+        {node: "LGTC85", rssi: [-89.5,4.47]},
+        {node: "LGTC86", rssi: [-93.0,4.92]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-85,4.2]},
+        {node: "LGTC53", rssi: [-88.0,5.0]},
+        {node: "LGTC54", rssi: [-87.0,4.49]},
+        {node: "LGTC55", rssi: [-94.0,4.61]},
+        {node: "LGTC56", rssi: [-92,5.61]},
+        {node: "LGTC57", rssi: [-89,4.08]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-94,4.18]},
+        {node: "LGTC60", rssi: [-98.0,2.63]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-94.0,3.02]},
+        {node: "LGTC63", rssi: [-98.0,2.68]},
+        {node: "LGTC64", rssi: [-3,3]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-97.0,3.41]},
+        {node: "LGTC67", rssi: [0,0]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-93,5.76]},
+        {node: "LGTC70", rssi: [-89.0,4.95]},
+        {node: "LGTC71", rssi: [-95,3.61]},
+        {node: "LGTC81", rssi: [-93,4.8]},
+        {node: "LGTC82", rssi: [-87,4.46]},
+        {node: "LGTC83", rssi: [-89,4.92]},
+        {node: "LGTC84", rssi: [-86,6.81]},
+        {node: "LGTC85", rssi: [-91.0,4.74]},
+        {node: "LGTC86", rssi: [-88.0,3.77]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-87.0,5.05]},
+        {node: "LGTC53", rssi: [-86.0,6.05]},
+        {node: "LGTC54", rssi: [-78.0,3.85]},
+        {node: "LGTC55", rssi: [-92.0,4.32]},
+        {node: "LGTC56", rssi: [-89,4.66]},
+        {node: "LGTC57", rssi: [-89,4.53]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-93.0,4.82]},
+        {node: "LGTC60", rssi: [-99.0,3.85]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-94,2.98]},
+        {node: "LGTC63", rssi: [-96.0,4.36]},
+        {node: "LGTC64", rssi: [0,0]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-96,4.15]},
+        {node: "LGTC67", rssi: [0,0]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-88,5.01]},
+        {node: "LGTC70", rssi: [-87,5.05]},
+        {node: "LGTC71", rssi: [-96.0,4.49]},
+        {node: "LGTC81", rssi: [-92,5.81]},
+        {node: "LGTC82", rssi: [-88,5.2]},
+        {node: "LGTC83", rssi: [-88,4.85]},
+        {node: "LGTC84", rssi: [-82.0,5.27]},
+        {node: "LGTC85", rssi: [-89,4.74]},
+        {node: "LGTC86", rssi: [-87.0,5.02]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-89,4.55]},
+        {node: "LGTC53", rssi: [-86,4.77]},
+        {node: "LGTC54", rssi: [-74.0,4.23]},
+        {node: "LGTC55", rssi: [-90,5.02]},
+        {node: "LGTC56", rssi: [-88,6.09]},
+        {node: "LGTC57", rssi: [-96.0,3.68]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-96,4.51]},
+        {node: "LGTC60", rssi: [-98.5,2.87]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-93,3.2]},
+        {node: "LGTC63", rssi: [-93,5.3]},
+        {node: "LGTC64", rssi: [-100,2.22]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-96,3.82]},
+        {node: "LGTC67", rssi: [0,0]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-85.0,5.93]},
+        {node: "LGTC70", rssi: [-83.0,4.37]},
+        {node: "LGTC71", rssi: [-97.0,4.67]},
+        {node: "LGTC81", rssi: [-92,5.24]},
+        {node: "LGTC82", rssi: [-94,3.85]},
+        {node: "LGTC83", rssi: [-88.0,4.73]},
+        {node: "LGTC84", rssi: [-76,4.26]},
+        {node: "LGTC85", rssi: [-89.0,6.69]},
+        {node: "LGTC86", rssi: [-88.0,6.76]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-90.0,5.57]},
+        {node: "LGTC53", rssi: [-84,5.52]},
+        {node: "LGTC54", rssi: [-80.0,5.35]},
+        {node: "LGTC55", rssi: [-92.0,5.72]},
+        {node: "LGTC56", rssi: [-90.0,3.87]},
+        {node: "LGTC57", rssi: [-93.0,2.94]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-92,4.53]},
+        {node: "LGTC60", rssi: [-97.5,2.48]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-93,3.48]},
+        {node: "LGTC63", rssi: [-97.0,3.6]},
+        {node: "LGTC64", rssi: [-100,2.7]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-95.0,3.73]},
+        {node: "LGTC67", rssi: [0,0]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-83.0,6.25]},
+        {node: "LGTC70", rssi: [-83.0,4.06]},
+        {node: "LGTC71", rssi: [-91.0,3.93]},
+        {node: "LGTC81", rssi: [-90,4.81]},
+        {node: "LGTC82", rssi: [-94.0,3.51]},
+        {node: "LGTC83", rssi: [-90.0,4.68]},
+        {node: "LGTC84", rssi: [-75,3.62]},
+        {node: "LGTC85", rssi: [-86.0,4.86]},
+        {node: "LGTC86", rssi: [-91,4.29]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-94,5.42]},
+        {node: "LGTC53", rssi: [-82.5,5.14]},
+        {node: "LGTC54", rssi: [-83.0,5.18]},
+        {node: "LGTC55", rssi: [-86,5.39]},
+        {node: "LGTC56", rssi: [-81,5.08]},
+        {node: "LGTC57", rssi: [-96,5.38]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-96.0,3.51]},
+        {node: "LGTC60", rssi: [-100,3.32]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-93,3.85]},
+        {node: "LGTC63", rssi: [-96.0,3.84]},
+        {node: "LGTC64", rssi: [-103,4.32]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-90.0,4.49]},
+        {node: "LGTC67", rssi: [-92.0,3.13]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-82.0,2.81]},
+        {node: "LGTC70", rssi: [-88.0,4.76]},
+        {node: "LGTC71", rssi: [-92.0,3.86]},
+        {node: "LGTC81", rssi: [-93,5.2]},
+        {node: "LGTC82", rssi: [-93,4.56]},
+        {node: "LGTC83", rssi: [-83.0,5.12]},
+        {node: "LGTC84", rssi: [-74.0,4.64]},
+        {node: "LGTC85", rssi: [-85,3.68]},
+        {node: "LGTC86", rssi: [-88,4.9]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-94,4.19]},
+        {node: "LGTC53", rssi: [-82,4.05]},
+        {node: "LGTC54", rssi: [-80,4.51]},
+        {node: "LGTC55", rssi: [-87.0,4.44]},
+        {node: "LGTC56", rssi: [-88.0,4.96]},
+        {node: "LGTC57", rssi: [-96,3.98]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-96,4.98]},
+        {node: "LGTC60", rssi: [-96.0,3.35]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-91,3.16]},
+        {node: "LGTC63", rssi: [-94.0,3.76]},
+        {node: "LGTC64", rssi: [-101.5,2.92]},
+        {node: "LGTC65", rssi: [-3,3]},
+        {node: "LGTC66", rssi: [-88.0,4.85]},
+        {node: "LGTC67", rssi: [-92.5,4.28]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-83,5.09]},
+        {node: "LGTC70", rssi: [-88.0,4.23]},
+        {node: "LGTC71", rssi: [-90.0,3.07]},
+        {node: "LGTC81", rssi: [-93.0,4.92]},
+        {node: "LGTC82", rssi: [-94,4.91]},
+        {node: "LGTC83", rssi: [-86.0,4.66]},
+        {node: "LGTC84", rssi: [-75.0,2.9]},
+        {node: "LGTC85", rssi: [-87.0,3.99]},
+        {node: "LGTC86", rssi: [-90.0,5.11]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-92,5.16]},
+        {node: "LGTC53", rssi: [-88,5.35]},
+        {node: "LGTC54", rssi: [-77,3.31]},
+        {node: "LGTC55", rssi: [-90,4.08]},
+        {node: "LGTC56", rssi: [-84.0,2.76]},
+        {node: "LGTC57", rssi: [-97,3.56]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-97,4.2]},
+        {node: "LGTC60", rssi: [-100,2.32]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-94.5,3.05]},
+        {node: "LGTC63", rssi: [-97,4.82]},
+        {node: "LGTC64", rssi: [0,0]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-96,3.21]},
+        {node: "LGTC67", rssi: [-91,3.84]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-82.0,3.23]},
+        {node: "LGTC70", rssi: [-82,4.56]},
+        {node: "LGTC71", rssi: [-93,4.47]},
+        {node: "LGTC81", rssi: [-94.5,4.94]},
+        {node: "LGTC82", rssi: [-93,3.57]},
+        {node: "LGTC83", rssi: [-88,4.95]},
+        {node: "LGTC84", rssi: [-76,3.8]},
+        {node: "LGTC85", rssi: [-92.0,4.28]},
+        {node: "LGTC86", rssi: [-90,4.63]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-91.0,4.32]},
+        {node: "LGTC53", rssi: [-87,5.02]},
+        {node: "LGTC54", rssi: [-78.0,4.0]},
+        {node: "LGTC55", rssi: [-87.0,5.67]},
+        {node: "LGTC56", rssi: [-84.0,3.82]},
+        {node: "LGTC57", rssi: [-96.0,3.08]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-94.0,3.51]},
+        {node: "LGTC60", rssi: [-97,2.79]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-92.0,4.85]},
+        {node: "LGTC63", rssi: [-92.5,5.29]},
+        {node: "LGTC64", rssi: [-99,3.13]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-96,3.94]},
+        {node: "LGTC67", rssi: [-93,4.9]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-85,3.29]},
+        {node: "LGTC70", rssi: [-80.0,4.4]},
+        {node: "LGTC71", rssi: [-96.0,3.71]},
+        {node: "LGTC81", rssi: [-91.0,5.68]},
+        {node: "LGTC82", rssi: [-89.5,4.58]},
+        {node: "LGTC83", rssi: [-91.0,4.59]},
+        {node: "LGTC84", rssi: [-76.0,3.98]},
+        {node: "LGTC85", rssi: [-90.0,5.61]},
+        {node: "LGTC86", rssi: [-88.0,5.3]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-89.0,5.95]},
+        {node: "LGTC53", rssi: [-88.0,6.08]},
+        {node: "LGTC54", rssi: [-77.0,5.51]},
+        {node: "LGTC55", rssi: [-86,4.77]},
+        {node: "LGTC56", rssi: [-82,5.43]},
+        {node: "LGTC57", rssi: [-93,4.66]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-95.5,4.48]},
+        {node: "LGTC60", rssi: [-100.0,4.19]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-93,4.15]},
+        {node: "LGTC63", rssi: [-93,4.18]},
+        {node: "LGTC64", rssi: [-103,3.38]},
+        {node: "LGTC65", rssi: [-3,3]},
+        {node: "LGTC66", rssi: [-94,6.58]},
+        {node: "LGTC67", rssi: [-91,4.81]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-89.0,5.94]},
+        {node: "LGTC70", rssi: [-83,6.58]},
+        {node: "LGTC71", rssi: [-93.0,3.52]},
+        {node: "LGTC81", rssi: [-94,4.45]},
+        {node: "LGTC82", rssi: [-90,4.85]},
+        {node: "LGTC83", rssi: [-92,4.1]},
+        {node: "LGTC84", rssi: [-81,5.2]},
+        {node: "LGTC85", rssi: [-91,5.39]},
+        {node: "LGTC86", rssi: [-89.0,5.3]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-93.0,3.51]},
+        {node: "LGTC53", rssi: [-88,5.46]},
+        {node: "LGTC54", rssi: [-79.0,4.67]},
+        {node: "LGTC55", rssi: [-89,5.6]},
+        {node: "LGTC56", rssi: [-87.0,4.81]},
+        {node: "LGTC57", rssi: [-94,3.52]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-95,3.9]},
+        {node: "LGTC60", rssi: [-96.5,4.34]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-93,3.53]},
+        {node: "LGTC63", rssi: [-94.0,4.41]},
+        {node: "LGTC64", rssi: [-103.0,2.22]},
+        {node: "LGTC65", rssi: [0,0]},
+        {node: "LGTC66", rssi: [-96.0,4.26]},
+        {node: "LGTC67", rssi: [-91.5,4.19]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-88,5.45]},
+        {node: "LGTC70", rssi: [-92,3.88]},
+        {node: "LGTC71", rssi: [-96.0,5.05]},
+        {node: "LGTC81", rssi: [-96,4.55]},
+        {node: "LGTC82", rssi: [-93.0,4.88]},
+        {node: "LGTC83", rssi: [-91.0,3.91]},
+        {node: "LGTC84", rssi: [-79,4.49]},
+        {node: "LGTC85", rssi: [-90,4.94]},
+        {node: "LGTC86", rssi: [-85.0,5.0]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-93.0,3.86]},
+        {node: "LGTC53", rssi: [-89.0,4.75]},
+        {node: "LGTC54", rssi: [-86,5.57]},
+        {node: "LGTC55", rssi: [-91.0,4.87]},
+        {node: "LGTC56", rssi: [-83.5,5.96]},
+        {node: "LGTC57", rssi: [-94.0,4.6]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-93,3.81]},
+        {node: "LGTC60", rssi: [-99,1.73]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-92.0,4.2]},
+        {node: "LGTC63", rssi: [-96.0,4.55]},
+        {node: "LGTC64", rssi: [-100.0,2.64]},
+        {node: "LGTC65", rssi: [-103.0,0.0]},
+        {node: "LGTC66", rssi: [-92,4.29]},
+        {node: "LGTC67", rssi: [-92.0,5.19]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-86,5.24]},
+        {node: "LGTC70", rssi: [-87,5.77]},
+        {node: "LGTC71", rssi: [-99,2.82]},
+        {node: "LGTC81", rssi: [-93,4.37]},
+        {node: "LGTC82", rssi: [-96,3.09]},
+        {node: "LGTC83", rssi: [-92.0,4.69]},
+        {node: "LGTC84", rssi: [-90.0,4.39]},
+        {node: "LGTC85", rssi: [-85,5.22]},
+        {node: "LGTC86", rssi: [-84.0,5.32]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-92.5,4.08]},
+        {node: "LGTC53", rssi: [-85,5.25]},
+        {node: "LGTC54", rssi: [-80.0,4.19]},
+        {node: "LGTC55", rssi: [-86,4.49]},
+        {node: "LGTC56", rssi: [-86.0,5.18]},
+        {node: "LGTC57", rssi: [-93.0,3.99]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-94.0,4.62]},
+        {node: "LGTC60", rssi: [-96,2.38]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-89.0,3.68]},
+        {node: "LGTC63", rssi: [-93,5.7]},
+        {node: "LGTC64", rssi: [-100,4.52]},
+        {node: "LGTC65", rssi: [-100,2.87]},
+        {node: "LGTC66", rssi: [-90.0,5.39]},
+        {node: "LGTC67", rssi: [-96.0,5.2]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-86.0,4.46]},
+        {node: "LGTC70", rssi: [-89,5.9]},
+        {node: "LGTC71", rssi: [-93,2.86]},
+        {node: "LGTC81", rssi: [-93.0,4.19]},
+        {node: "LGTC82", rssi: [-97.0,3.33]},
+        {node: "LGTC83", rssi: [-86.0,5.51]},
+        {node: "LGTC84", rssi: [-90.0,4.23]},
+        {node: "LGTC85", rssi: [-82.0,2.75]},
+        {node: "LGTC86", rssi: [-88,6.74]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-94.0,4.54]},
+        {node: "LGTC53", rssi: [-84,4.03]},
+        {node: "LGTC54", rssi: [-81,4.2]},
+        {node: "LGTC55", rssi: [-87,5.01]},
+        {node: "LGTC56", rssi: [-79.0,3.69]},
+        {node: "LGTC57", rssi: [-94.0,3.99]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-92.0,4.0]},
+        {node: "LGTC60", rssi: [-98.0,3.05]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-89.0,3.95]},
+        {node: "LGTC63", rssi: [-94.0,4.58]},
+        {node: "LGTC64", rssi: [-102.5,2.5]},
+        {node: "LGTC65", rssi: [-103.0,4.45]},
+        {node: "LGTC66", rssi: [-93,4.77]},
+        {node: "LGTC67", rssi: [-93,4.22]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-83,3.69]},
+        {node: "LGTC70", rssi: [-87,3.34]},
+        {node: "LGTC71", rssi: [-93,2.69]},
+        {node: "LGTC81", rssi: [-94.0,3.38]},
+        {node: "LGTC82", rssi: [-96,4.02]},
+        {node: "LGTC83", rssi: [-90,5.5]},
+        {node: "LGTC84", rssi: [-84,5.29]},
+        {node: "LGTC85", rssi: [-81.0,4.2]},
+        {node: "LGTC86", rssi: [-81.0,4.26]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-92.5,3.09]},
+        {node: "LGTC53", rssi: [-85,5.45]},
+        {node: "LGTC54", rssi: [-81.0,4.85]},
+        {node: "LGTC55", rssi: [-90,5.84]},
+        {node: "LGTC56", rssi: [-74.0,5.27]},
+        {node: "LGTC57", rssi: [-93.0,3.91]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-94.0,3.98]},
+        {node: "LGTC60", rssi: [-3,3]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-90,4.74]},
+        {node: "LGTC63", rssi: [-92.0,4.66]},
+        {node: "LGTC64", rssi: [-103,2.51]},
+        {node: "LGTC65", rssi: [-100.0,6.47]},
+        {node: "LGTC66", rssi: [-91.0,4.56]},
+        {node: "LGTC67", rssi: [-93.0,5.82]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-84,3.51]},
+        {node: "LGTC70", rssi: [-87.5,4.82]},
+        {node: "LGTC71", rssi: [-96.0,6.37]},
+        {node: "LGTC81", rssi: [-95.0,3.75]},
+        {node: "LGTC82", rssi: [-99.0,3.69]},
+        {node: "LGTC83", rssi: [-89.0,4.25]},
+        {node: "LGTC84", rssi: [-87,4.6]},
+        {node: "LGTC85", rssi: [-82.0,5.99]},
+        {node: "LGTC86", rssi: [-79.0,5.24]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-91.0,4.01]},
+        {node: "LGTC53", rssi: [-87.0,5.22]},
+        {node: "LGTC54", rssi: [-83.0,4.59]},
+        {node: "LGTC55", rssi: [-90,5.57]},
+        {node: "LGTC56", rssi: [-76.0,3.89]},
+        {node: "LGTC57", rssi: [-96,4.19]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-94,4.23]},
+        {node: "LGTC60", rssi: [-97.0,2.82]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-89,4.75]},
+        {node: "LGTC63", rssi: [-93,4.91]},
+        {node: "LGTC64", rssi: [-100,2.09]},
+        {node: "LGTC65", rssi: [-103.0,5.36]},
+        {node: "LGTC66", rssi: [-93,4.7]},
+        {node: "LGTC67", rssi: [-92,4.88]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-85.0,5.99]},
+        {node: "LGTC70", rssi: [-87.0,4.16]},
+        {node: "LGTC71", rssi: [-92.0,3.12]},
+        {node: "LGTC81", rssi: [-92.0,4.34]},
+        {node: "LGTC82", rssi: [-97,2.42]},
+        {node: "LGTC83", rssi: [-92,4.32]},
+        {node: "LGTC84", rssi: [-92.0,4.78]},
+        {node: "LGTC85", rssi: [-87,4.38]},
+        {node: "LGTC86", rssi: [-79.0,4.36]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-96.0,4.09]},
+        {node: "LGTC53", rssi: [-85.0,3.45]},
+        {node: "LGTC54", rssi: [-87.0,4.47]},
+        {node: "LGTC55", rssi: [-90,5.29]},
+        {node: "LGTC56", rssi: [-77.0,4.72]},
+        {node: "LGTC57", rssi: [-97,3.5]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-91,5.02]},
+        {node: "LGTC60", rssi: [-97.0,1.55]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-91,5.6]},
+        {node: "LGTC63", rssi: [-94,4.59]},
+        {node: "LGTC64", rssi: [-106,2.99]},
+        {node: "LGTC65", rssi: [-97,4.33]},
+        {node: "LGTC66", rssi: [-92,4.78]},
+        {node: "LGTC67", rssi: [-93.0,5.03]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-89.0,5.09]},
+        {node: "LGTC70", rssi: [-86,4.34]},
+        {node: "LGTC71", rssi: [-93,5.14]},
+        {node: "LGTC81", rssi: [-95.0,5.27]},
+        {node: "LGTC82", rssi: [-100.0,2.92]},
+        {node: "LGTC83", rssi: [-88.0,4.48]},
+        {node: "LGTC84", rssi: [-90,4.52]},
+        {node: "LGTC85", rssi: [-81.0,3.3]},
+        {node: "LGTC86", rssi: [-83.0,6.17]},
+    ],
+    [
+        {node: "LGTC51", rssi: [0,0]},
+        {node: "LGTC52", rssi: [-93,3.62]},
+        {node: "LGTC53", rssi: [-89.0,5.98]},
+        {node: "LGTC54", rssi: [-86,3.98]},
+        {node: "LGTC55", rssi: [-87,4.89]},
+        {node: "LGTC56", rssi: [-75.0,4.65]},
+        {node: "LGTC57", rssi: [-97,3.9]},
+        {node: "LGTC58", rssi: [0,0]},
+        {node: "LGTC59", rssi: [-96.0,4.46]},
+        {node: "LGTC60", rssi: [-97.0,3.33]},
+        {node: "LGTC61", rssi: [0,0]},
+        {node: "LGTC62", rssi: [-89.0,4.8]},
+        {node: "LGTC63", rssi: [-95,4.88]},
+        {node: "LGTC64", rssi: [-99,2.99]},
+        {node: "LGTC65", rssi: [-100.0,5.24]},
+        {node: "LGTC66", rssi: [-91.0,5.39]},
+        {node: "LGTC67", rssi: [-92.0,5.15]},
+        {node: "LGTC68", rssi: [0,0]},
+        {node: "LGTC69", rssi: [-86,3.92]},
+        {node: "LGTC70", rssi: [-84.0,3.73]},
+        {node: "LGTC71", rssi: [-95.0,3.17]},
+        {node: "LGTC81", rssi: [-94,4.2]},
+        {node: "LGTC82", rssi: [-95.0,4.76]},
+        {node: "LGTC83", rssi: [-94.0,3.76]},
+        {node: "LGTC84", rssi: [-91.0,4.89]},
+        {node: "LGTC85", rssi: [-91.0,4.71]},
+        {node: "LGTC86", rssi: [-72,2.96]},
+    ],
+    ];
+
+
 
 var node_names = [
     "LGTC51",
@@ -60,7 +790,97 @@ var node_names = [
     "LGTC86"
 ]
 
+// Zacnes pri zacetku smetnjaka in po 3 ploscice naprej (2 preskocis)
+var position_coordiantes =[
+    [1 , -220, -403],   // smetnjak zacetek
+    [2 , -220, -394],
+    [3 , -220, -385],   // node 51
+    [4 , -220, -376],
+    [5 , -220, -367],
+    [6 , -220, -358],
+    [7 , -220, -349],
+    [8 , -220, -340],
+    [9 , -220, -331],
+    [10, -220, -322],
+    [11, -220, -313],
+    [12, -220, -304],
+    [13, -220, -295],   // node 53
+    [14, -220, -286],
+    [15, -220, -277],
+    [16, -220, -268],
+    [17, -220, -259],
+    [18, -220, -250],
+    [19, -220, -241],
+    [20, -220, -232],
+    [21, -220, -223],
+    [22, -220, -214],
+    [23, -220, -205],
+    [24, -220, -196],   // node 55
+    [25, -220, -187],
+    [26, -220, -178],   // smetnjak sredina
+];
 
+var enabled_devices = [
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1,
+
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+];
+
+
+var node_locations = [
+    [-235,265], // 1
+    [-165,265], // 2
+    [-235,353], // 3
+    [-165,353], // 4
+    [-235,441], // 5
+    [-165,441], // 6
+    [-135,175], // 7
+    //[-175,190], 
+    [-195,175], // 9
+    //[-235,190], 
+    [-255,173], // 11
+    //[-292,264], 
+    [-327,288], // 13
+    //[-310,330], 
+    [-333,360], // 15
+    [-337,408], // 16
+    //[-333,433], 
+    [-355,478], // 18
+    [-435,472], // 19
+    [-455,525], // 20
+    [-313,538], // 21
+    [-203,548], // 22
+    [-95 ,530], // 23
+    [-95 ,440], // 24
+    [-93 ,350], // 25
+    [-43 ,198], // 26
+    //[-140,490]
+];
 /**
  * Math
  */
@@ -235,527 +1055,213 @@ export class rssi_queue {
 }
 
 
-// 21 pozicij 
-var position_measurements = [ 
-    [
-        {node: "LGTC51", rssi: [-95.1,-83.9]},
-        {node: "LGTC52", rssi: [-89.5,-78.5]},
-        {node: "LGTC53", rssi: [-101.2,-90.8]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-100.0,-92.0]},
-        {node: "LGTC56", rssi: [-100.2,-91.8]},
-        {node: "LGTC57", rssi: [-93.4,-82.6]},
-        {node: "LGTC58", rssi: [-96.3,-83.7]},
-        {node: "LGTC59", rssi: [-90.5,-79.5]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-98.7,-90.3]},
-        {node: "LGTC63", rssi: [-103.6,-95.4]},
-        {node: "LGTC64", rssi: [0,0]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-99.9,-92.1]},
-        {node: "LGTC67", rssi: [-100.7,-93.3]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [-93.8,-84.2]},
-        {node: "LGTC70", rssi: [-94.1,-85.9]},
-        {node: "LGTC71", rssi: [-101.7,-92.3]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-94.8,-81.2]},
-        {node: "LGTC52", rssi: [-90.1,-77.9]},
-        {node: "LGTC53", rssi: [-102.4,-89.6]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-100.6,-91.4]},
-        {node: "LGTC56", rssi: [-100.5,-91.5]},
-        {node: "LGTC57", rssi: [-94.2,-81.8]},
-        {node: "LGTC58", rssi: [-91.9,-82.1]},
-        {node: "LGTC59", rssi: [-90.9,-80.1]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-101.9,-92.1]},
-        {node: "LGTC63", rssi: [-104.4,-95.6]},
-        {node: "LGTC64", rssi: [0,0]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-97.8,-88.2]},
-        {node: "LGTC67", rssi: [-98.8,-89.2]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [-97.7,-88.3]},
-        {node: "LGTC70", rssi: [-94.5,-85.5]},
-        {node: "LGTC71", rssi: [-99.2,-91.8]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-94.5,-83.5]},
-        {node: "LGTC52", rssi: [-89.3,-76.7]},
-        {node: "LGTC53", rssi: [-101.5,-90.5]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-100.7,-91.3]},
-        {node: "LGTC56", rssi: [-100.1,-91.9]},
-        {node: "LGTC57", rssi: [-96.0,-86.0]},
-        {node: "LGTC58", rssi: [-94.9,-85.1]},
-        {node: "LGTC59", rssi: [-90.3,-77.7]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-99.6,-92.4]},
-        {node: "LGTC63", rssi: [-99.9,-92.1]},
-        {node: "LGTC64", rssi: [0,0]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-100.0,-94.0]},
-        {node: "LGTC67", rssi: [-100.1,-93.9]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [-96.9,-89.1]},
-        {node: "LGTC70", rssi: [-95.0,-85.0]},
-        {node: "LGTC71", rssi: [-97.4,-86.6]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-93.8,-80.2]},
-        {node: "LGTC52", rssi: [-87.3,-76.7]},
-        {node: "LGTC53", rssi: [-98.3,-87.7]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-101.1,-90.9]},
-        {node: "LGTC56", rssi: [-98.7,-91.3]},
-        {node: "LGTC57", rssi: [-97.5,-86.5]},
-        {node: "LGTC58", rssi: [-97.9,-86.1]},
-        {node: "LGTC59", rssi: [-94.3,-81.7]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-99.5,-92.5]},
-        {node: "LGTC63", rssi: [-106.6,-99.4]},
-        {node: "LGTC64", rssi: [0,0]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-103.5,-96.5]},
-        {node: "LGTC67", rssi: [-99.8,-92.2]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [-98.0,-88.0]},
-        {node: "LGTC70", rssi: [-96.6,-87.4]},
-        {node: "LGTC71", rssi: [-100.6,-89.4]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-92.4,-81.6]},
-        {node: "LGTC52", rssi: [-86.6,-73.4]},
-        {node: "LGTC53", rssi: [-96.1,-87.9]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-98.1,-87.9]},
-        {node: "LGTC56", rssi: [-98.5,-87.5]},
-        {node: "LGTC57", rssi: [-100.4,-91.6]},
-        {node: "LGTC58", rssi: [-99.5,-84.5]},
-        {node: "LGTC59", rssi: [-97.2,-86.8]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-100.4,-91.6]},
-        {node: "LGTC63", rssi: [-104.3,-95.7]},
-        {node: "LGTC64", rssi: [0,0]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-100.3,-91.7]},
-        {node: "LGTC67", rssi: [-101.5,-90.5]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [-95.8,-88.2]},
-        {node: "LGTC70", rssi: [-92.9,-83.1]},
-        {node: "LGTC71", rssi: [-95.5,-84.5]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-89.2,-78.8]},
-        {node: "LGTC52", rssi: [-89.5,-76.5]},
-        {node: "LGTC53", rssi: [-95.3,-84.7]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-99.0,-89.0]},
-        {node: "LGTC56", rssi: [-99.8,-86.2]},
-        {node: "LGTC57", rssi: [-103.1,-92.9]},
-        {node: "LGTC58", rssi: [-98.4,-87.6]},
-        {node: "LGTC59", rssi: [-96.3,-85.7]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-99.0,-91.0]},
-        {node: "LGTC63", rssi: [-105.7,-98.3]},
-        {node: "LGTC64", rssi: [0,0]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-101.1,-92.9]},
-        {node: "LGTC67", rssi: [-98.2,-87.8]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [-96.1,-87.9]},
-        {node: "LGTC70", rssi: [-92.0,-82.0]},
-        {node: "LGTC71", rssi: [-93.3,-82.7]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-97.9,-88.1]},
-        {node: "LGTC52", rssi: [-89.0,-80.0]},
-        {node: "LGTC53", rssi: [-95.0,-83.0]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-100.4,-91.6]},
-        {node: "LGTC56", rssi: [-96.9,-87.1]},
-        {node: "LGTC57", rssi: [-96.8,-89.2]},
-        {node: "LGTC58", rssi: [-97.3,-86.7]},
-        {node: "LGTC59", rssi: [-97.2,-86.8]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-97.8,-88.2]},
-        {node: "LGTC63", rssi: [-104.0,-96.0]},
-        {node: "LGTC64", rssi: [0,0]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-100.3,-91.7]},
-        {node: "LGTC67", rssi: [-97.2,-88.8]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [-96.6,-89.4]},
-        {node: "LGTC70", rssi: [-96.5,-86.5]},
-        {node: "LGTC71", rssi: [-96.2,-87.8]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-99.4,-86.6]},
-        {node: "LGTC52", rssi: [-90.5,-81.5]},
-        {node: "LGTC53", rssi: [-95.5,-84.5]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-97.1,-84.9]},
-        {node: "LGTC56", rssi: [-97.7,-86.3]},
-        {node: "LGTC57", rssi: [-100.4,-91.6]},
-        {node: "LGTC58", rssi: [-97.8,-86.2]},
-        {node: "LGTC59", rssi: [-98.0,-88.0]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-98.5,-91.5]},
-        {node: "LGTC63", rssi: [-101.7,-94.3]},
-        {node: "LGTC64", rssi: [0,0]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-99.5,-90.5]},
-        {node: "LGTC67", rssi: [-99.6,-86.4]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [-97.4,-88.6]},
-        {node: "LGTC70", rssi: [-93.2,-80.8]},
-        {node: "LGTC71", rssi: [-96.7,-84.3]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-97.0,-87.0]},
-        {node: "LGTC52", rssi: [-98.5,-85.5]},
-        {node: "LGTC53", rssi: [-95.1,-84.9]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-96.3,-83.7]},
-        {node: "LGTC56", rssi: [-94.0,-86.0]},
-        {node: "LGTC57", rssi: [-101.4,-92.6]},
-        {node: "LGTC58", rssi: [-97.4,-86.6]},
-        {node: "LGTC59", rssi: [-98.8,-89.2]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-98.4,-89.6]},
-        {node: "LGTC63", rssi: [-104.5,-95.5]},
-        {node: "LGTC64", rssi: [0,0]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-98.6,-91.4]},
-        {node: "LGTC67", rssi: [-97.2,-88.8]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [-89.7,-80.3]},
-        {node: "LGTC70", rssi: [-93.7,-84.3]},
-        {node: "LGTC71", rssi: [-100.1,-91.9]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-97.1,-86.9]},
-        {node: "LGTC52", rssi: [-96.8,-87.2]},
-        {node: "LGTC53", rssi: [-92.9,-79.1]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-97.3,-88.7]},
-        {node: "LGTC56", rssi: [-95.4,-84.6]},
-        {node: "LGTC57", rssi: [-101.0,-92.0]},
-        {node: "LGTC58", rssi: [-97.9,-88.1]},
-        {node: "LGTC59", rssi: [-99.2,-90.8]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-98.0,-90.0]},
-        {node: "LGTC63", rssi: [-103.4,-90.6]},
-        {node: "LGTC64", rssi: [0,0]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-97.1,-86.9]},
-        {node: "LGTC67", rssi: [-95.7,-86.3]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [-91.9,-78.1]},
-        {node: "LGTC70", rssi: [-90.6,-79.4]},
-        {node: "LGTC71", rssi: [-99.7,-92.3]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-93.3,-84.7]},
-        {node: "LGTC52", rssi: [-96.1,-85.9]},
-        {node: "LGTC53", rssi: [-94.2,-83.8]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-96.5,-87.5]},
-        {node: "LGTC56", rssi: [-95.4,-85.6]},
-        {node: "LGTC57", rssi: [-100.4,-93.6]},
-        {node: "LGTC58", rssi: [-97.7,-86.3]},
-        {node: "LGTC59", rssi: [-97.8,-88.2]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-98.9,-91.1]},
-        {node: "LGTC63", rssi: [-98.1,-92.9]},
-        {node: "LGTC64", rssi: [-113,-100]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-99.1,-92.9]},
-        {node: "LGTC67", rssi: [-96.2,-87.8]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [-90.8,-81.2]},
-        {node: "LGTC70", rssi: [-92.2,-81.8]},
-        {node: "LGTC71", rssi: [-100.4,-91.6]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-96.7,-85.3]},
-        {node: "LGTC52", rssi: [-97.6,-86.4]},
-        {node: "LGTC53", rssi: [-88.0,-78.0]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-94.8,-85.2]},
-        {node: "LGTC56", rssi: [-89.2,-78.8]},
-        {node: "LGTC57", rssi: [-100.2,-91.8]},
-        {node: "LGTC58", rssi: [-99.8,-90.2]},
-        {node: "LGTC59", rssi: [-101.0,-93.0]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-97.6,-90.4]},
-        {node: "LGTC63", rssi: [-97.9,-90.1]},
-        {node: "LGTC64", rssi: [-102.4,-98.6]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-96.5,-89.5]},
-        {node: "LGTC67", rssi: [-98.7,-87.3]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [0,0]},
-        {node: "LGTC70", rssi: [-96.1,-87.9]},
-        {node: "LGTC71", rssi: [-97.7,-90.3]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-99.2,-88.8]},
-        {node: "LGTC52", rssi: [-98.6,-87.4]},
-        {node: "LGTC53", rssi: [-85.4,-76.6]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-93.5,-80.5]},
-        {node: "LGTC56", rssi: [-96.0,-84.0]},
-        {node: "LGTC57", rssi: [-99.9,-92.1]},
-        {node: "LGTC58", rssi: [-101.9,-92.1]},
-        {node: "LGTC59", rssi: [-100.0,-92.0]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-97.7,-88.3]},
-        {node: "LGTC63", rssi: [-100.5,-91.5]},
-        {node: "LGTC64", rssi: [-103.5,-96.5]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-100.1,-89.9]},
-        {node: "LGTC67", rssi: [-95.8,-86.2]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [0,0]},
-        {node: "LGTC70", rssi: [-93.7,-80.3]},
-        {node: "LGTC71", rssi: [-98.7,-91.3]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-98.8,-89.2]},
-        {node: "LGTC52", rssi: [-98.6,-89.4]},
-        {node: "LGTC53", rssi: [-90.1,-79.9]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-96.3,-83.7]},
-        {node: "LGTC56", rssi: [-89.8,-80.2]},
-        {node: "LGTC57", rssi: [-99.8,-92.2]},
-        {node: "LGTC58", rssi: [-101.4,-92.6]},
-        {node: "LGTC59", rssi: [-97.2,-89.8]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-96.4,-89.6]},
-        {node: "LGTC63", rssi: [-102.0,-90.0]},
-        {node: "LGTC64", rssi: [-105,-99]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-98.8,-91.2]},
-        {node: "LGTC67", rssi: [-97.1,-86.9]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [0,0]},
-        {node: "LGTC70", rssi: [-88.5,-77.5]},
-        {node: "LGTC71", rssi: [-101.2,-92.8]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-97.3,-86.7]},
-        {node: "LGTC52", rssi: [-100.0,-92.0]},
-        {node: "LGTC53", rssi: [-98.6,-87.4]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-92.9,-81.1]},
-        {node: "LGTC56", rssi: [-91.5,-80.5]},
-        {node: "LGTC57", rssi: [-99.8,-92.2]},
-        {node: "LGTC58", rssi: [-99.0,-89.0]},
-        {node: "LGTC59", rssi: [-100.1,-91.9]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-97.4,-88.6]},
-        {node: "LGTC63", rssi: [-100.0,-92.0]},
-        {node: "LGTC64", rssi: [-106.9,-96.1]},
-        {node: "LGTC65", rssi: [0,0]},
-        {node: "LGTC66", rssi: [-99.1,-90.9]},
-        {node: "LGTC67", rssi: [-97.2,-88.8]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [0,0]},
-        {node: "LGTC70", rssi: [-93.2,-84.8]},
-        {node: "LGTC71", rssi: [-99.6,-92.4]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-99.1,-88.9]},
-        {node: "LGTC52", rssi: [-99.8,-92.2]},
-        {node: "LGTC53", rssi: [-96.5,-87.5]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-92.9,-83.1]},
-        {node: "LGTC56", rssi: [-88.3,-75.7]},
-        {node: "LGTC57", rssi: [-102.0,-93.0]},
-        {node: "LGTC58", rssi: [-101.5,-92.5]},
-        {node: "LGTC59", rssi: [-100.0,-92.0]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-96.9,-89.1]},
-        {node: "LGTC63", rssi: [-99.1,-90.9]},
-        {node: "LGTC64", rssi: [-102.1,-97.9]},
-        {node: "LGTC65", rssi: [-103,-101]},
-        {node: "LGTC66", rssi: [-96.5,-88.5]},
-        {node: "LGTC67", rssi: [-95.8,-86.2]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [0,0]},
-        {node: "LGTC70", rssi: [-95.2,-82.8]},
-        {node: "LGTC71", rssi: [-100.5,-95.5]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-99.6,-90.4]},
-        {node: "LGTC52", rssi: [-98.5,-89.5]},
-        {node: "LGTC53", rssi: [-96.5,-85.5]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-93.5,-82.5]},
-        {node: "LGTC56", rssi: [-88.6,-79.4]},
-        {node: "LGTC57", rssi: [-97.8,-90.2]},
-        {node: "LGTC58", rssi: [-99.8,-92.2]},
-        {node: "LGTC59", rssi: [-99.1,-90.9]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-97.3,-86.7]},
-        {node: "LGTC63", rssi: [-101.0,-91.0]},
-        {node: "LGTC64", rssi: [-100.6,-93.4]},
-        {node: "LGTC65", rssi: [-105.2,-96.8]},
-        {node: "LGTC66", rssi: [-94.5,-85.5]},
-        {node: "LGTC67", rssi: [-95.8,-82.2]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [0,0]},
-        {node: "LGTC70", rssi: [-93.1,-84.9]},
-        {node: "LGTC71", rssi: [-100.9,-93.1]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-100.1,-91.9]},
-        {node: "LGTC52", rssi: [-101.7,-90.3]},
-        {node: "LGTC53", rssi: [-92.7,-81.3]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-93.8,-82.2]},
-        {node: "LGTC56", rssi: [-85.0,-75.0]},
-        {node: "LGTC57", rssi: [-100.6,-93.4]},
-        {node: "LGTC58", rssi: [-100.5,-91.5]},
-        {node: "LGTC59", rssi: [-100.3,-91.7]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-96.7,-87.3]},
-        {node: "LGTC63", rssi: [-99.4,-91.6]},
-        {node: "LGTC64", rssi: [0,0]},
-        {node: "LGTC65", rssi: [-107,-103]},
-        {node: "LGTC66", rssi: [-97.8,-88.2]},
-        {node: "LGTC67", rssi: [-93.5,-84.5]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [0,0]},
-        {node: "LGTC70", rssi: [-94.0,-86.0]},
-        {node: "LGTC71", rssi: [-97.8,-88.2]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-99.5,-92.5]},
-        {node: "LGTC52", rssi: [-100.6,-91.4]},
-        {node: "LGTC53", rssi: [-94.5,-83.5]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-95.4,-84.6]},
-        {node: "LGTC56", rssi: [-84.9,-75.1]},
-        {node: "LGTC57", rssi: [-101.6,-94.4]},
-        {node: "LGTC58", rssi: [-103.4,-90.6]},
-        {node: "LGTC59", rssi: [-99.9,-88.1]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-96.2,-87.8]},
-        {node: "LGTC63", rssi: [-101.8,-90.2]},
-        {node: "LGTC64", rssi: [-99.6,-95.4]},
-        {node: "LGTC65", rssi: [-104.6,-101.4]},
-        {node: "LGTC66", rssi: [-97.7,-88.3]},
-        {node: "LGTC67", rssi: [-94.9,-81.1]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [0,0]},
-        {node: "LGTC70", rssi: [-93.3,-84.7]},
-        {node: "LGTC71", rssi: [-100.3,-92.7]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-96.4,-89.6]},
-        {node: "LGTC52", rssi: [-100.3,-91.7]},
-        {node: "LGTC53", rssi: [-98.5,-85.5]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-92.4,-77.6]},
-        {node: "LGTC56", rssi: [-89.7,-74.3]},
-        {node: "LGTC57", rssi: [-102.6,-95.4]},
-        {node: "LGTC58", rssi: [-101.4,-92.6]},
-        {node: "LGTC59", rssi: [-98.2,-91.8]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-95.6,-86.4]},
-        {node: "LGTC63", rssi: [-98.0,-89.0]},
-        {node: "LGTC64", rssi: [-99.9,-94.1]},
-        {node: "LGTC65", rssi: [-108.0,-98.0]},
-        {node: "LGTC66", rssi: [-95.1,-84.9]},
-        {node: "LGTC67", rssi: [-92.8,-81.2]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [0,0]},
-        {node: "LGTC70", rssi: [-96.6,-87.4]},
-        {node: "LGTC71", rssi: [-98.0,-88.0]},
-    ],
-    [
-        {node: "LGTC51", rssi: [-102.4,-92.6]},
-        {node: "LGTC52", rssi: [-99.9,-92.1]},
-        {node: "LGTC53", rssi: [-100.7,-88.3]},
-        {node: "LGTC54", rssi: [0,0]},
-        {node: "LGTC55", rssi: [-90.8,-81.2]},
-        {node: "LGTC56", rssi: [-87.3,-76.7]},
-        {node: "LGTC57", rssi: [-106.4,-99.6]},
-        {node: "LGTC58", rssi: [-101.0,-93.0]},
-        {node: "LGTC59", rssi: [-102.6,-91.4]},
-        {node: "LGTC60", rssi: [0,0]},
-        {node: "LGTC61", rssi: [0,0]},
-        {node: "LGTC62", rssi: [-97.9,-88.1]},
-        {node: "LGTC63", rssi: [-99.4,-90.6]},
-        {node: "LGTC64", rssi: [-103.0,-95.0]},
-        {node: "LGTC65", rssi: [-101.2,-92.8]},
-        {node: "LGTC66", rssi: [-96.0,-88.0]},
-        {node: "LGTC67", rssi: [-94.5,-83.5]},
-        {node: "LGTC68", rssi: [0,0]},
-        {node: "LGTC69", rssi: [0,0]},
-        {node: "LGTC70", rssi: [-98.7,-87.3]},
-        {node: "LGTC71", rssi: [-99.0,-93.0]},
-    ],
-    ];
 
 
 
 
+export class ble_fingerprint {
 
-// Zacnes pri zacetku smetnjaka in po 3 ploscice naprej (2 preskocis)
-var position_coordiantes =[
-    [1 , -220, -403],   // smetnjak zacetek
-    [2 , -220, -394],
-    [3 , -220, -385],   // node 51
-    [4 , -220, -376],
-    [5 , -220, -367],
-    [6 , -220, -358],
-    [7 , -220, -349],
-    [8 , -220, -340],
-    [9 , -220, -331],
-    [10, -220, -322],
-    [11, -220, -313],
-    [12, -220, -304],
-    [13, -220, -295],   // node 53
-    [14, -220, -286],
-    [15, -220, -277],
-    [16, -220, -268],
-    [17, -220, -259],
-    [18, -220, -250],
-    [19, -220, -241],
-    [20, -220, -232],
-    [21, -220, -223],
-    [22, -220, -214],
-    [23, -220, -205],
-    [24, -220, -196],   // node 55
-    [25, -220, -187],
-    [26, -220, -178],   // smetnjak sredina
-];
+    constructor() {
+        this.num_rx_nodes = 27;
+        this.num_positions = 26;
 
+        this.weight_rssi_threshold = -77;
+
+        // Queue for las 5 locations with its weight
+        this.q_len = 10;
+        this.location_q = [];
+
+        // For LPF
+        this.old_pos = 0;
+
+        this.MISSED_ERROR = 1;
+    }
+
+    getLocation (rssi){
+
+        //cycle through position measurements and find matching index
+        var possible_loc = new Array(this.num_positions).fill(0);
+        var match = 0;
+        var count = 0;
+        var weight = 0;
+
+        var err = 0;
+
+        //console.log(rssi);
+
+        // Calculate weight for incoming measurements
+        for(let i=0; i<rssi.length; i++){
+            if (rssi[i] != 0){
+                weight += 1;
+                // better measurements get higher weight)
+                if (rssi[i] > this.weight_rssi_threshold){
+                    weight += 5;
+                    console.log(rssi[i]);
+                }
+            }
+        }
+
+        // Go through all positions (0~10)
+        for(let POS=0; POS<this.num_positions; POS++){
+
+            //console.log("POS: " + POS);
+
+            // Go through RX nodes (0~20)
+            for(let NODE=0; NODE<this.num_rx_nodes; NODE++){
+
+
+                if(enabled_devices[NODE]){
+                    // Prejeta meritev
+                    if(rssi[NODE] != 0){
+                        let med = position_measurements[POS][NODE]["rssi"][0];
+                        let dev = position_measurements[POS][NODE]["rssi"][1];
+
+                        //
+                        if(med){
+                            let razlika = Math.abs((med - rssi[NODE]));
+                            let e;
+                            if(razlika > (dev)){
+                                e = 1;
+                            }
+                            else{
+                                //e = (Math.pow(razlika, 2))/dev;
+                                e = razlika/dev;
+                            }
+                            //console.log("MEd "+ med +" msmnt " + rssi[NODE] + " devi " + dev + " = error: " + e); 
+                            err += e;
+                            count += 1;
+                        }
+                        else{
+                            // Nebi smeu dobit meritve na tej lokaciji
+                            err += this.MISSED_ERROR;
+                            count += 1;
+                        }
+                    }
+                    // Meritve nismo prejeli pa bi jo mogli - za to so uteži
+                    else{}
+                }
+                else{
+                    if(rssi[NODE] != 0){
+                        count += 1;
+                    }
+                    else{
+                        //console.log("Ne naredi nč");
+                    }
+                }
+
+                //console.log("NODE: " + NODE);
+
+                
+            }
+
+            let accuracy = err / count; 
+            //possible_loc[POS] = accuracy;
+            //match = 0;
+            possible_loc[POS] = accuracy;
+            count = 0;
+            err = 0;
+            
+            //console.log("Possition " + POS + " : " + accuracy);
+        }
+
+
+        //console.log("Location acuracy:")
+        //console.log(possible_loc);
+        //console.log(position_measurements[index]);
+        
+        // Find max probability of a location
+        // IF there is more than 1 maximum in possible locations, take the one with highest neighbors
+        let min_error = Math.min.apply(Math, possible_loc);
+        //console.log("Max accuracy: " + max_accuracy);
+
+        /*var izbrana ;
+        let mozne = [];
+        for(let i=0; i<possible_loc.length; i++){
+            if(possible_loc[i] == min_error){
+                if(i==0){
+                    izbrana = possible_loc[i+1];
+                }
+                else if(i==possible_loc.length-1){
+                    izbrana = possible_loc[i-1]
+                }
+                else{
+                    izbrana = (possible_loc[i-1] + possible_loc[i+1]) /2;
+                }
+                //console.log("pozicija " + i + " szi verjetnostjo " + izbrana);
+                mozne.push([i, izbrana]);
+            }
+        }
+        console.log("Promissing locations: ");
+        console.log(mozne);
+        let len = mozne.length;
+        let max_neighbour = 0;
+        let index = 0;
+        while(len--){
+            if(mozne[len][1] > max_neighbour){
+                max_neighbour = mozne[len][1];
+                index = mozne[len][0];
+            }
+        }*/
+
+        let index = possible_loc.indexOf(min_error);
+        console.log("--- Chosen location: " + index + " with weight: " + weight);
+
+        
+        
+
+        // ------- Calculate weighted average of locations ---------
+        // add position with corresponding weight to end of Q
+        this.location_q.push([index,weight]);
+        
+        // Remove old position from the Q
+        if(this.location_q.length > this.q_len){
+            this.location_q.shift()
+        }
+        
+        // Weighted sum
+        let sum = this.location_q[0][0] * this.location_q[0][1];
+        let sum_w = this.location_q[0][1];
+
+        for(let i=1; i<this.location_q.length; i++){
+            sum += this.location_q[i][0] * this.location_q[i][1]
+            sum_w += this.location_q[i][1];
+        }
+
+        let weighted_index = sum/sum_w;
+
+        //for(let j=0; j<this.location_q.length; j++){
+        //    console.log("Q_loc: " + this.location_q[j][0] + " W: " + this.location_q[j][1]);
+        //}
+
+
+        //weighted_index = Math.round(weighted_index);
+        //console.log("Weighted index: " + weighted_index);
+
+        //return position_coordiantes[weighted_index];
+        
+
+
+
+        // ------------------ LP filter --------------------
+
+        let lp_index = (this.old_pos * 0.7) + (weighted_index * 0.3);
+
+        
+        lp_index = Math.round(lp_index);
+        //console.log("LP index: " + lp_index);
+
+        this.old_pos = lp_index;
+
+        return position_coordiantes[lp_index];
+
+
+    }
+}
+
+
+
+
+/*
 export class ble_fingerprint {
 
     constructor() {
@@ -914,3 +1420,5 @@ export class ble_fingerprint {
         return position_coordiantes[lp_index];
     }
 }
+
+*/
