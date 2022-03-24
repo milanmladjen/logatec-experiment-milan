@@ -39,8 +39,6 @@ var ble_f = new ble_fingerprint();
 var BLE_INTERVAL = 1000;
 
 function displayBleLocation() {
-    console.log("Displaying location.");
-
     // Get measurements from Q
     var rssi_measurements = ble_q.getAllMeasurements();
     
@@ -48,7 +46,7 @@ function displayBleLocation() {
         // Compare with fingerprint
         var position = ble_f.getLocation(rssi_measurements);
         // Display
-        console.log("Location: " + position);
+        //console.log("Location: " + position);
         $("#phone").css("top", position[1]+"px");
         $("#phone").css("left", position[2]+"px");
     }

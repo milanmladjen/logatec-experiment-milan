@@ -1040,7 +1040,6 @@ export class rssi_queue {
                 */
                let medi = median(this.queue[i]["data"]);
                m[i] = medi;
-               console.log(medi);
 
                 // Delete old measurements
                 if (del == true) this.queue[i]["data"] = [];
@@ -1081,7 +1080,7 @@ export class ble_fingerprint {
         this.weight_rssi_threshold = -77;
 
         // Queue for las 5 locations with its weight
-        this.q_len = 15;
+        this.q_len = 10;
         this.location_q = [];
 
         // For LPF
@@ -1257,7 +1256,7 @@ export class ble_fingerprint {
 
         // ------------------ LP filter --------------------
 
-        let lp_index = (this.old_pos * 0.5) + (weighted_index * 0.5);
+        let lp_index = (this.old_pos * 0.6) + (weighted_index * 0.4);
 
         
         lp_index = Math.round(lp_index);
