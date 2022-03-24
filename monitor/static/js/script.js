@@ -39,7 +39,7 @@ var ble_f = new ble_fingerprint();
 var BLE_INTERVAL = 1000;
 
 function displayBleLocation() {
-    //console.log("Displaying location.");
+    console.log("Displaying location.");
 
     // Get measurements from Q
     var rssi_measurements = ble_q.getAllMeasurements();
@@ -456,7 +456,7 @@ $(document).ready(function(){
     // store a BLE measurement for localization into a RSSI Q
     socket.on("localization", function(msg){
         //console.log(msg);
-        //console.log("Received RSSI "+ msg.data + " from " + msg.device);
+        console.log("Received RSSI "+ msg.data + " from " + msg.device);
         ble_q.putMeasurement(msg.device, parseInt(msg.data));
     });
 

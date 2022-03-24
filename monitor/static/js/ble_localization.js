@@ -1040,6 +1040,7 @@ export class rssi_queue {
                 */
                let medi = median(this.queue[i]["data"]);
                m[i] = medi;
+               console.log(medi);
 
                 // Delete old measurements
                 if (del == true) this.queue[i]["data"] = [];
