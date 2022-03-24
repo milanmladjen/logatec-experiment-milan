@@ -454,7 +454,7 @@ $(document).ready(function(){
     // store a BLE measurement for localization into a RSSI Q
     socket.on("localization", function(msg){
         //console.log(msg);
-        console.log("Received RSSI "+ msg.data + " from " + msg.device);
+        //console.log("Received RSSI "+ msg.data + " from " + msg.device);
         ble_q.putMeasurement(msg.device, parseInt(msg.data));
     });
 
