@@ -759,8 +759,11 @@ var position_coordiantes =[
 export class ble_fingerprint {
 
     constructor() {
-        this.num_rx_nodes = 27;
-        this.num_positions = 26;
+        //this.num_rx_nodes = 27;
+        //this.num_positions = 26;
+
+        this.num_rx_nodes = 21;
+        this.num_positions = 21;
 
         this.weight_rssi_threshold = -79;
 
