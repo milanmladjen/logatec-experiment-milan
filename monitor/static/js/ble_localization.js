@@ -1082,12 +1082,12 @@ export class ble_fingerprint {
         this.min_dev = 1.55;
 
         // Queue for las 5 locations with its weight
-        this.q_len = 15;
+        this.q_len = 3;
         this.location_q = [];
 
         // For LPF
         this.old_pos = 0;
-        this.lpf = 0.6;
+        this.lpf = 0.7;
 
         // Tku največji error ki se pojavi je tm okuli 10 :D
         this.MISSED_ERROR = 70;
@@ -1111,7 +1111,7 @@ export class ble_fingerprint {
                 weight += 1;
                 // better measurements get higher weight)
                 if (rssi[i] > this.weight_rssi_threshold){
-                    weight += 5;
+                    weight += 10;
                     console.log(rssi[i]);
                 }
             }
