@@ -1070,7 +1070,6 @@ export class rssi_queue {
 
 
 
-
 export class ble_fingerprint {
 
     constructor() {
@@ -1079,14 +1078,19 @@ export class ble_fingerprint {
 
         this.weight_rssi_threshold = -77;
 
+        // Minimalna deviacija pri fingerprintih
+        this.min_dev = 1.55;
+
         // Queue for las 5 locations with its weight
-        this.q_len = 10;
+        this.q_len = 15;
         this.location_q = [];
 
         // For LPF
         this.old_pos = 0;
+        this.lpf = 0.6;
 
-        this.MISSED_ERROR = 1;
+        // Tku največji error ki se pojavi je tm okuli 10 :D
+        this.MISSED_ERROR = 70;
     }
 
     getLocation (rssi){
@@ -1099,7 +1103,7 @@ export class ble_fingerprint {
 
         var err = 0;
 
-        //console.log(rssi);
+        console.log(rssi);
 
         // Calculate weight for incoming measurements
         for(let i=0; i<rssi.length; i++){
@@ -1112,6 +1116,66 @@ export class ble_fingerprint {
                 }
             }
         }
+
+
+/*
+        // Go through all positions (0~10)
+        for(let POS=0; POS<this.num_positions; POS++){
+
+            //console.log("POS: " + POS);
+
+            // Go through RX nodes (0~20)
+            for(let NODE=0; NODE<this.num_rx_nodes; NODE++){
+
+                //console.log("NODE: " + NODE);
+
+                // If incoming measurement has any value 
+                if(rssi[NODE] != 0){
+                    //let min = position_measurements[POS][NODE]["rssi"][0];
+                    //let max = position_measurements[POS][NODE]["rssi"][1];
+
+                    let med = position_measurements[POS][NODE]["rssi"][0];
+                    let dev = position_measurements[POS][NODE]["rssi"][1];
+                    
+                    // If fingerprints on that node exists
+                    if(enabled_devices[NODE]){
+                        count += 1;
+                        
+                        if(med == 0 && dev == 0){
+                            err += this.MISSED_ERROR;
+                            //console.log("Missed --------")
+                        }
+                        else{
+                            let razlika = Math.abs((med - rssi[NODE]));
+                            let e;
+
+                            if(razlika > dev){
+                                e = 1;
+                            }
+                            else{
+                                e = razlika/dev;
+                            }
+                            //let e = Math.abs((med - rssi[NODE])/dev)
+                            //console.log("MEd "+ med +" msmnt " + rssi[NODE] + " devi " + dev + " = error: " + e); 
+                            err += e
+                        }
+                        // Compare the incoming value with fingerprints
+                        //if(rssi[NODE] >= min && rssi[NODE] <= max){
+                        //    match += 1;
+                        //}
+                    }
+                }
+                else{
+                    let med = position_measurements[POS][NODE]["rssi"][0];
+
+                    if(med){
+                        console.log("------------------")
+                        err += this.MISSED_ERROR;
+                    }
+                }
+            }
+
+*/
 
         // Go through all positions (0~10)
         for(let POS=0; POS<this.num_positions; POS++){
@@ -1128,17 +1192,12 @@ export class ble_fingerprint {
                         let med = position_measurements[POS][NODE]["rssi"][0];
                         let dev = position_measurements[POS][NODE]["rssi"][1];
 
-                        //
+                        // Ce fingerprint obstaja
                         if(med){
                             let razlika = Math.abs((med - rssi[NODE]));
                             let e;
-                            if(razlika > (dev)){
-                                e = 1;
-                            }
-                            else{
-                                //e = (Math.pow(razlika, 2))/dev;
-                                e = razlika/dev;
-                            }
+                            let normirana_dev = this.min_dev / dev;
+                            e = razlika/normirana_dev;
                             //console.log("MEd "+ med +" msmnt " + rssi[NODE] + " devi " + dev + " = error: " + e); 
                             err += e;
                             count += 1;
@@ -1152,7 +1211,9 @@ export class ble_fingerprint {
                     // Meritve nismo prejeli pa bi jo mogli - za to so uteži
                     else{}
                 }
+                // Ce nimamo fingerprintov od naprave
                 else{
+                    // Pa smo meritev vseeno prejeli
                     if(rssi[NODE] != 0){
                         count += 1;
                     }
@@ -1160,15 +1221,9 @@ export class ble_fingerprint {
                         //console.log("Ne naredi nč");
                     }
                 }
-
-                //console.log("NODE: " + NODE);
-
-                
             }
 
             let accuracy = err / count; 
-            //possible_loc[POS] = accuracy;
-            //match = 0;
             possible_loc[POS] = accuracy;
             count = 0;
             err = 0;
@@ -1256,9 +1311,8 @@ export class ble_fingerprint {
 
         // ------------------ LP filter --------------------
 
-        let lp_index = (this.old_pos * 0.6) + (weighted_index * 0.4);
-
-        
+        let lp_index = (this.old_pos * this.lpf) + (weighted_index * (1-this.lpf));
+      
         lp_index = Math.round(lp_index);
         //console.log("LP index: " + lp_index);
 
@@ -1269,7 +1323,6 @@ export class ble_fingerprint {
 
     }
 }
-
 
 
 
