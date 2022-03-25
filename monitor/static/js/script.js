@@ -353,6 +353,8 @@ $(document).ready(function(){
             console.log("Experiment is already running ["+ msg.data +"]");
             experiment_started(msg.data);
 
+            bleExecution = setInterval(displayBleLocation, BLE_INTERVAL);
+
             // Update testbed tloris
             socket.emit("testbed update");
         }
