@@ -820,6 +820,7 @@ var position_coordiantes =[
     [26, -220, -178],   // smetnjak sredina
 ];
 
+// Which devices have valid fingerprint!
 var enabled_devices = [
     0,
     1,
@@ -852,43 +853,48 @@ var enabled_devices = [
 ];
 
 
-var node_locations = [
-    [-235,265], // 1
-    [-165,265], // 2
-    [-235,353], // 3
-    [-165,353], // 4
-    [-235,441], // 5
-    [-165,441], // 6
-    [-135,175], // 7
-    //[-175,190], 
-    [-195,175], // 9
-    //[-235,190], 
-    [-255,173], // 11
-    //[-292,264], 
-    [-327,288], // 13
-    //[-310,330], 
-    [-333,360], // 15
-    [-337,408], // 16
-    //[-333,433], 
-    [-355,478], // 18
-    [-435,472], // 19
-    [-455,525], // 20
-    [-313,538], // 21
-    [-203,548], // 22
-    [-95 ,530], // 23
-    [-95 ,440], // 24
-    [-93 ,350], // 25
-    [-43 ,198], // 26
-    //[-140,490]
-];
+
+
+/*-------------------------------------------------------------------------------------------------------------------------------------------------*/
+
 /**
- * Math
+ * Weighted Least Square Algorithm
  */
 export default class ble_localization {
 
     constructor() {
         this.P_Tx_dBm = 7.0;
         this.alpha = 3.8;
+
+        this.node_locations = [
+            [-235,265], // 1
+            [-165,265], // 2
+            [-235,353], // 3
+            [-165,353], // 4
+            [-235,441], // 5
+            [-165,441], // 6
+            [-135,175], // 7
+            //[-175,190], 
+            [-195,175], // 9
+            //[-235,190], 
+            [-255,173], // 11
+            //[-292,264], 
+            [-327,288], // 13
+            //[-310,330], 
+            [-333,360], // 15
+            [-337,408], // 16
+            //[-333,433], 
+            [-355,478], // 18
+            [-435,472], // 19
+            [-455,525], // 20
+            [-313,538], // 21
+            [-203,548], // 22
+            [-95 ,530], // 23
+            [-95 ,440], // 24
+            [-93 ,350], // 25
+            [-43 ,198], // 26
+            //[-140,490]
+        ];
     }
 
     WLS_localization(x, y, weights, dist) {
@@ -936,8 +942,8 @@ export default class ble_localization {
         var y = new Array(weights.length).fill(1);
         for (let index = 0; index < weights.length; index++) {
             if(weights[index]){
-                x[index] = node_locations[index][0];
-                y[index] = node_locations[index][1];
+                x[index] = this.node_locations[index][0];
+                y[index] = this.node_locations[index][1];
             }
         }
         return [x,y];
@@ -946,13 +952,12 @@ export default class ble_localization {
 
 }
 
-const median = arr => {
-    let middle = Math.floor(arr.length / 2);
-      arr = [...arr].sort((a, b) => a - b);
-    return arr.length % 2 !== 0 ? arr[middle] : (arr[middle - 1] + arr[middle]) / 2;
-  };
+/*-------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+
 
 /**
+ * Measurement queue:
  * Device list with their measurement queues & list of active devices.
  * 
  * queue = [
@@ -965,8 +970,17 @@ const median = arr => {
  *  {device:"LGTC71", data:[1,2,3]},
  * ]
  * 
- * node_states  = [1, 1, 0, ... , 1]
+ * node_states  - stores active measurements index - resets at each queue lookup
+ * active_devices - stores all of the active devices during the experiment
+ * 
  */
+const median = arr => {
+    let middle = Math.floor(arr.length / 2);
+      arr = [...arr].sort((a, b) => a - b);
+    return arr.length % 2 !== 0 ? arr[middle] : (arr[middle - 1] + arr[middle]) / 2;
+  };
+
+
 export class rssi_queue {
 
     constructor() {
@@ -1008,6 +1022,9 @@ export class rssi_queue {
     }
 
     // Get all & averaged measurements from the queue
+    //
+    // You can use average or median value!
+    //
     getAllMeasurements(del = true) {
         let m = new Array(this.num_of_dev).fill(0);
         this.node_states = new Array(this.num_of_dev).fill(0);
@@ -1020,6 +1037,7 @@ export class rssi_queue {
                 count += 1;
             }
         }
+        // If there is not enough measurements
         if(count <= 3){
             return;
         }
@@ -1067,21 +1085,29 @@ export class rssi_queue {
 }
 
 
+/*-------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 
-
+/**
+ * Determine device location based on given array of rssi measurements.
+ * Compare the received RSSI with fingerprints median value and stddev.
+ * 
+ * in constructor, fine tune the algorithm..
+ * 
+ */
 export class ble_fingerprint {
 
     constructor() {
         this.num_rx_nodes = 27;
         this.num_positions = 26;
 
+        // Measurements above this threshold will have stronger weight
         this.weight_rssi_threshold = -77;
 
-        // Minimalna deviacija pri fingerprintih
+        // Minimal stddev between all of the fingerprints (Use parsers logs)
         this.min_dev = 1.55;
 
-        // Queue for las 5 locations with its weight
+        // Queue for las 3 locations with their weight
         this.q_len = 3;
         this.location_q = [];
 
@@ -1094,10 +1120,8 @@ export class ble_fingerprint {
     }
 
     getLocation (rssi){
-
         //cycle through position measurements and find matching index
         var possible_loc = new Array(this.num_positions).fill(0);
-        var match = 0;
         var count = 0;
         var weight = 0;
 
@@ -1109,82 +1133,18 @@ export class ble_fingerprint {
         for(let i=0; i<rssi.length; i++){
             if (rssi[i] != 0){
                 weight += 1;
-                // better measurements get higher weight)
+                // better measurements gets higher weight
                 if (rssi[i] > this.weight_rssi_threshold){
                     weight += 10;
                     console.log(rssi[i]);
                 }
             }
         }
-
-
-/*
         // Go through all positions (0~10)
         for(let POS=0; POS<this.num_positions; POS++){
 
-            //console.log("POS: " + POS);
-
             // Go through RX nodes (0~20)
             for(let NODE=0; NODE<this.num_rx_nodes; NODE++){
-
-                //console.log("NODE: " + NODE);
-
-                // If incoming measurement has any value 
-                if(rssi[NODE] != 0){
-                    //let min = position_measurements[POS][NODE]["rssi"][0];
-                    //let max = position_measurements[POS][NODE]["rssi"][1];
-
-                    let med = position_measurements[POS][NODE]["rssi"][0];
-                    let dev = position_measurements[POS][NODE]["rssi"][1];
-                    
-                    // If fingerprints on that node exists
-                    if(enabled_devices[NODE]){
-                        count += 1;
-                        
-                        if(med == 0 && dev == 0){
-                            err += this.MISSED_ERROR;
-                            //console.log("Missed --------")
-                        }
-                        else{
-                            let razlika = Math.abs((med - rssi[NODE]));
-                            let e;
-
-                            if(razlika > dev){
-                                e = 1;
-                            }
-                            else{
-                                e = razlika/dev;
-                            }
-                            //let e = Math.abs((med - rssi[NODE])/dev)
-                            //console.log("MEd "+ med +" msmnt " + rssi[NODE] + " devi " + dev + " = error: " + e); 
-                            err += e
-                        }
-                        // Compare the incoming value with fingerprints
-                        //if(rssi[NODE] >= min && rssi[NODE] <= max){
-                        //    match += 1;
-                        //}
-                    }
-                }
-                else{
-                    let med = position_measurements[POS][NODE]["rssi"][0];
-
-                    if(med){
-                        console.log("------------------")
-                        err += this.MISSED_ERROR;
-                    }
-                }
-            }
-
-*/
-
-        // Go through all positions (0~10)
-        for(let POS=0; POS<this.num_positions; POS++){
-
-            //console.log("POS: " + POS);
-
-            // Go through RX nodes (0~20)
-            for(let NODE=0; NODE<this.num_rx_nodes; NODE++){
-
 
                 if(enabled_devices[NODE]){
                     // Prejeta meritev
@@ -1231,52 +1191,17 @@ export class ble_fingerprint {
             //console.log("Possition " + POS + " : " + accuracy);
         }
 
-
-        //console.log("Location acuracy:")
-        //console.log(possible_loc);
-        //console.log(position_measurements[index]);
-        
-        // Find max probability of a location
-        // IF there is more than 1 maximum in possible locations, take the one with highest neighbors
         let min_error = Math.min.apply(Math, possible_loc);
-        //console.log("Max accuracy: " + max_accuracy);
-
-        /*var izbrana ;
-        let mozne = [];
-        for(let i=0; i<possible_loc.length; i++){
-            if(possible_loc[i] == min_error){
-                if(i==0){
-                    izbrana = possible_loc[i+1];
-                }
-                else if(i==possible_loc.length-1){
-                    izbrana = possible_loc[i-1]
-                }
-                else{
-                    izbrana = (possible_loc[i-1] + possible_loc[i+1]) /2;
-                }
-                //console.log("pozicija " + i + " szi verjetnostjo " + izbrana);
-                mozne.push([i, izbrana]);
-            }
-        }
-        console.log("Promissing locations: ");
-        console.log(mozne);
-        let len = mozne.length;
-        let max_neighbour = 0;
-        let index = 0;
-        while(len--){
-            if(mozne[len][1] > max_neighbour){
-                max_neighbour = mozne[len][1];
-                index = mozne[len][0];
-            }
-        }*/
 
         let index = possible_loc.indexOf(min_error);
         console.log("--- Chosen location: " + index + " with weight: " + weight);
 
         
-        
+        /** 
+         * Calculate weighted average of locations using
+         * old locations queue and their weights
+         **/
 
-        // ------- Calculate weighted average of locations ---------
         // add position with corresponding weight to end of Q
         this.location_q.push([index,weight]);
         
@@ -1300,16 +1225,12 @@ export class ble_fingerprint {
         //    console.log("Q_loc: " + this.location_q[j][0] + " W: " + this.location_q[j][1]);
         //}
 
-
         //weighted_index = Math.round(weighted_index);
         //console.log("Weighted index: " + weighted_index);
 
-        //return position_coordiantes[weighted_index];
-        
-
-
-
-        // ------------------ LP filter --------------------
+        /**
+         * LP Filter
+         */
 
         let lp_index = (this.old_pos * this.lpf) + (weighted_index * (1-this.lpf));
       
@@ -1319,12 +1240,12 @@ export class ble_fingerprint {
         this.old_pos = lp_index;
 
         return position_coordiantes[lp_index];
-
-
     }
 }
 
-
+/**
+ * Old example of the algorithm where intervals were used instead of median and deviation.
+ */
 
 /*
 export class ble_fingerprint {

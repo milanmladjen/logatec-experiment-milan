@@ -2,8 +2,11 @@
 
 LOG-a-TEC testbed experiment repository with included Continuous Deployment service and Experiment Control & Monitoring System.
 
-## Bluetooth Low Energy
+## Localization
 
-A branch for experiments with Bluetooth Low Energy technology.
+A separate branch for localization experiments with Bluetooth Low Energy technology. Application uses ECMS - the UI is modified, therefore a new branch was created.
 
-Infrastructure nodes in LOG-a-TEC testbed are equipped with WL1837MOD BLE radio module. For interaction with the module, all dependencies and libraries are installed inside a Docker container (see `/deployment/docker/Dockerfile`).
+## Usage
+
+On the Management server choose this branch and restart the SMS portal.
+Before release, check for offline nodes and update inventory.

@@ -33,7 +33,7 @@ class BLE_experiment(threading.Thread):
         self.out_q = output_q
 
         self.file = open("../results/" + results_filename, "a+")
-        self.file.write("usaj neki more bit shranjeno v text fajlu, da obstaja")
+        self.file.write("Detected beacons:")
 
         self.scr = Scanner()
 
@@ -41,15 +41,12 @@ class BLE_experiment(threading.Thread):
         self.queuePutState("ONLINE")
         self.log.info("Experiment started")
 
-        
-        #self.scr.clear()
-        #self.scr.start()
-    
 
         self.scr.clear()
         while self._is_thread_running:
 
             ##### MAIN APP #####################################
+            # Scan for 5 seconds and then repeat
             if self._is_app_running:
 
                 #if self.scr._helper is None:
@@ -74,17 +71,7 @@ class BLE_experiment(threading.Thread):
                     resp = self.scr._waitResp(['scan', 'stat'], remain)
                     if resp is None:
                         self.log.warning("No response from BLE, resetting...")
-                        #self.scr.stop()
-                        #self.scr.clear()
-                        #self.scr.start()
-                        #continue
                         break
-
-
-
-                    # {'rsp': ['stat'], 'state': ['scan'], 'dst': ['(null)'], 'mtu': [0], 'sec': ['low']}
-                    # {'rsp': ['stat'], 'state': ['scan'], 'dst': ['(null)'], 'mtu': [0], 'sec': ['low']}
-                    # {'rsp': ['stat'], 'state': ['disc'], 'mtu': [0], 'sec': ['low']}
 
                     respType = resp['rsp'][0]
                     if respType == 'stat':
@@ -110,9 +97,10 @@ class BLE_experiment(threading.Thread):
 
 
                     #### ECMS #####################################
+                    # Store in file whatever comes to the node
                     if (not self.in_q.empty()):
                         sqn, cmd = self.queueGet()
-
+                        
                         if sqn:
                             self.file.write(cmd + "\n")
 
@@ -120,7 +108,7 @@ class BLE_experiment(threading.Thread):
 
 
         # End of experiment
-        self.log.debug("Scanner stopped")
+        self.log.info("Scanner stopped")
         try:
             # May be already stopped when
             self.scr.stop()
@@ -138,7 +126,6 @@ class BLE_experiment(threading.Thread):
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if isNewDev:
             self.log.info("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
-            #self.queuePutInfo("New device ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
             if(dev.getValueText(9) == PHONE_NAME):
                 self.file.write("Phone ""[" + str(datetime.now().time())+"]: " + "N " + str(dev.addr) + " RSSI" + str(dev.rssi) + "\n")
                 self.queuePutInfo("Found phone")
@@ -149,14 +136,7 @@ class BLE_experiment(threading.Thread):
             # 9 = ime naprave
             if(dev.getValueText(9) == PHONE_NAME):
                 self.file.write("RSSI " + "[" + str(unixTime) + "]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") {" + str(dev.rssi) + "}\n")
-                #self.file.write("Ttt")
-                #self.log.info("Phone RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
-                #self.queuePutInfo("Target RSSI " + "[" + str(unixTime) +"s]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") RSSI {" + str(dev.rssi) + "}\n")
                 self.queuePutLoc(str(dev.rssi))
-            
-            #if(dev.getValueText(9) == "Galaxy S10e"):
-            #    self.file.write("Aaa")
-            #    self.queuePutLoc(str(dev.rssi))
 
 
 

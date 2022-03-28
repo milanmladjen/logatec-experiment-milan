@@ -31,17 +31,11 @@ hcitool -i hci0 cmd 0x03 0x0003
 echo "Done"
 
 # Start the ECMS_client with experiment application
+
+# Uncomment to add debug messages from the bluepy library
 #sed -i 's/Debugging = False/Debugging = True/' /usr/local/lib/python3.8/dist-packages/bluepy/btle.py
 cd /root/logatec-experiment/monitor/
 python3 experiment_LGTC.py $IPADDR $APP_LOC $APP_NAME
-
-
-
-#cd /root/logatec-experiment/applications/01_localization
-#python3 testna2.py $IPADDR
-
-
-
 
 # ----------------------------------------------------------------------------------------------------------
 # Move the measured data and logg files into results folder.

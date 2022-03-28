@@ -506,6 +506,7 @@ $(document).ready(function(){
         if(cmd == "EXIT"){
             // Stop the BLE localization
             clearInterval(bleExecution);
+            //ble_q.clean();
         }
 
         // Check which device is selected from dropdown menu

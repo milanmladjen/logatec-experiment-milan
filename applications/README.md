@@ -2,30 +2,12 @@
 
 Experiment application are located in the corresponding folders.
 
-## Testbed
-
-To use CD service, please refer to `../deployment/README.md`. 
-Note that:
-
-* experiment application folder should have number indicator (XX_),
-* the application script must have the same name as the folder name.
-
 ## BLE module
 
-Obtain the MAC address of the Bluetooth radio device:
+HCICONFIG:
 
-`$ sudo hciconfig | grep "BD Address:`
+https://linux.die.net/man/8/hciconfig
 
-Start BT advertisement:
+BLUEPY Python Library
 
-`$ sudo hciconfig hci0 leadv3`
-
-Stop BT advertisement:
-
-`$ sudo hciconfig hci0 noleadv`
-
-
-In case that BT advertisement doesn't work, add a *--experimental* flag in file `/lib/systemd/system/bluetooth.service` line 9.
-Something like:
-
-> ExecStart=/usr/lib/bluetooth/bluetoothd --experimental
+https://ianharvey.github.io/bluepy-doc/scanner.html
