@@ -19,4 +19,4 @@ if [ "${usecfg}" = "True" ]; then
 fi
 
 
-ansible-playbook -f 50 -i deployment/ansible/inventory/logatec_testbed -i /etc/ansible/hosts $ANSIBLE_PLAYB
+ansible-playbook -f 50 -i deployment/ansible/inventory/logatec_testbed -i /etc/ansible/hosts $ANSIBLE_PLAYBOOK
