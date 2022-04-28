@@ -17,7 +17,7 @@ from requests.auth import HTTPBasicAuth
 import json
 
 PHONE_NAME = "Grega20"
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.ERROR
 
 class BLE_experiment(threading.Thread):
 
@@ -137,7 +137,8 @@ class BLE_experiment(threading.Thread):
             if(dev.getValueText(9) == PHONE_NAME):
                 self.file.write("RSSI " + "[" + str(unixTime) + "]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") {" + str(dev.rssi) + "}\n")
                 # Send RSSI measurement to the server
-                self.queuePutLoc(str(dev.rssi))
+                #self.queuePutLoc(str(dev.rssi))
+                print(unixTime)
 
 
         # getValueText(number)
