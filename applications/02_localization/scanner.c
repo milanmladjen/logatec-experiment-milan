@@ -116,7 +116,7 @@ int main()
     unsigned last_detection_time = now;
     // Keep scanning until we see nothing for 10 secs or we have seen lots of advertisements.  Then exit.
     // We exit in this case because the scan may have failed or stopped. Higher level code can restart
-	while ( last_detection_time - now < 10 && count < 1000 ) {
+	while ( last_detection_time - now < 5 && count < 1000 ) {
 		len = read(device, buf, sizeof(buf));
 		if ( len >= HCI_EVENT_HDR_SIZE ) {
 		    count++;
