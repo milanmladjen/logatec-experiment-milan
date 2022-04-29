@@ -30,6 +30,15 @@ hciconfig hci0 rstat
 hcitool -i hci0 cmd 0x03 0x0003
 echo "Done"
 
+# --------------------------------------
+# For localization ver2
+echo "Install bt library"
+apt-get install libbluetooth-dev
+echo "compile"
+cd /root/logatec-experiment/applications/02_localization
+cc scanner.c -lbluetooth -std=c99 -o scanner
+#----------------------------------------------------
+
 # Start the ECMS_client with experiment application
 
 # Uncomment to add debug messages from the bluepy library
