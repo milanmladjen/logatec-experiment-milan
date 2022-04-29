@@ -15,6 +15,8 @@ import requests
 from requests.auth import HTTPBasicAuth
 import json
 
+from subprocess import Popen, PIPE
+
 LOG_LEVEL = logging.DEBUG
 
 class BLE_experiment(threading.Thread):
