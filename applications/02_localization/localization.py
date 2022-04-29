@@ -33,8 +33,8 @@ class BLE_experiment(threading.Thread):
         self.out_q = output_q
 
         self.file = open("../results/" + results_filename, "a+")
-        self.file.write("Measurements on date: " + str(time.asctime(time.localtime(time.time()))))
-        self.file.write("Detected beacons:")
+        self.file.write("Measurements on date: " + str(time.asctime(time.localtime(time.time()))) + "\n\n")
+        self.file.write("Detected beacons: \n")
 
     def run(self):
         self.queuePutState("ONLINE")
