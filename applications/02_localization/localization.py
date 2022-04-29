@@ -54,7 +54,7 @@ class BLE_experiment(threading.Thread):
                             
                             if sqn:
                                 unixTime = int(time.time())
-                                self.file.write("CMD [" + str(unixTime) + "] " + cmd + "\n")
+                                self.file.write("[" + str(unixTime) + "] " + cmd + " - from within\n")
 
 
                 if p.returncode:
@@ -66,7 +66,7 @@ class BLE_experiment(threading.Thread):
                     sqn, cmd = self.queueGet()
                     
                     if sqn:
-                        self.file.write("CMD [" + str(time.time()) + "] " + cmd + "\n")
+                        self.file.write("[" + str(time.time()) + "] " + cmd + "\n")
 
 
 
