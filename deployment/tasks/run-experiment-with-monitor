@@ -28,6 +28,7 @@ hciconfig hci0 down
 hciconfig hci0 up
 hciconfig hci0 rstat
 hcitool -i hci0 cmd 0x03 0x0003
+hciconfig hci0 noleadv
 echo "Done"
 
 # --------------------------------------
