@@ -33,6 +33,7 @@ echo "Done"
 # --------------------------------------
 # For localization ver2
 echo "Install bt library"
+apt-get update
 apt-get install -y libbluetooth-dev
 echo "compile"
 cd /root/logatec-experiment/applications/02_localization
