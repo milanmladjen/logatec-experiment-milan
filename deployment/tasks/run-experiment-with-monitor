@@ -33,7 +33,7 @@ echo "Done"
 # --------------------------------------
 # For localization ver2
 echo "Install bt library"
-apt-get install libbluetooth-dev
+apt-get install -y libbluetooth-dev
 echo "compile"
 cd /root/logatec-experiment/applications/02_localization
 cc scanner.c -lbluetooth -std=c99 -o scanner
