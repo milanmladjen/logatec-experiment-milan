@@ -7,6 +7,8 @@ import importlib
 
 from lib import zmq_client
 
+import time
+
 
 # -------------------------------------------------------------------------------------------
 # DEFINITIONS
@@ -117,6 +119,7 @@ class ECMS_client():
 
                         else:
                             # Forward it to the experiment
+                            self.log.info("CMD " + msg + " at " + str(time.time()))
                             self.queuePut(sqn, msg)
 
             # --------------------------------------------------------------------------------
