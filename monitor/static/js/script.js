@@ -520,6 +520,14 @@ $(document).ready(function(){
         }
 
         console.log("Send command (" + sqn + "): " + cmd + " to device: " + dev );
+
+        // Feedback
+        var formatted_msg = cmd + "command sent to [" + dev + "]\n";
+        $("#output_field").val( $("#output_field").val() + formatted_msg);
+        if(auto_scroll){
+            $("#output_field").scrollTop( $("#output_field")[0].scrollHeight);
+        }
+
         
         // Send it to server
         socket.emit("new command", {
