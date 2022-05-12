@@ -138,7 +138,7 @@ class BLE_experiment(threading.Thread):
             if(dev.getValueText(9) == PHONE_NAME):
                 self.file.write("RSSI " + "[" + str(unixTime) + "]: " + "R " + str(dev.addr) + " (" + str(dev.updateCount) + ") {" + str(dev.rssi) + "}\n")
                 # Send RSSI measurement to the server
-                #self.queuePutLoc(str(dev.rssi))
+                self.queuePutLoc(str(dev.rssi))
 
         # getValueText(number)
         # https://btprodspecificationrefs.blob.core.windows.net/assigned-numbers/Assigned%20Number%20Types/Generic%20Access%20Profile.pdf

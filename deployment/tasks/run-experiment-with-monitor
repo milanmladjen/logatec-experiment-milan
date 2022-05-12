@@ -33,12 +33,12 @@ echo "Done"
 
 # --------------------------------------
 # For localization ver2
-echo "Install bt library"
-apt-get update
-apt-get install -y libbluetooth-dev
-echo "compile"
-cd /root/logatec-experiment/applications/02_localization
-cc scanner.c -lbluetooth -std=c99 -o scanner
+#echo "Install bt library"
+#apt-get update
+#apt-get install -y libbluetooth-dev
+#echo "compile"
+#cd /root/logatec-experiment/applications/02_localization
+#cc scanner.c -lbluetooth -std=c99 -o scanner
 #----------------------------------------------------
 
 # Start the ECMS_client with experiment application
