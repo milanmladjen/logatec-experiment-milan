@@ -1,7 +1,7 @@
 [submodule "contiki-ng"]
 	path = contiki-ng
-	url = https://github.com/gcerar/contiki-ng
-	branch = master
+	url = https://github.com/sensorlab/contiki-ng
+	branch = RF23x
 [submodule "vesna-drivers"]
 	path = vesna-drivers
 	url = git@github.com:logatec3/vesna-drivers.git
