@@ -1,5 +1,5 @@
 experiment_none:
-	./run-experiment
+	./run-experiment-node
 
 experiment_node:
 	./run-experiment-node
