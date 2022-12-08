@@ -51,4 +51,4 @@ mv *.txt /root/logatec-experiment/results/
 # Cleanup (put Vesna to reset state so it doesn't interfeer with other networks)
 # ----------------------------------------------------------------------------------------------------------
 cd /root/logatec-experiment/deployment/tasks
-python vesna_reset.py 0
+python3 vesna_reset.py 0
