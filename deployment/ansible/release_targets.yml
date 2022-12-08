@@ -38,10 +38,10 @@
         delete: yes
         recursive: yes
   
-    - name: Build the docker file
-      command: docker build -t logatec-experiment-srd -f deployment/docker/Dockerfile . 
-      args:
-        chdir: ~/deploy/logatec-experiment
+    #- name: Build the docker file
+      #command: docker build -t logatec-experiment-srd -f deployment/docker/Dockerfile . 
+     # args:
+      #  chdir: ~/deploy/logatec-experiment
   
     - name: Cleanup old docker containers
       ignore_errors: yes
