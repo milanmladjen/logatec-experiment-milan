@@ -33,13 +33,13 @@ ROOT_FILE="/root/logatec-experiment/applications/${APP_LOC}/${APP_NAME}-root.c"
 if test -f "$ROOT_FILE"; then
     echo "Root file located --> flashing Vesna with it!"
     make ${APP_NAME}-root.logatec3 -j2
-    cd /root/logatec-experiment/deployment/tasks
-    python3 vesna_serial_monitor.py -o "node_${IPADDR}.txt"
+    #cd /root/logatec-experiment/deployment/tasks
+    python3 serial_monitor.py -o "node_${IPADDR}.txt"
 else
     echo "No root file located --> flashing Vesna with normal node and adding root option to the serial monitor"
     make $APP.logatec3 -j2
-    cd /root/logatec-experiment/deployment/tasks
-    python3 vesna_serial_monitor.py -o "node_${IPADDR}.txt" -r
+    #cd /root/logatec-experiment/deployment/tasks
+    python3 serial_monitor.py -o "node_${IPADDR}.txt" -r
 fi
 
 # ----------------------------------------------------------------------------------------------------------
