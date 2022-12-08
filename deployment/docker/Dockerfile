@@ -22,7 +22,7 @@ RUN mkdir results/
 
 # Pull the changes inside a container TODO: Use the submodule!
 RUN git clone --single-branch --branch RF23x https://github.com/sensorlab/contiki-ng.git
-
+RUN echo "Update!"
 # Copy the logatec-experiment directory into container (without files in .dockerignore)
 COPY ./ ./
 
