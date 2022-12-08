@@ -1,3 +1,4 @@
+
 ---
 #############################################################################################################
 # RELEASE TARGETS
@@ -15,15 +16,17 @@
 #
 #############################################################################################################
 
-- hosts: SRDB_template:&sna-lgtc-192-168-12
+#- hosts: SRDB_template:&sna-lgtc-192-168-12
+- hosts: 192.168.12.84, 192.168.12.85, 192.168.12.86
   strategy: free
   remote_user: videk
 
   vars:
     technology: srdb
-    application: 00_hello-world
-    duration: 20
-    option: monitor
+    application: 05_ping
+    duration: 5
+    option: node
+    root_node: 192.168.12.86
 
   tasks:
     - name: Create directory
@@ -38,10 +41,10 @@
         delete: yes
         recursive: yes
   
-    #- name: Build the docker file
-      #command: docker build -t logatec-experiment-srd -f deployment/docker/Dockerfile . 
-     # args:
-      #  chdir: ~/deploy/logatec-experiment
+    - name: Build the docker file
+      command: docker build -t logatec-experiment-srd -f deployment/docker/Dockerfile . 
+      args:
+        chdir: ~/deploy/logatec-experiment
   
     - name: Cleanup old docker containers
       ignore_errors: yes
@@ -52,4 +55,8 @@
   
     - name: Run docker container
       command: docker run --name target-{{technology}} --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="{{option}}" logatec-experiment-srd
-  
+      when: inventory_hostname != root_node
+
+    - name: Run docker container for root node
+      command: docker run --name target-{{technology}} --privileged --net=host -e APP="{{application}}" -e APP_DUR="{{duration}}" -e OPTION="root" logatec-experiment-srd
+      when: inventory_hostname == root_node
