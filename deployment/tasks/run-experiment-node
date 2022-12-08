@@ -18,6 +18,7 @@ APP_NAME=${APP:3}
 cd /root/logatec-experiment/contiki-ng
 echo "Pull changes from Contiki-NG repo"
 git pull
+git status
 
 echo "Deploying $APP application on node $IPADDR with option: node"
 
