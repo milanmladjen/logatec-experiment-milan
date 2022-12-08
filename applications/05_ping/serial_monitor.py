@@ -19,7 +19,7 @@ from timeit import default_timer as timer
 
 # Application duration should be defined as variable while running container
 try:
-    APP_DURATION = int(os.environ['APP_DURATION_MIN'])
+    APP_DURATION = int(os.environ['APP_DUR'])
 except:
     print("No app duration was defined...going with default 60min")
     APP_DURATION = 60
